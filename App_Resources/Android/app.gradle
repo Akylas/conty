@@ -1,0 +1,215 @@
+
+project.ext.abiCodes = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, 'x86':4, 'x86_64':5]
+def BUILD_TOOLS_PATH = "$rootDir/build-tools"
+
+apply plugin: "androidx.baselineprofile"
+apply plugin: "org.jetbrains.kotlin.android"
+
+android { 
+  // we only enable split if specified as an arg or if in debug and abiFilters is used(through cli)
+  def splitEnabled = (gradle.startParameter.taskNames.contains("assembleDebug") && project.hasProperty('abiFilters')) || project.hasProperty('splitEnabled');
+  defaultConfig {  
+    multiDexEnabled false
+    minSdkVersion 21
+    versionCode 1
+    versionName "1.0.0"
+
+    // if (project.hasProperty('resConfigs')) {
+    //   def resConfigs = project.findProperty('resConfigs')
+    //   reset()
+    //   include resConfigs.split(',')
+    // } else {
+    //   resConfigs "en", "fr", "es"
+    // }
+    ndk {
+      if (splitEnabled || project.hasProperty('abiFilters')) {
+        abiFilters.clear()
+        if (!splitEnabled && project.hasProperty('abiFilters')) {
+          abiFilters.addAll(project.findProperty('abiFilters').split(',').collect{it as String})
+        }
+      }
+
+    }
+    androidResources {
+      generateLocaleConfig = true
+    }
+  }
+  kotlin {
+        jvmToolchain(17)
+    }
+  compileOptions {
+      sourceCompatibility JavaVersion.VERSION_17
+      targetCompatibility JavaVersion.VERSION_17
+  }
+  lintOptions {
+      // disable("LintError")
+      checkReleaseBuilds false
+      // Or, if you prefer, you can continue to check for errors in release builds,
+      // but continue the build even when errors are found:
+      abortOnError false
+  }
+  bundle {
+      language {
+          // We disable language split because we do not use
+          // runtime Google Play Service APIs and thus cannot dynamically
+          // request to download the language resources for a specific locale.
+          enableSplit = false
+      }
+  }
+  splits {
+      abi {
+          enable splitEnabled
+          if (project.hasProperty('abiFilters')) {
+            def abis = project.findProperty('abiFilters')
+            reset()
+            include abis.split(',')
+          }
+          universalApk project.hasProperty('universalApk')
+      }
+  }
+  // aaptOptions {
+  //   additionalParameters "--no-version-vectors"  
+  // }  
+  buildTypes { // THIS CAUSES RELEASE MODE ERROR ON APP LAUNCH
+    release {
+      // Enables code shrinking, obfuscation, and optimization for only
+      // your project's release build type.
+      minifyEnabled true
+
+      // Enables resource shrinking, which is performed by the
+      // Android Gradle plugin.
+      shrinkResources true
+
+      // Disables PNG crunching for the release build type.
+      crunchPngs false
+
+
+      // Includes the default ProGuard rules files that are packaged with
+      // the Android Gradle plugin. To learn more, go to the section about
+      // R8 configuration files.
+      def absolutePathToAppResources = getAppResourcesPath()
+      proguardFiles getDefaultProguardFile(
+        'proguard-android-optimize.txt'),
+        "$BUILD_TOOLS_PATH/proguard-rules.pro"
+
+      debuggable false
+      jniDebuggable false
+      renderscriptDebuggable false
+    }
+    debug {
+      multiDexEnabled true;
+    }
+    benchmark {
+        initWith release
+        proguardFiles("../benchmark/benchmark-rules.pro")
+        signingConfig signingConfigs.debug
+        matchingFallbacks = ['release']
+        debuggable false
+    }
+  }  
+  // experimentalProperties["android.experimental.art-profile-r8-rewriting"] = true
+  // experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
+  packagingOptions {
+    pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+    pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    pickFirst 'lib/x86_64/libc++_shared.so'
+    pickFirst 'lib/x86/libc++_shared.so'
+    exclude "assets/app/**/*.js.map"
+    exclude "org/bouncycastle/**"
+    exclude "license/**"
+    jniLibs {
+        // we should not need this. why did it start creating twice as big apks  (gradle 8.4?)?
+        // only enable it for apk build
+        useLegacyPackaging project.hasProperty('splitEnabled')
+    }
+  }
+  dependenciesInfo {
+    // Disables dependency metadata when building APKs.
+    includeInApk = false
+  }
+  // experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
+}
+
+task createProguard {
+    dependsOn 'buildMetadata'
+    doLast {
+        exec {
+            workingDir "$USER_PROJECT_ROOT"
+            println("node scripts/createProguard.js ${rootDir} ${getAppResourcesPath()}")
+            commandLine 'node', "scripts/createProguard.js", "${rootDir}", "${getAppResourcesPath()}"
+        }
+    }
+}
+project.tasks.configureEach {
+    if (name =~ /buildMetadata/) {
+        it.finalizedBy(createProguard)
+    }
+    if (name =~ /minify(Debug|Release)WithR8/) {
+        it.dependsOn(createProguard)
+    }
+}
+
+
+android.applicationVariants.all { variant ->
+    if (project.hasProperty('splitEnabled')) {
+        if (variant.buildType.name == "debug") {
+            variant.outputs.each { output ->
+                output.versionNameOverride = android.defaultConfig.versionName + "." + variant.versionCode + "-dev";
+            }
+        } else {
+            variant.outputs.each { output ->
+                output.versionNameOverride = android.defaultConfig.versionName + "." + variant.versionCode;
+            }
+        }
+    }
+}
+dependencies {
+    def computeKotlinVersion = { -> project.hasProperty("kotlinVersion") ? kotlinVersion : "${ns_default_kotlin_version}" }
+    def kotlinVersion = computeKotlinVersion()
+
+    // if (project.hasProperty('debugCarto')) {
+    //   implementation project(path: ':carto-mobile-sdk')
+    // }
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.media:media:1.7.0'
+    // implementation 'androidx.documentfile:documentfile:1.0.1'
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion") {
+            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion") {
+            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+        }
+    }
+    implementation "androidx.profileinstaller:profileinstaller:1.3.1"
+    // baselineProfile project(':baselineprofile')
+}
+
+if (project.hasProperty("sentryEnabled")) {
+  sentry {
+    debug = false
+    telemetry = false
+
+    // Experimental flag to turn on support for GuardSquare's tools integration (Dexguard and External Proguard).
+    // If enabled, the plugin will try to consume and upload the mapping file produced by Dexguard and External Proguard.
+    // Default is disabled.
+    dexguardEnabled = true
+
+    // Disables or enables the automatic configuration of Native Symbols
+    // for Sentry. This executes sentry-cli automatically so
+    // you don't need to do it manually.
+    // Default is disabled.
+    uploadNativeSymbols = true
+    // Does or doesn't include the source code of native code for Sentry.
+    // This executes sentry-cli with the --include-sources param. automatically so
+    // you don't need to do it manually.
+    // This option has an effect only when [uploadNativeSymbols] is enabled.
+    // Default is disabled.
+    includeNativeSources = true
+
+    // Generates a JVM (Java, Kotlin, etc.) source bundle and uploads your source code to Sentry.
+    // This enables source context, allowing you to see your source
+    // code as part of your stack traces in Sentry.
+    includeSourceContext = true
+  }
+}

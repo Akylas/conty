@@ -1,0 +1,7 @@
+app_identifier "com.akylas.conty"
+package_name "com.akylas.conty"
+apple_id "martin.guillon@akylas.fr"
+team_id "3UUB5NM43K"
+itunes_connect_id("martin.guillon@akylas.fr")
+itc_team_id("1469488")
+team_name('Akylas')

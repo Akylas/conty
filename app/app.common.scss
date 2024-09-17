@@ -1,0 +1,281 @@
+@import './animations';
+
+
+.ns-root {
+
+    --fontScale: 1;
+    --colorPrimary: #006E25;
+    --colorOnPrimary: #ffffff;
+    --colorPrimaryContainer: #98F89C;
+    --colorOnPrimaryContainer: #002106;
+    --colorSecondary: #526350;
+    --colorOnSecondary: #FFFFFF;
+    --colorSecondaryContainer: #D5E8D0;
+    --colorOnSecondaryContainer: #101F10;
+    --colorTertiary: #39656B;
+    --colorOnTertiary: #FFFFFF;
+    --colorTertiaryContainer: #BCEBF2;
+    --colorOnTertiaryContainer: #001F23;
+    --colorBackground: #FCFDF7;
+    --colorOnBackground: #1A1C19;
+    --colorError: #BA1A1A;
+    --colorOnError: #FFFFFF;
+    --colorErrorContainer: #FFDAD6;
+    --colorOutline: #72796F;
+    --colorOutlineVariant: #C2C9BD;
+    --colorOnSurfaceDisabled: #00000055;
+    --colorSurfaceVariant: #DEE5D9;
+    --colorOnSurfaceVariant: #424940;
+    --colorSurface: #F9FAF4;
+    --colorOnSurface: #1A1C19;
+    --colorOnSurfaceInverse: #000000;
+    --colorSurfaceContainer: #C2C9BD;
+    --popupMenuBackground: #C2C9BD;
+
+    --mdiFontFamily: #{$mdiFontFamily};
+
+    --navigationBarHeight: 0;
+    --actionBarButtonHeight: 50;
+    --actionBarHeight: 60;
+}
+
+// .lato {
+// font-family: $lato-fontFamily;
+// }
+
+.mdi {
+    font-family: $mdiFontFamily;
+}
+
+// mdprogress {
+//     color: var(--colorPrimary);
+// }
+
+mdtextfield,
+mdtextview {
+    stroke-color: var(--colorOutline);
+    placeholder-color: var(--colorOutline);
+    color: var(--colorOnBackground);
+}
+
+checkbox {
+    color: var(--colorOnBackground);
+    fill-color: var(--colorPrimary);
+    on-check-color: var(--colorOnPrimary);
+    on-tint-color: var(--colorPrimary);
+}
+
+
+// mdbutton[variant=flat],mdbutton[variant=contained] {
+//     background-color: var(--colorPrimary);
+//     color: var(--colorOnPrimary);
+// }
+// mdslider, slider {
+//     color: var(--colorPrimaryContainer);
+//     background-color: var(--colorPrimaryContainer);
+//     track-background-color: var(--colorSecondary);
+// }
+
+label,
+canvaslabel,
+htmllabel {
+    // background-color: rgba(255, 0,0,0.2);
+    // .ns-light & {
+    color: var(--colorOnBackground);
+
+    // }
+    // .ns-dark &,
+    // .ns-black & {
+    //     color: var(--colorOnSurface-dark);
+    // }
+
+    // white-space: normal;
+
+}
+
+// mdtextfield {
+//     color: black;
+//     // background-color: white;
+//     // placeholder-color: black;
+
+//     .ns-dark & {
+//         color: white;
+//         // background-color: black;
+//         // placeholder-color: white;
+//     }
+// }
+
+
+page {
+    status-bar-color: transparent;
+    status-bar-style: light;
+    background-color: var(--colorBackground);
+
+    .ns-dark &,
+    .ns-black & {
+        status-bar-style: dark;
+    }
+}
+
+frame {
+    background-color: var(--colorBackground);
+}
+
+.actionBar {
+    height: var(--actionBarHeight);
+    background-color: var(--colorBackground);
+}
+
+.sectionHeader {
+    font-size: 15;
+    font-weight: 500;
+    color: var(--colorPrimary);
+    padding: 5 5 5 16;
+}
+
+
+
+.sectionBigHeader {
+    font-size: 20;
+    font-weight: 500;
+    color: var(--colorPrimary);
+    padding: 4 0 10 0;
+}
+
+
+.actionBarTitle {
+    font-size: 22;
+    max-font-size: 22;
+    white-space: normal;
+    font-weight: 400;
+    padding: 0 16 0 16;
+    color: var(--colorOnBackground);
+}
+
+.actionBarSubtitle {
+    font-size: 13;
+    color: var(--colorOnBackground);
+}
+
+
+label,
+canvaslabel,
+htmllabel,
+mdtextfield,
+.actionBarTitle,
+.actionBarSubtitle {
+
+    &:black,
+    &:dark {
+        color: white;
+    }
+
+    &:white,
+    &:light {
+        color: black;
+    }
+    &:secondary {
+        color: var(--colorOnSecondaryContainer);
+    }
+}
+
+
+.icon-btn,
+.actionBarButton {
+    @extend .mdi;
+    shape: round;
+    padding: 0;
+    margin: 0;
+    width: var(--actionBarHeight);
+    height: var(--actionBarHeight);
+    font-size: 24;
+    color: var(--colorOnBackground);
+    ripple-color: var(--colorOnBackground);
+
+
+
+    &:onTertiary {
+        color: var(--colorOnTertiary);
+        ripple-color: var(--colorOnTertiary);
+    }
+
+    &:secondary {
+        color: var(--colorOnSecondaryContainer);
+    }
+
+    &:disabled {
+        color: #999;
+        ripple-color: #999;
+    }
+
+    &:black,
+    &:dark {
+        color: white;
+        ripple-color: white;
+
+
+    }
+
+    &:white,
+    &:light {
+        color: black;
+        ripple-color: black;
+    }
+}
+
+.fab {
+    @extend .mdi;
+    background-color: var(--colorPrimaryContainer);
+    ripple-color: var(--colorPrimaryContainer);
+    color: var(--colorOnPrimaryContainer);
+    shape: medium;
+    elevation: 2;
+    font-size: 24;
+    padding: 0;
+    margin: 16;
+    width: 56;
+    height: 56;
+}
+
+
+.small-fab {
+    @extend .mdi;
+    shape: small;
+    background-color: var(--colorSecondaryContainer);
+    ripple-color: var(--colorSecondaryContainer);
+    color: var(--colorOnSecondaryContainer);
+    elevation: 2;
+    font-size: 24;
+    padding: 0;
+    margin: 8;
+    width: 40;
+    height: 40;
+}
+
+.icon-label {
+    @extend .mdi;
+
+    color: var(--colorOnBackground);
+
+    width: var(--actionBarButtonHeight);
+    height: var(--actionBarButtonHeight);
+    text-align: center;
+    vertical-text-alignment: center;
+    font-size: 24;
+}
+
+.playerButton {
+    @extend .fab;
+    width: 70;
+    height: 70;
+    font-size: 40;
+    padding: 0;
+    // shape: round;
+    // border-radius: math.div(70, 2);
+}
+
+.whiteActionBarButton {
+    @extend .actionBarButton;
+    color: white;
+    ripple-color: white;
+}
