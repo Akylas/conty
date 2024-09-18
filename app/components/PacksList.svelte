@@ -466,11 +466,11 @@
         staticLayout.draw(canvas);
         canvas.restore();
 
-        canvas.drawText(filesize(item.pack.size, { output: 'string' }), dx, h - 10, textPaint);
+        canvas.drawText(filesize(item.pack.size, { output: 'string' }), dx, h - 13, textPaint);
 
         if (item.pack.age) {
             textPaint.color = colorOnTertiaryContainer;
-            staticLayout = new StaticLayout(' ' + item.pack.age + ' ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+            staticLayout = new StaticLayout(' ' + lc('age', item.pack.age) + ' ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
             const width = staticLayout.getLineWidth(0);
             const height = staticLayout.getHeight();
             canvas.translate(w - width - 20, h - height - 10);

@@ -383,7 +383,7 @@
                         text={loading ? lc('loading') : !currentRemoteSource ? lc('no_remote_source') : lc('please_refresh')}
                         textAlignment="center"
                         textWrap={true} />
-                    <mdbutton text={lc('add_source')} on:tap={addSource} />
+                    <mdbutton text={lc('add_source')} visibility={!currentRemoteSource ? 'visible' : 'collapse'} on:tap={addSource} />
                 </flexlayout>
             {/if}
 

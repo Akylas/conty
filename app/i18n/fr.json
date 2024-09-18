@@ -2,6 +2,7 @@
     "add": "ajouter",
     "add_source": "ajouter une source",
     "added_remote_sources": "sources ajoutées",
+    "age": "%1$s ans",
     "app": {
         "name": "Conty"
     },
