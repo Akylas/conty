@@ -1,4 +1,5 @@
 {
+    "add": "ajouter",
     "app": {
         "name": "Conty"
     },
@@ -31,6 +32,7 @@
     "export_settings_desc": "exporter tous les paramètres de l'application afin que vous puissiez les importer plus tard",
     "failed_to_export_settings": "échec de l'exportation des paramètres",
     "feedback_sent": "commentaires envoyés",
+    "first_presentation": "Conty peut lire des histoires que vous ajoutez manuellement à votre téléphone. \nVous pouvez également télécharger des histoires à distance. \nÀ l'heure actuelle, aucune source distante n'est configurée. \nVoulez-vous en ajouter un ?",
     "general": "général",
     "import_settings": "importer les paramètres",
     "import_settings_desc": "importer tous les paramètres d'une sauvegarde précédente",
@@ -84,5 +86,6 @@
         "light": "Clair",
         "title": "Thème"
     },
-    "third_parties": "librairies tierces"
+    "third_parties": "librairies tierces",
+    "welcome": "accueillir"
 }

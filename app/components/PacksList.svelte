@@ -21,7 +21,7 @@
     import { Pack, RemoteContent } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
     import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
-    import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
+    import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { fade, navigate, showModal } from '~/utils/svelte/ui';
     import { onBackButton, playPack, showPopoverMenu, showSettings } from '~/utils/ui';
@@ -236,12 +236,32 @@
         }
     }
     async function onNavigatedTo(e: NavigatedData) {
-        if (!e.isBackNavigation) {
-            if (documentsService.started) {
-                refresh();
-            } else {
-                documentsService.once('started', refresh);
+        try {
+            if (!e.isBackNavigation) {
+                const showFirstPresentation = ApplicationSettings.getBoolean('showFirstPresentation', true);
+                if (showFirstPresentation) {
+                    const result = await confirm({
+                        title: lc('welcome'),
+                        message: lc('first_presentation'),
+                        okButtonText: lc('add_source'),
+                        cancelButtonText: lc('cancel')
+                    });
+                    if (result) {
+                        // ApplicationSettings.remove(SETTINGS_REMOTE_SOURCES);
+                        await showSettings({
+                            subSettingsOptions: 'remote_sources'
+                        });
+                    }
+                    ApplicationSettings.setBoolean('showFirstPresentation', false);
+                }
+                if (documentsService.started) {
+                    refresh();
+                } else {
+                    documentsService.once('started', refresh);
+                }
             }
+        } catch (error) {
+            showError(error);
         }
     }
     let nbSelected = 0;
@@ -507,7 +527,7 @@
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
     <gridlayout rows="auto,*">
         <!-- {/if} -->
-        <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 154]}>
+        <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
             <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={packs} paddingBottom={100} rowHeight={getItemRowHeight(viewStyle) * $fontScale} width="100%">
                 <Template let:item>
                     <canvasview
@@ -534,7 +554,7 @@
                     </canvasview>
                 </Template>
             </collectionView>
-            <gridlayout prop:bottomSheet rows="90,64" width="100%">
+            <gridlayout prop:bottomSheet rows="90,78" width="100%">
                 <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
                     <!-- <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} /> -->
                     <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />

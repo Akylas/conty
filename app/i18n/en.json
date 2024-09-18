@@ -1,4 +1,7 @@
 {
+    "add": "add",
+    "add_source": "add source",
+    "added_remote_sources": "added sources",
     "app": {
         "name": "Conty"
     },
@@ -32,6 +35,7 @@
     "export_settings_desc": "export all application settings so that you can import them later",
     "failed_to_export_settings": "failed to export settings",
     "feedback_sent": "feedback sent",
+    "first_presentation": "Conty can play stories you manually add to your phone. You can also download stories from remote. Right now you don't have any remote source configured. Do you want to add one?",
     "general": "general",
     "import_settings": "import settings",
     "import_settings_desc": "import all settings from a previous backup",
@@ -46,6 +50,7 @@
     "list_used_third_parties": "list used third parties",
     "loading": "loading",
     "missing_manage_permission": "missing manage all files permissions which is needed to access files outside of app files",
+    "missing_name_or_url": "missing name or url",
     "missing_storage_perm_settings": "storage permission is needed to export settings",
     "move_data": "move data?",
     "move_data_desc": "all your app data will be moved and an app restart will be enforced at the end",
@@ -53,6 +58,7 @@
     "name": "name",
     "no_network": "no network",
     "no_pack_yet": "no pack yet",
+    "no_remote_source": "no remote source yet",
     "no_space_left": "your device seems to be running out of free storage",
     "notification_audio_desc": "audio player notification shown while playing stories",
     "notification_download_desc": "notifications shown while downloading packs",
@@ -61,6 +67,11 @@
     "please_refresh": "please refresh to see packs",
     "please_restart_app": "please restart the app the see the change",
     "preparing_download": "preparing download",
+    "proposed_sources": "proposed sources",
+    "remote_source_already_added": "that source is already added",
+    "remote_source_json_url": "url to JSON store of remote packs",
+    "remote_sources": "remote sources",
+    "remote_sources_desc": "configure sources to get stories from",
     "restart": "restart",
     "restart_app": "restart the app",
     "review_application": "review application",
@@ -77,6 +88,7 @@
     },
     "share_application": "share application",
     "show_love": "If you like the project please share some love or even contribute",
+    "source": "source",
     "startup_error": "there was an error while starting the app. Please restart the app to try again. If it persists please report it",
     "theme": {
         "auto": "auto",
@@ -85,5 +97,6 @@
         "light": "light",
         "title": "theme"
     },
-    "third_parties": "third party libraries"
+    "third_parties": "third party libraries",
+    "welcome": "welcome"
 }

@@ -15,14 +15,15 @@
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
-    import { RemoteContent } from '~/models/Pack';
+    import { RemoteContent, RemoteContentProvider } from '~/models/Pack';
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
     import { timeout } from '~/utils';
     import { showError } from '~/utils/showError';
     import { closeModal, fade } from '~/utils/svelte/ui';
-    import { onBackButton, showPopoverMenu } from '~/utils/ui';
+    import { onBackButton, showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale } from '~/variables';
+    import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -58,8 +59,10 @@
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
     let loading = false;
+    let sources: RemoteContentProvider[] = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+    let currentRemoteSource: RemoteContentProvider = sources[0];
 
-    let viewStyle: string = ApplicationSettings.getString('packs_list_view_style', 'normal');
+    const viewStyle: string = ApplicationSettings.getString('packs_list_view_style', 'normal');
     $: condensed = viewStyle === 'condensed';
     // let items: ObservableArray<{
     //     doc: Pack; selected: boolean
@@ -74,7 +77,7 @@
         }
     }
     const updateFilteredDebounce = debounce(updateFiltered, 500);
-    
+
     $: updateFilteredDebounce(filter);
 
     onDestroy(() => {
@@ -85,7 +88,7 @@
     }
 
     async function refresh() {
-        if (loading) {
+        if (loading || !currentRemoteSource) {
             return;
         }
         loading = true;
@@ -130,25 +133,16 @@
 
     onMount(() => {
         DEV_LOG && console.log('RemoteList', 'onMount');
-        if (__ANDROID__) {
-            Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
-            // Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
-            // const intent = Application.android['startIntent'];
-            // if (intent) {
-            //     onAndroidNewItent({ intent } as any);
-            // }
-        }
         refresh();
     });
     onDestroy(() => {
         DEV_LOG && console.log('RemoteList', 'onDestroy');
-        if (__ANDROID__) {
-            Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
-            // Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
-        }
     });
 
     async function onNavigatedTo(e: NavigatedData) {
+        sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+        currentRemoteSource = sources[0];
+        DEV_LOG && console.log('onNavigatedTo', sources.length);
         if (!e.isBackNavigation) {
             if (documentsService.started) {
                 refresh();
@@ -157,137 +151,26 @@
             }
         }
     }
-    let nbSelected = 0;
-    function selectItem(item: Item) {
-        if (!item.selected) {
-            packs.some((d, index) => {
-                if (d === item) {
-                    nbSelected++;
-                    d.selected = true;
-                    packs.setItem(index, d);
-                    return true;
-                }
-            });
-        }
-    }
-    function unselectItem(item: Item) {
-        if (item.selected) {
-            packs.some((d, index) => {
-                if (d === item) {
-                    nbSelected--;
-                    d.selected = false;
-                    packs.setItem(index, d);
-                    return true;
-                }
-            });
-        }
-    }
-    function unselectAll() {
-        if (packs) {
-            nbSelected = 0;
-            packs.splice(0, packs.length, ...packs.map((i) => ({ pack: i.pack, selected: false })));
-        }
-        // packs?.forEach((d, index) => {
-        //         d.selected = false;
-        //         packs.setItem(index, d);
-        //     });
-        // refresh();
-    }
-    let ignoreTap = false;
-    function onItemLongPress(item: Item, event?) {
-        // if (event && event.ios && event.ios.state !== 1) {
-        //     return;
-        // }
-        // if (event && event.ios) {
-        //     ignoreTap = true;
-        // }
-        // console.log('onItemLongPress', item, Object.keys(event));
-        if (item.selected) {
-            unselectItem(item);
-        } else {
-            selectItem(item);
-        }
-    }
+
     async function onItemTap(item: Item) {
         try {
-            if (ignoreTap) {
-                ignoreTap = false;
-                return;
-            }
             // console.log('onItemTap', event && event.ios && event.ios.state, selectedSessions.length);
-            if (nbSelected > 0) {
-                onItemLongPress(item);
-            } else {
-                const component = (await import('~/components/DownloadWebview.svelte')).default;
-                const actualUrl = await showBottomSheet({
-                    view: component,
-                    props: {
-                        url: item.pack.download
-                    }
-                });
-                DEV_LOG && console.log('actualUrl', actualUrl);
-                if (actualUrl) {
-                    item.pack.download = actualUrl;
-                    //wait a bit because closeModal would not work because of the precedent closeBottomSheet
-                    await timeout(500);
-                    closeModal(item.pack);
-                }
-                // await goToPackView(item.doc);
-            }
-        } catch (error) {
-            showError(error);
-        }
-    }
-    const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
-        onBackButton(page?.nativeView, () => {
-            if (nbSelected > 0) {
-                data.cancel = true;
-                unselectAll();
-            }
-        });
 
-    function getSelectedPacks() {
-        const selected = [];
-        packs.forEach((d, index) => {
-            if (d.selected) {
-                selected.push(d.pack);
-            }
-        });
-        return selected;
-    }
-
-    async function downloadSelectedPacks() {
-        if (nbSelected > 0) {
-            try {
-                const result = await confirm({
-                    title: lc('delete'),
-                    message: lc('confirm_delete_packs', nbSelected),
-                    okButtonText: lc('delete'),
-                    cancelButtonText: lc('cancel')
-                });
-                if (result) {
-                    await documentsService.deletePacks(getSelectedPacks());
-                }
-            } catch (error) {
-                showError(error);
-            }
-        }
-    }
-    async function selectViewStyle(event) {
-        try {
-            // const options = Object.keys(OPTIONS[option]).map((k) => ({ ...OPTIONS[option][k], id: k }));
-            await showPopoverMenu({
-                options: [
-                    { id: 'default', name: lc('expanded') },
-                    { id: 'condensed', name: lc('condensed') }
-                ],
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                onClose: (item) => {
-                    viewStyle = item.id;
-                    ApplicationSettings.setString('packs_list_view_style', viewStyle);
+            const component = (await import('~/components/DownloadWebview.svelte')).default;
+            const actualUrl = await showBottomSheet({
+                view: component,
+                props: {
+                    url: item.pack.download
                 }
             });
+            DEV_LOG && console.log('actualUrl', actualUrl);
+            if (actualUrl) {
+                item.pack.download = actualUrl;
+                //wait a bit because closeModal would not work because of the precedent closeBottomSheet
+                await timeout(500);
+                closeModal(item.pack);
+            }
+            // await goToPackView(item.doc);
         } catch (error) {
             showError(error);
         }
@@ -371,58 +254,113 @@
         canvas.translate(dx, (condensed ? 0 : 0) + 10);
         staticLayout.draw(canvas);
     }
+
+    async function addSource() {
+        try {
+            await showSettings({
+                subSettingsOptions: 'remote_sources'
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+    async function selectSource(event) {
+        try {
+            // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
+            const options = sources.map((s) => ({
+                ...s
+            }));
+            await showPopoverMenu({
+                options,
+                anchor: event.object,
+                vertPos: VerticalPosition.BELOW,
+                props: {
+                    width: event.object.getMeasuredWidth()
+                },
+                onClose: (value) => {
+                    currentRemoteSource = value;
+                    refresh();
+                }
+            });
+            // await showPopover({
+            //     backgroundColor: colorSurfaceContainer,
+            //     view: OptionSelect,
+            //     anchor: event.object,
+            //     horizPos: HorizontalPosition.ALIGN_LEFT,
+            //     vertPos: VerticalPosition.CENTER,
+            //     props: {
+            //         borderRadius: 10,
+            //         elevation: 4,
+            //         margin: 4,
+            //         backgroundColor: colorSurfaceContainer,
+            //         containerColumns: 'auto',
+            //         rowHeight: 58 * $fontScale,
+            //         height: Math.min(58 * options.length * $fontScale + 8, 300),
+            //         width: 150,
+            //         options,
+            //         onClose: (item) => {
+            //             closePopover();
+            //             updateOption(option, valueTransformer ? valueTransformer(item.id) : item.id, fullRefresh);
+            //         }
+            //     }
+            // });
+        } catch (error) {
+            showError(error);
+        }
+    }
 </script>
 
-<page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
-    <gridlayout rows="auto,auto,*">
-        <textfield
-            autocapitalizationType="none"
-            hint={lc('search')}
-            margin={10}
-            placeholder={lc('search')}
-            returnKeyType="search"
-            row={1}
-            text={filter}
-            on:returnPress={blurTextField}
-            on:textChange={(e) => (filter = e['value'])} />
-        <!-- {/if} -->
-        <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={filteredPacks} paddingBottom={100} row={2} rowHeight={getItemRowHeight(viewStyle) * $fontScale}>
-            <Template let:item>
-                <canvasview
-                    backgroundColor={colorSurfaceContainerHigh}
-                    borderRadius={12}
-                    fontSize={14 * $fontScale}
-                    margin={8}
-                    rippleColor={colorSurface}
-                    on:tap={() => onItemTap(item)}
-                    on:longPress={(e) => onItemLongPress(item, e)}
-                    on:draw={(e) => onCanvasDraw(item, e)}>
-                    <image
-                        borderRadius={12}
-                        decodeWidth={IMAGE_DECODE_WIDTH}
-                        horizontalAlignment="left"
-                        marginBottom={getImageMargin(viewStyle)}
-                        marginLeft={10}
-                        marginTop={getImageMargin(viewStyle)}
-                        src={item.pack.thumbs.medium}
-                        stretch="aspectFill"
-                        width={getItemImageHeight(viewStyle)} />
-                    <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
-                </canvasview>
-            </Template>
-        </collectionView>
-        {#if showNoPack || loading}
-            <flexlayout
-                flexDirection="column"
-                horizontalAlignment="center"
-                marginBottom="30%"
-                paddingLeft={16}
-                paddingRight={16}
+<frame>
+    <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
+        <gridlayout rows="auto,auto,auto,*">
+            <textfield
+                editable={false}
+                hint={lc('source')}
+                margin={10}
+                placeholder={lc('source')}
+                row={1}
+                text={currentRemoteSource?.name}
+                variant="outline"
+                visibility={currentRemoteSource ? 'visible' : 'collapsed'}
+                on:tap={(e) => selectSource(e)} />
+            <textfield
+                autocapitalizationType="none"
+                hint={lc('search')}
+                margin={10}
+                placeholder={lc('search')}
+                returnKeyType="search"
                 row={2}
-                verticalAlignment="center"
-                width="80%"
-                transition:fade={{ duration: 200 }}>
-                <!-- <lottie
+                text={filter}
+                on:returnPress={blurTextField}
+                on:textChange={(e) => (filter = e['value'])} />
+            <!-- {/if} -->
+            <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={filteredPacks} row={3} rowHeight={getItemRowHeight(viewStyle) * $fontScale}>
+                <Template let:item>
+                    <canvasview
+                        backgroundColor={colorSurfaceContainerHigh}
+                        borderRadius={12}
+                        fontSize={14 * $fontScale}
+                        margin={8}
+                        rippleColor={colorSurface}
+                        on:tap={() => onItemTap(item)}
+                        on:draw={(e) => onCanvasDraw(item, e)}>
+                        <image
+                            borderRadius={12}
+                            decodeWidth={IMAGE_DECODE_WIDTH}
+                            horizontalAlignment="left"
+                            marginBottom={getImageMargin(viewStyle)}
+                            marginLeft={10}
+                            marginTop={getImageMargin(viewStyle)}
+                            src={item.pack.thumbs.medium}
+                            stretch="aspectFill"
+                            width={getItemImageHeight(viewStyle)} />
+                        <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
+                    </canvasview>
+                </Template>
+            </collectionView>
+            {#if showNoPack || !currentRemoteSource || loading}
+                <flexlayout flexDirection="column" horizontalAlignment="center" paddingLeft={16} paddingRight={16} row={3} verticalAlignment="center" width="80%" transition:fade={{ duration: 200 }}>
+                    <!-- <lottie
                     bind:this={lottieView}
                     async={true}
                     autoPlay={true}
@@ -435,19 +373,23 @@
                     }}
                     loop={true}
                     src="~/assets/lottie/scanning.lottie" /> -->
-                <image flexShrink={2} src="res://icon_star" visibility={showNoPack ? 'visible' : 'collapse'} />
-                <mdactivityindicator busy={loading} height={$actionBarButtonHeight} verticalAlignment="middle" visibility={loading ? 'visible' : 'collapse'} width={$actionBarButtonHeight} />
+                    <image flexShrink={2} src="res://icon_star" visibility={!loading ? 'visible' : 'collapse'} />
+                    <mdactivityindicator busy={loading} height={$actionBarButtonHeight} verticalAlignment="middle" visibility={loading ? 'visible' : 'collapse'} width={$actionBarButtonHeight} />
 
-                <label color={colorOnSurfaceVariant} flexShrink={0} fontSize={19} text={loading ? lc('loading') : lc('please_refresh')} textAlignment="center" textWrap={true} />
-            </flexlayout>
-        {/if}
+                    <label
+                        color={colorOnSurfaceVariant}
+                        flexShrink={0}
+                        fontSize={19}
+                        text={loading ? lc('loading') : !currentRemoteSource ? lc('no_remote_source') : lc('please_refresh')}
+                        textAlignment="center"
+                        textWrap={true} />
+                    <mdbutton text={lc('add_source')} on:tap={addSource} />
+                </flexlayout>
+            {/if}
 
-        <CActionBar modalWindow={true} title={l('download_packs')}></CActionBar>
-        <!-- {#if nbSelected > 0} -->
-        {#if nbSelected > 0}
-            <CActionBar modalWindow={true} onGoBack={unselectAll} title={l('selected', nbSelected)} titleProps={{ maxLines: 1, autoFontSize: true }}>
-                <!-- <mdbutton class="actionBarButton" text="mdi-share-variant" variant="text" visibility={nbSelected ? 'visible' : 'collapse'} on:tap={showImageExportPopover} /> -->
+            <CActionBar modalWindow={true} title={l('download_packs')}>
+                <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
             </CActionBar>
-        {/if}
-    </gridlayout>
-</page>
+        </gridlayout>
+    </page>
+</frame>

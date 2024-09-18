@@ -1,33 +1,32 @@
 <script context="module" lang="ts">
     import { CheckBox } from '@nativescript-community/ui-checkbox';
-    import { Folder, path } from '@nativescript/core/file-system';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { alert, confirm, prompt } from '@nativescript-community/ui-material-dialogs';
+    import { alert, confirm, login, prompt } from '@nativescript-community/ui-material-dialogs';
     import { showSnack } from '@nativescript-community/ui-material-snackbar';
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { TextView } from '@nativescript-community/ui-material-textview';
-    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, TouchGestureEventData, Utils, View } from '@nativescript/core';
+    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
+    import { Folder, path } from '@nativescript/core/file-system';
+    import { SDK_VERSION } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
     import { Template } from 'svelte-native/components';
     import type { NativeViewElementNode } from 'svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
     import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
-    import { clock_24, getLocaleDisplayName, l, lc, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
-    import { TextFieldProperties } from '@nativescript-community/ui-material-textfield';
+    import { getLocaleDisplayName, l, lc, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
     import { getColorThemeDisplayName, getThemeDisplayName, onColorThemeChanged, onThemeChanged, selectColorTheme, selectTheme } from '~/helpers/theme';
+    import { RemoteContentProvider } from '~/models/Pack';
+    import { documentsService } from '~/services/documents';
+    import { copyFolderContent, getAndroidRealPath, removeFolderContent, requestManagePermission, restartApp } from '~/utils';
+    import { SETTINGS_LANGUAGE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { Sentry } from '~/utils/sentry';
     import { share } from '~/utils/share';
-    import { navigate } from '~/utils/svelte/ui';
-    import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading } from '~/utils/ui';
-    import { copyFolderContent, getAndroidRealPath, removeFolderContent, requestManagePermission, restartApp } from '~/utils';
+    import { showError } from '~/utils/showError';
+    import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
-    import { SETTINGS_LANGUAGE } from '~/utils/constants';
-    import { showError } from '~/utils/showError';
-    import { documentsService } from '~/services/documents';
-    import { SDK_VERSION } from '@nativescript/core/utils';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -52,15 +51,16 @@
     export let subSettingsOptions: string = null;
     export let options: (page, updateImte) => any[] = null;
     if (!options && subSettingsOptions) {
-        options = getSubSettings(subSettingsOptions);
+        options = () => getSubSettings(subSettingsOptions);
+        actionBarButtons = getSubSettingsActions(subSettingsOptions);
+        title = getSubSettingsTitle(subSettingsOptions);
     }
-
-    function getTitle(item) {
-        switch (item.id) {
-            case 'token':
-                return lc(item.token);
+    function getSubSettingsTitle(id: string) {
+        switch (id) {
+            case SETTINGS_REMOTE_SOURCES:
+                return lc('remote_sources');
             default:
-                return item.title;
+                break;
         }
     }
     function getDescription(item) {
@@ -73,8 +73,88 @@
         }
         return storeSettings[k];
     }
+    function getSubSettingsActions(id: string) {
+        switch (id) {
+            case SETTINGS_REMOTE_SOURCES:
+                return [{ icon: 'mdi-plus', id: 'add_remote_source' }];
+        }
+        return [];
+    }
+
+    function addRemoteSource(source: RemoteContentProvider) {
+        const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+        if (sources.findIndex((s) => s.url === source.url) !== -1) {
+            return alert({ message: lc('remote_source_already_added') });
+        }
+        sources.push(source);
+        ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
+        refresh();
+    }
     function getSubSettings(id: string) {
         switch (id) {
+            case SETTINGS_REMOTE_SOURCES:
+                const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+                const defaultSource = {
+                    name: 'Raconte moi une histoire',
+                    url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
+                    attribution:
+                        'La communauté <a href="https://monurl.ca/lunii.creations">Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
+                    image: 'https://cdn.discordapp.com/icons/911349645752541244/2300753397affc590b981bcb582f2a65.png'
+                } as RemoteContentProvider;
+                const hasDefaultSource =
+                    sources.findIndex(
+                        (s) =>
+                            s.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
+                            s.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
+                    ) !== -1;
+                return []
+                    .concat(
+                        hasDefaultSource
+                            ? []
+                            : ([
+                                  {
+                                      type: 'sectionheader',
+                                      title: lc('proposed_sources')
+                                  },
+                                  {
+                                      type: 'button',
+                                      html: defaultSource.name + '<br/><small><small>' + defaultSource.attribution + '</small></small>',
+                                      image: () => defaultSource.image,
+                                      data: defaultSource,
+                                      buttonText: lc('add'),
+                                      onLinkTap: (e) => openLink(e.link),
+                                      showBottomLine: true,
+                                      titlProps: { verticalTextAlignment: 'top', padding: 10, fontSize: 18 },
+                                      onButtonTap: () => {
+                                          addRemoteSource(defaultSource);
+                                      }
+                                  }
+                              ] as any)
+                    )
+                    .concat([
+                        {
+                            type: 'sectionheader',
+                            title: lc('added_remote_sources')
+                        }
+                    ] as any)
+                    .concat(
+                        sources.length
+                            ? sources.map((s) => ({
+                                  type: 'imageLeft',
+                                  html: s.attribution ? defaultSource.name + '<br/><small><small>' + s.attribution + '</small></small>' : undefined,
+                                  title: s.attribution ? undefined : s.name,
+                                  showBottomLine: true,
+                                  image: () => s.image,
+                                  onLinkTap: (e) => openLink(e.link),
+                                  titlProps: s.attribution ? { verticalTextAlignment: 'top', padding: 10, fontSize: 18 } : undefined
+                              }))
+                            : [
+                                  {
+                                      description: () => lc('no_remote_source'),
+                                      titlProps: { textAlignment: 'center' }
+                                  }
+                              ]
+                    );
             default:
                 break;
         }
@@ -112,6 +192,13 @@
                     id: 'auto_black',
                     title: lc('auto_black'),
                     value: ApplicationSettings.getBoolean('auto_black', false)
+                },
+                {
+                    id: 'sub_settings',
+                    settings: SETTINGS_REMOTE_SOURCES,
+                    icon: 'mdi-cloud-download-outline',
+                    title: getSubSettingsTitle(SETTINGS_REMOTE_SOURCES),
+                    description: lc('remote_sources_desc')
                 }
             ]
                 .concat(
@@ -221,6 +308,16 @@
             showError(error);
         }
     }
+    async function onButtonTap(item, event) {
+        try {
+            const needsUpdate = await item.onButtonTap?.(item, event);
+            if (needsUpdate) {
+                updateItem(item);
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
     async function onTap(item, event) {
         try {
             if (item.type === 'checkbox' || item.type === 'switch') {
@@ -234,17 +331,10 @@
             }
             switch (item.id) {
                 case 'sub_settings': {
-                    const component = (await import('~/components/settings/Settings.svelte')).default;
-                    navigate({
-                        page: component,
-                        props: {
-                            title: item.title,
-                            reorderEnabled: item.reorderEnabled,
-                            options: item.options,
-                            actionBarButtons: item.actionBarButtons?.() || []
-                        }
+                    showSettings({
+                        title: item.title,
+                        subSettingsOptions: item.settings
                     });
-
                     break;
                 }
                 case 'github':
@@ -264,6 +354,30 @@
                         message: GIT_URL
                     });
                     break;
+                case 'add_remote_source': {
+                    const result = await login({
+                        title: lc('add_source'),
+                        autoFocus: true,
+                        usernameTextFieldProperties: {
+                            margin: 10,
+                            hint: lc('name')
+                        },
+                        passwordTextFieldProperties: {
+                            margin: 10,
+                            hint: lc('remote_source_json_url'),
+                            secure: false
+                        }
+                    });
+                    if (result.password && result.userName) {
+                        addRemoteSource({
+                            name: result.userName,
+                            url: result.password
+                        });
+                    } else {
+                        throw new Error(lc('missing_name_or_url'));
+                    }
+                    break;
+                }
                 case 'review':
                     openLink(STORE_REVIEW_LINK);
                     break;
@@ -489,7 +603,7 @@
                 case 'setting': {
                     if (item.type === 'prompt') {
                         const result = await prompt({
-                            title: getTitle(item),
+                            title: item.title,
                             message: item.full_description || item.description,
                             okButtonText: l('save'),
                             cancelButtonText: l('cancel'),
@@ -650,41 +764,109 @@
                 <label class="sectionHeader" {...item.additionalProps || {}} text={item.title} />
             </Template>
             <Template key="switch" let:item>
-                <ListItemAutoSize fontSize={20} leftIcon={item.icon} subtitle={getDescription(item)} title={getTitle(item)} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize
+                    fontSize={20}
+                    html={item.html}
+                    leftIcon={item.icon}
+                    onLinkTap={item.onLinkTap}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
                     <switch id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} ios:backgroundColor={colorPrimary} />
                 </ListItemAutoSize>
             </Template>
             <Template key="checkbox" let:item>
-                <ListItemAutoSize fontSize={20} leftIcon={item.icon} subtitle={getDescription(item)} title={getTitle(item)} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize
+                    fontSize={20}
+                    html={item.html}
+                    leftIcon={item.icon}
+                    onLinkTap={item.onLinkTap}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
                     <checkbox id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="rightIcon" let:item>
-                <ListItemAutoSize fontSize={20} showBottomLine={false} subtitle={getDescription(item)} title={getTitle(item)} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize
+                    fontSize={20}
+                    onLinkTap={item.onLinkTap}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
                     <IconButton col={1} text={item.rightBtnIcon} on:tap={(event) => onRightIconTap(item, event)} />
+                </ListItemAutoSize>
+            </Template>
+            <Template key="button" let:item>
+                <ListItemAutoSize
+                    columns="auto,*,auto"
+                    fontSize={20}
+                    html={item.html}
+                    mainCol={1}
+                    onLinkTap={item.onLinkTap}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    text={item.text}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
+                    <image height={45} marginRight={4} marginTop={20} src={item.image()} verticalAlignment="top" />
+                    <mdbutton col={2} marginTop={20} text={item.buttonText} verticalAlignment="top" on:tap={(event) => onButtonTap(item, event)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="leftIcon" let:item>
                 <ListItemAutoSize
                     columns="auto,*,auto"
                     fontSize={20}
+                    html={item.html}
                     leftIcon={item.icon}
                     mainCol={1}
+                    onLinkTap={item.onLinkTap}
                     rightValue={item.rightValue}
-                    showBottomLine={false}
+                    showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
-                    title={getTitle(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
                     on:tap={(event) => onTap(item, event)}>
                     <label col={0} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
                 </ListItemAutoSize>
             </Template>
+            <Template key="imageLeft" let:item>
+                <ListItemAutoSize
+                    columns="auto,*,auto"
+                    html={item.html}
+                    mainCol={1}
+                    onLinkTap={item.onLinkTap}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
+                    <image height={45} marginRight={4} src={item.image()} visibility={!!item.image ? 'visible' : 'hidden'} />
+                </ListItemAutoSize>
+            </Template>
             <Template key="image" let:item>
-                <ListItemAutoSize fontSize={20} showBottomLine={false} subtitle={getDescription(item)} title={getTitle(item)} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize fontSize={20} html={item.html} showBottomLine={item.showBottomLine} subtitle={getDescription(item)} title={item.title} on:tap={(event) => onTap(item, event)}>
                     <image col={1} height={45} src={item.image()} />
                 </ListItemAutoSize>
             </Template>
             <Template let:item>
-                <ListItemAutoSize fontSize={20} rightValue={item.rightValue} showBottomLine={false} subtitle={getDescription(item)} title={getTitle(item)} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize
+                    fontSize={20}
+                    html={item.html}
+                    onLinkTap={item.onLinkTap}
+                    rightValue={item.rightValue}
+                    showBottomLine={item.showBottomLine}
+                    subtitle={getDescription(item)}
+                    title={item.title}
+                    titleProps={item.titlProps}
+                    on:tap={(event) => onTap(item, event)}>
                 </ListItemAutoSize>
             </Template>
         </collectionview>

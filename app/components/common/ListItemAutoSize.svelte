@@ -1,9 +1,8 @@
 <script context="module" lang="ts">
     import { Canvas, CanvasView, Paint } from '@nativescript-community/ui-canvas';
     import { createEventDispatcher } from '~/utils/svelte/ui';
+    import { conditionalEvent } from '~/utils/svelte/ui';
     import { colors, fontScale } from '~/variables';
-    const iconPaint = new Paint();
-    // iconPaint.setTextAlign(Align.CENTER);
     const linePaint = new Paint();
     linePaint.strokeWidth = 1;
 </script>
@@ -21,6 +20,8 @@
     export let fontWeight: any = 'normal';
     export let subtitleFontSize: number = 14;
     export let title: string = null;
+    export let html: any = null;
+    export let text: any = null;
     export let titleColor: string = null;
     export let color: string = null;
     export let subtitleColor: string = null;
@@ -31,12 +32,13 @@
     export let columns: string = '*,auto';
     // export let leftIconFonFamily: string = $fonts.mdi;
     export let mainCol = 0;
+    export let onLinkTap: (event) => void = null;
     export let onDraw: (event: { canvas: Canvas; object: CanvasView }) => void = null;
 
     function draw(event: { canvas: Canvas; object: CanvasView }) {
         const canvas = event.canvas;
         const h = canvas.getHeight();
-        const w = canvas.getHeight();
+        const w = canvas.getWidth();
 
         if (showBottomLine) {
             event.canvas.drawLine(20, h - 1, w, h - 1, linePaint);
@@ -96,15 +98,20 @@
         width={iconFontSize * 2} /> -->
     <label
         col={mainCol}
+        color={titleColor || color || colorOnSurface}
         disableCss={true}
+        fontSize={fontSize * $fontScale}
+        {fontWeight}
+        {html}
         lineBreak="end"
         paddingBottom={addedPadding}
         paddingTop={addedPadding}
+        {text}
         textWrap={true}
-        verticalAlignment="center"
         verticalTextAlignment="center"
+        use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}
         {...$$restProps.titleProps || {}}>
-        <cspan color={titleColor || color || colorOnSurface} fontSize={fontSize * $fontScale} {fontWeight} text={title} />
+        <cspan text={title} />
         <cspan color={subtitleColor || colorOnSurfaceVariant} fontSize={subtitleFontSize * $fontScale} text={subtitle ? '\n' + subtitle : null} />
     </label>
 
