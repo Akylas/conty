@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="664.24414pt"
-   height="651.84241pt"
-   viewBox="0 0 664.24414 651.84241"
+   width="700pt"
+   height="700pt"
+   viewBox="0 0 700 700"
    version="1.1"
    id="svg64"
    sodipodi:docname="icon.svg"
@@ -27,9 +27,9 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:zoom="0.44729715"
-     inkscape:cx="998.21785"
-     inkscape:cy="481.78264"
+     inkscape:zoom="0.32533787"
+     inkscape:cx="902.13906"
+     inkscape:cy="542.51293"
      inkscape:window-width="1920"
      inkscape:window-height="999"
      inkscape:window-x="0"
@@ -38,7 +38,7 @@
      inkscape:current-layer="svg64" />
   <g
      id="#f9ad0cff"
-     transform="translate(-176.09441,-187.84845)">
+     transform="translate(-158.6521,-185.35672)">
     <path
        fill="#f9ad0c"
        opacity="1"
@@ -72,7 +72,7 @@
   </g>
   <g
      id="#26a56cff"
-     transform="translate(-176.09441,-187.84845)">
+     transform="translate(-158.6521,-185.35672)">
     <path
        fill="#26a56c"
        opacity="1"
@@ -121,7 +121,7 @@
   </g>
   <g
      id="#1a1c1fff"
-     transform="translate(-176.09441,-187.84845)">
+     transform="translate(-158.6521,-185.35672)">
     <path
        fill="#1a1c1f"
        opacity="1"
@@ -165,7 +165,7 @@
   </g>
   <g
      id="#57a0f7ff"
-     transform="translate(-176.09441,-187.84845)">
+     transform="translate(-158.6521,-185.35672)">
     <path
        fill="#57a0f7"
        opacity="1"
@@ -174,7 +174,7 @@
   </g>
   <g
      id="#437ec3ff"
-     transform="translate(-176.09441,-187.84845)">
+     transform="translate(-158.6521,-185.35672)">
     <path
        fill="#437ec3"
        opacity="1"
