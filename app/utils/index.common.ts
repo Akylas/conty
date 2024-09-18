@@ -1,4 +1,4 @@
-import { ApplicationSettings, Color, File, Folder } from '@nativescript/core';
+import { Application, ApplicationSettings, CSSUtils, Color, File, Folder, getRootView } from '@nativescript/core';
 import dayjs from 'dayjs';
 
 function chunk<T>(array: T[], size) {
@@ -55,5 +55,31 @@ export function getFileOrFolderSize(filePath: string) {
         } else {
             return File.fromPath(filePath).size;
         }
+    }
+}
+
+export function setCustomCssRootClass(className, oldClassName?) {
+    const rootView = Application.getRootView();
+    const rootModalViews = rootView._getRootModalViews();
+    DEV_LOG && console.log('setCustomCssRootClass', rootView, className, oldClassName);
+    function addCssClass(rootView, cssClass) {
+        cssClass = `${CSSUtils.CLASS_PREFIX}${cssClass}`;
+        CSSUtils.pushToSystemCssClasses(cssClass);
+        rootView.cssClasses.add(cssClass);
+        rootModalViews.forEach((rootModalView) => {
+            rootModalView.cssClasses.add(cssClass);
+        });
+    }
+    function removeCssClass(rootView, cssClass) {
+        cssClass = `${CSSUtils.CLASS_PREFIX}${cssClass}`;
+        CSSUtils.removeSystemCssClass(cssClass);
+        rootView.cssClasses.delete(cssClass);
+        rootModalViews.forEach((rootModalView) => {
+            rootModalView.cssClasses.delete(cssClass);
+        });
+    }
+    addCssClass(rootView, className);
+    if (oldClassName) {
+        removeCssClass(rootView, oldClassName);
     }
 }

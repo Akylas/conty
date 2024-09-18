@@ -12,7 +12,7 @@ import { showAlertOptionSelect } from '~/utils/ui';
 import { closePopover } from '@nativescript-community/ui-popover/svelte';
 import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
 import { confirm } from '@nativescript-community/ui-material-dialogs';
-import { restartApp } from '~/utils';
+import { restartApp, setCustomCssRootClass } from '~/utils';
 
 export type Themes = 'auto' | 'light' | 'dark' | 'black';
 export type ColorThemes = 'default' | 'lunii' | 'eink' | 'dynamic';
@@ -48,12 +48,9 @@ Application.on(Application.systemAppearanceChangedEvent, (event: SystemAppearanc
             }
             Theme.setMode(Theme.Auto, undefined, realTheme, false);
             updateThemeColors(realTheme);
-            DEV_LOG && console.log('systemAppearanceChangedEvent 1', realTheme);
             //close any popover as they are not updating with theme yet
             closePopover();
-            DEV_LOG && console.log('systemAppearanceChangedEvent 2', realTheme);
             currentRealTheme.set(realTheme);
-            DEV_LOG && console.log('systemAppearanceChangedEvent notify', realTheme);
             globalObservable.notify({ eventName: 'theme', data: realTheme });
         }
     } catch (error) {
@@ -235,6 +232,8 @@ export function start() {
     }
     started = true;
     colorTheme = getString('color_theme', 'default') as ColorThemes;
+    setCustomCssRootClass(colorTheme);
+
     useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
     if (__IOS__ && SDK_VERSION < 13) {
         theme = 'light';
@@ -258,6 +257,7 @@ export function start() {
 
     prefs.on('key:color_theme', async () => {
         const newColorTheme = getString('color_theme') as ColorThemes;
+        const oldColorTheme = colorTheme;
         colorTheme = newColorTheme;
         useDynamicColors = colorTheme === 'dynamic';
         currentColorTheme.set(colorTheme);
@@ -286,6 +286,8 @@ export function start() {
             if (result) {
                 restartApp();
             }
+        } else {
+            setCustomCssRootClass(colorTheme, oldColorTheme);
         }
         updateThemeColors(getRealTheme(theme));
         globalObservable.notify({ eventName: 'color_theme', data: colorTheme });

@@ -157,7 +157,6 @@ frame {
     color: var(--colorOnBackground);
 }
 
-
 label,
 canvaslabel,
 htmllabel,
@@ -174,6 +173,7 @@ mdtextfield,
     &:light {
         color: black;
     }
+
     &:secondary {
         color: var(--colorOnSecondaryContainer);
     }
@@ -235,6 +235,12 @@ mdtextfield,
     margin: 16;
     width: 56;
     height: 56;
+
+    .ns-eink & {
+        elevation: 0;
+        border-color: black;
+        border-width: 1;
+    }
 }
 
 
@@ -250,6 +256,12 @@ mdtextfield,
     margin: 8;
     width: 40;
     height: 40;
+
+    .ns-eink & {
+        elevation: 0;
+        border-color: black;
+        border-width: 1;
+    }
 }
 
 .icon-label {
