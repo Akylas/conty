@@ -1,0 +1,6 @@
+### Bug fixes
+- multiple story playing issues fix ([2697862](/26978626d43dbd9b01aaf42f23d9238b64b7e083))
+- more custom eink theme changes (more to come) ([88d9b59](/88d9b597a00272c68049f44361ffd8dc1c6727e0))
+- color themes not being applied correcly ([3e6c6de](/3e6c6de92fe7f4d8e2a9a11d9d73b78cdd41e96e))
+- You can now define custom remote sources. Now there is none by default, but you are proposed to add one ([b55f7e5](/b55f7e568fa05087d03e212a69e6e3093a2a7e72))
+- better icon! ([b3e38cf](/b3e38cf
