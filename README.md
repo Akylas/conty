@@ -58,7 +58,7 @@ There is a default key included in the app but the access is limited and you cou
 You can,
 - [Create an issue here](https://github.com/Akylas/conty/issues)
 
-<!-- ### Languages: [<img align="right" src="https://hosted.weblate.org/widgets/conty/-/287x66-white.png" alt="Übersetzungsstatus" />](https://hosted.weblate.org/engage/conty/?utm_source=widget)
+### Languages: [<img align="right" src="https://hosted.weblate.org/widgets/conty/-/287x66-white.png" alt="Übersetzungsstatus" />](https://hosted.weblate.org/engage/conty/?utm_source=widget)
 
 [<img src="https://hosted.weblate.org/widgets/conty/-/multi-auto.svg" alt="Übersetzungsstatus" />](https://hosted.weblate.org/engage/conty/)
 
@@ -69,7 +69,7 @@ The Translations are hosted by [Weblate.org](https://hosted.weblate.org/engage/c
   <a href="https://raw.githubusercontent.com/farfromrefug/sponsorkit/main/sponsors.svg">
 	<img src='https://raw.githubusercontent.com/farfromrefug/sponsorkit/main/sponsors.svg'/>
   </a>
-</p> -->
+</p>
 
 
 Feature Graphic generated with [hotpot.ai](https://hotpot.ai/design/google-play-feature-graphic)
