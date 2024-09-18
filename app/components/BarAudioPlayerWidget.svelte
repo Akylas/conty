@@ -1,26 +1,19 @@
 <script context="module" lang="ts">
-    import { throttle } from '@nativescript/core/utils';
     import { GridLayout, Screen } from '@nativescript/core';
-    import dayjs from 'dayjs';
     import { onDestroy, onMount } from 'svelte';
     import { NativeViewElementNode } from 'svelte-native/dom';
     import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StoryHandler } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
-    import { ControlSettings, Pack, Stage } from '~/models/Pack';
+    import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { getBGServiceInstance } from '~/services/BgService.ios';
     import { IMAGE_COLORMATRIX } from '~/utils/constants';
     import { showError } from '~/utils/showError';
-    import { closeModal, showModal } from '~/utils/svelte/ui';
     import { showFullscreenPlayer } from '~/utils/ui';
-    import { colors, fontScale, fonts } from '~/variables';
+    import { fonts } from '~/variables';
     const screenWidth = Screen.mainScreen.widthDIPs;
 </script>
 
 <script lang="ts">
-    let gridLayout: NativeViewElementNode<GridLayout>;
-    const colorMatrix = IMAGE_COLORMATRIX;
-
     let state: 'play' | 'pause' | 'stopped' = 'stopped';
     let currentStages: Stage[] = [];
     let selectedStageIndex = 0;
@@ -127,10 +120,12 @@
     }
     function onPackStop(event) {}
     function onPlayerState(event: PlaybackEventData) {
+        DEV_LOG && console.log('onPlayerState', event.playingInfo?.name);
+        playingInfo = event.playingInfo;
         if (event.state !== state) {
             state = event.state;
             if (state === 'play') {
-                playingInfo = event.playingInfo;
+                DEV_LOG && console.log('onPlayerState1', playingInfo?.name);
                 startPlayerInterval();
             } else {
                 stopPlayerInterval();
@@ -147,7 +142,12 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
+            DEV_LOG && console.log('BarPlayer, onStageChanged');
+            storyHandler?.getCurrentStageImage().then((r) => {
+                currentImage = r;
+                DEV_LOG && console.log('currentImage', r);
+                return r;
+            });
         } catch (error) {
             showError(error);
         }
@@ -184,20 +184,20 @@
 </script>
 
 <gridlayout {...$$restProps}>
-    <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="60,*,auto" height={80}>
-        <image backgroundColor="black" borderRadius={4} marginLeft={2} src={currentImage} stretch="aspectFill" verticalAlignment="center" width={58} on:tap={showFullscreenPlayer} />
-        <label col={1} color="white" fontSize={15} lineBreak="end" margin={3} maxLines={2} row={1} verticalTextAlignment="top">
-            <cspan fontFamily={$fonts.mdi} paddingTop={3} text="mdi-music" />
-            <cspan paddingLeft={20} text={playingInfo && playingInfo.name} />
+    <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*">
+        <image src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
+        <label col={1} colSpan={2} color="white" fontSize={15} lineBreak="end" margin="0 3 0 3" maxLines={2} row={1} verticalTextAlignment="top">
+            <cspan fontFamily={$fonts.mdi} text="mdi-music  " verticalAlignment="bottom" />
+            <cspan text={playingInfo?.name} />
         </label>
-        <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 3 3 10" verticalTextAlignment="bottom">
+        <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 3 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
-        <stacklayout col={2} orientation="horizontal">
+        <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
             <mdbutton class="whiteActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
             <mdbutton class="whiteActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
-            <mdbutton class="whiteActionBarButton" text="mdi-home" variant="text" visibility={!!controlSettings?.home ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
+            <mdbutton class="whiteActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton
                 class="whiteActionBarButton"
                 text={state === 'play' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}

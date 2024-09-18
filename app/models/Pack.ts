@@ -7,6 +7,14 @@ import { showError } from '~/utils/showError';
 
 const imageCache = new ImageCache();
 
+
+export interface RemoteContentProvider {
+    name?: string;
+    url: string;
+    image?: string;
+    attribution?: string;
+}
+
 export interface RemoteContent {
     age: number;
     title: string;
@@ -60,7 +68,8 @@ export interface ControlSettings {
     autoplay: boolean;
 }
 export interface Transition {
-    actionNode: string;
+    actionNode?: string;
+    stageNode?: string; // we add this when homeTransition is missing
     optionIndex: number;
 }
 export interface Stage {
@@ -99,6 +108,13 @@ export function setDocumentsService(service: DocumentsService) {
 }
 export function getDocumentsService() {
     return documentsService;
+}
+
+export function stageIsStory(s: Stage) {
+    return s.type === 'story' || (s.audio && s.controlSettings.pause === true && s.controlSettings.home === true);
+}
+export function stageCanGoHome(s: Stage) {
+    return s && !!s.controlSettings?.home && s.homeTransition;
 }
 
 export class Pack extends Observable implements IPack {

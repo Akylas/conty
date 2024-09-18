@@ -11,7 +11,7 @@ import { BgServiceCommon } from '../BgService.common';
 import { FLAG_IMMUTABLE, NOTIFICATION_CHANEL_ID_RECORDING_CHANNEL, NotificationHelper } from './NotificationHelper';
 import { showError } from '~/utils/showError';
 import { MediaSessionCompatCallback } from './MediaSessionCompatCallback';
-import { Stage } from '~/models/Pack';
+import { Stage, stageCanGoHome } from '~/models/Pack';
 
 const PlaybackStateCompat = android.support.v4.media.session.PlaybackStateCompat;
 
@@ -285,7 +285,7 @@ export class BgService extends android.app.Service {
                 }
             }
 
-            if (controlSettings.home) {
+            if (stageCanGoHome(currentStage)) {
                 actionIndex++;
                 this.addAction(context, 'home', lc('home'), ic_home_id, notifBuilder, playbackstateBuilder);
             }

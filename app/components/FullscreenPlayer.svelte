@@ -8,7 +8,7 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StoryHandler } from '~/handlers/StoryHandler';
     import { Template } from 'svelte-native/components';
-    import { ControlSettings, Pack, Stage } from '~/models/Pack';
+    import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
     import { colors, windowInset } from '~/variables';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
@@ -191,6 +191,12 @@
         }
         storyHandler?.onStageOk();
     }
+    async function onOkButtonIfOption() {
+        if (!controlSettings?.ok || currentStages.length <= 1) {
+            return;
+        }
+        storyHandler?.onStageOk();
+    }
     async function onHomeButton() {
         storyHandler?.onStageHome();
     }
@@ -203,7 +209,7 @@
     }
 
     function getStageName(stage: Stage) {
-        return storyHandler?.getStageName(pack, stage);
+        return storyHandler?.getStageName(pack, stage) || ' ';
     }
 
     function onNavigatedFrom(args): void {
@@ -246,9 +252,9 @@
             <!-- <image id="image" backgroundColor="black" borderRadius={20} elevation={4} margin={10} src={currentImage} stretch="aspectFit" /> -->
             <pager items={currentStages} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} on:selectedIndexChange={onPagerChanged}>
                 <Template let:item>
-                    <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButton}>
+                    <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                         <!-- <image backgroundColor={colorSecondary} borderRadius={20} colorMatrix={COLORMATRIX_BLACK_TRANSPARENT} elevation={4} margin="0 6 0 6" src={getImage(item)} stretch="aspectFit" /> -->
-                        <image borderRadius={20} elevation={4} src={getImage(item)} verticalAlignment="center" />
+                        <image borderRadius={20} elevation={4} horizontalAlignment="center" src={getImage(item)} verticalAlignment="center" />
                     </gridlayout>
                 </Template>
             </pager>
@@ -271,7 +277,13 @@
             <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
         <stacklayout horizontalAlignment="center" orientation="horizontal" row={6}>
-            <mdbutton class="playerButton" horizontalAlignment="right" text="mdi-home" verticalAlignment="center" visibility={!!controlSettings?.home ? 'visible' : 'hidden'} on:tap={onHomeButton} />
+            <mdbutton
+                class="playerButton"
+                horizontalAlignment="right"
+                text="mdi-home"
+                verticalAlignment="center"
+                visibility={stageCanGoHome(currentStage) ? 'visible' : 'hidden'}
+                on:tap={onHomeButton} />
             <mdbutton
                 class="playerButton"
                 horizontalAlignment="right"
