@@ -3,10 +3,10 @@
     "license": "MIT",
     "readme": "NativeScript Application",
     "author": "Martin Guillon<martin.guillon@akylas.fr>",
-    "repository": "https://github.com/Akylas/alpimaps",
+    "repository": "https://github.com/Akylas/conty",
     "main": "app/main",
     "bugs": {
-        "url": "https://github.com/Akylas/alpimaps/issues"
+        "url": "https://github.com/Akylas/conty/issues"
     },
     "scripts": {
         "prepare": "ts-patch install -s",
@@ -37,7 +37,7 @@
         "@mdi/font": "7.4.47",
         "@modern-dev/daylight": "^0.1.0",
         "@nativescript-community/arraybuffers": "1.1.5",
-        "@nativescript-community/audio": "^6.4.4",
+        "@nativescript-community/audio": "^6.4.5",
         "@nativescript-community/css-theme": "1.2.14",
         "@nativescript-community/extendedinfo": "1.3.1",
         "@nativescript-community/gesturehandler": "2.0.32",
@@ -49,7 +49,7 @@
         "@nativescript-community/preferences": "1.3.2",
         "@nativescript-community/sentry": "4.6.33",
         "@nativescript-community/sqlite": "3.5.1",
-        "@nativescript-community/systemui": "1.1.22",
+        "@nativescript-community/systemui": "1.1.23",
         "@nativescript-community/text": "1.6.5",
         "@nativescript-community/ui-canvas": "4.6.33",
         "@nativescript-community/ui-canvaslabel": "1.2.36",
@@ -60,7 +60,7 @@
         "@nativescript-community/ui-drawer": "0.1.28",
         "@nativescript-community/ui-image": "4.5.3",
         "@nativescript-community/ui-image-colorfilter": "^4.5.3",
-        "@nativescript-community/ui-label": "1.3.29",
+        "@nativescript-community/ui-label": "1.3.30",
         "@nativescript-community/ui-material-activityindicator": "7.2.62",
         "@nativescript-community/ui-material-bottomsheet": "7.2.62",
         "@nativescript-community/ui-material-button": "7.2.62",
@@ -149,8 +149,7 @@
         "webpack-shell-plugin-next": "^2.3.2"
     },
     "resolutions": {
-        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
-        "@nativescript-community/audio": "portal:../audio/packages/audio"
+        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core"
     },
     "packageManager": "yarn@4.3.1"
 }
