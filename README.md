@@ -21,11 +21,10 @@
 
 <div align="center">
 
-<!-- |  ||
+|  ||
 |:-:|:-:|
-|[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/packages/com.akylas.weather)|[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on PlayStore" height="80">](https://play.google.com/store/apps/details?id=com.akylas.weather)|
-|[<img src="badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/Akylas/conty/releases)|<div><a href="https://apps.apple.com/fr/app/conty/id1499117252"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1496188800" alt="Download on the App Store" height="58"></a></div>|
-</div> -->
+|[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on PlayStore" height="80">](https://play.google.com/store/apps/details?id=com.akylas.conty)|[<img src="badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/Akylas/conty/releases)|<div><a href="https://apps.apple.com/fr/app/conty/id1499117252"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1496188800" alt="Download on the App Store" height="58"></a></div>|
+</div> 
  
 
 <h2 align="center">Enjoying Conty?</h2>
