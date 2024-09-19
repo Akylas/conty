@@ -22,7 +22,7 @@
     import { showError } from '~/utils/showError';
     import { closeModal, fade } from '~/utils/svelte/ui';
     import { onBackButton, showPopoverMenu, showSettings } from '~/utils/ui';
-    import { actionBarButtonHeight, colors, fontScale } from '~/variables';
+    import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
 
     const textPaint = new Paint();
@@ -55,6 +55,7 @@
     let filteredPacks: ObservableArray<Item> = null;
     let filter: string = null;
     let nbPacks: number = 0;
+    let showSearch = false;
     let showNoPack = false;
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
@@ -312,7 +313,7 @@
 
 <frame>
     <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
-        <gridlayout rows="auto,auto,auto,*">
+        <gridlayout rows="auto,auto,*,auto">
             <textfield
                 editable={false}
                 hint={lc('source')}
@@ -323,18 +324,14 @@
                 variant="outline"
                 visibility={currentRemoteSource ? 'visible' : 'collapsed'}
                 on:tap={(e) => selectSource(e)} />
-            <textfield
-                autocapitalizationType="none"
-                hint={lc('search')}
-                margin={10}
-                placeholder={lc('search')}
-                returnKeyType="search"
-                row={2}
-                text={filter}
-                on:returnPress={blurTextField}
-                on:textChange={(e) => (filter = e['value'])} />
             <!-- {/if} -->
-            <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={filteredPacks} row={3} rowHeight={getItemRowHeight(viewStyle) * $fontScale}>
+            <collectionView
+                bind:this={collectionView}
+                iosOverflowSafeArea={true}
+                items={filteredPacks}
+                row={2}
+                rowHeight={getItemRowHeight(viewStyle) * $fontScale}
+                android:paddingBottom={$windowInset.bottom}>
                 <Template let:item>
                     <canvasview
                         backgroundColor={colorSurfaceContainerHigh}
@@ -388,7 +385,20 @@
             {/if}
 
             <CActionBar modalWindow={true} title={l('download_packs')}>
-                <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
+                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={showSearch ? 'collapsed' : 'visible'} on:tap={() => (showSearch = true)} />
+                    <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
+
+                <textfield
+                    slot="center"
+                    autocapitalizationType="none"
+                    hint={lc('search')}
+                    placeholder={lc('search')}
+                    returnKeyType="search"
+                    col={1}
+                    text={filter}
+                    visibility={showSearch ? 'visible' : 'hidden'}
+                    on:returnPress={blurTextField}
+                    on:textChange={(e) => (filter = e['value'])} />
             </CActionBar>
         </gridlayout>
     </page>
