@@ -187,25 +187,25 @@
     <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*">
         <image src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
         <label col={1} colSpan={2} color="white" fontSize={15} lineBreak="end" margin="0 3 0 3" maxLines={2} row={1} verticalTextAlignment="top">
-            <cspan fontFamily={$fonts.mdi} text="mdi-music  " verticalAlignment="bottom" />
-            <cspan text={playingInfo?.name} />
+            <span fontFamily={$fonts.mdi} text="mdi-music  " verticalAlignment="bottom" />
+            <span text={playingInfo?.name || ''} />
         </label>
-        <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 3 4 10" verticalTextAlignment="bottom">
+        <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
         <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
-            <mdbutton class="whiteActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
-            <mdbutton class="whiteActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
-            <mdbutton class="whiteActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton
-                class="whiteActionBarButton"
+                class="whiteSmallActionBarButton"
                 text={state === 'play' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}
                 variant="text"
                 visibility={currentStages.length ? 'visible' : 'hidden'}
                 on:tap={togglePlayState} />
-            <mdbutton class="whiteActionBarButton" text="mdi-check" variant="text" visibility={!!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
-            <mdbutton class="whiteActionBarButton" text="mdi-close" variant="text" on:tap={stopPlayback} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-check" variant="text" visibility={!!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-close" variant="text" on:tap={stopPlayback} />
         </stacklayout>
 
         <mdprogress colSpan={4} color="white" margin={0} maxValue=" 100" padding={0} value={progress} verticalAlignment="bottom" />

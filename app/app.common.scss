@@ -291,3 +291,8 @@ mdtextfield,
     color: white;
     ripple-color: white;
 }
+.whiteSmallActionBarButton {
+    @extend .whiteActionBarButton;
+    width: 40;
+    height: 40;
+}

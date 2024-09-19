@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { Page, Screen, StackLayout } from '@nativescript/core';
+    import { Color, Page, Screen, StackLayout } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
     import { onDestroy, onMount } from 'svelte';
@@ -44,6 +44,8 @@
     } = $colors);
     let page: NativeViewElementNode<Page>;
     const colorMatrix = IMAGE_COLORMATRIX;
+
+    const statusBarStyle = new Color(colorSecondaryContainer).isDark() ? 'dark' : 'light';
 
     const screenWidth = Screen.mainScreen.widthDIPs;
     const screenHeight = Screen.mainScreen.heightDIPs;
@@ -242,7 +244,7 @@
     actionBarHidden={true}
     backgroundColor={colorSecondaryContainer}
     navigationBarColor={colorSecondaryContainer}
-    statusBarColor={colorSecondaryContainer}
+    {statusBarStyle}
     on:navigatedFrom={onNavigatedFrom}>
     <gridlayout paddingBottom={$windowInset.bottom} rows="auto,*,auto, auto, auto,auto,auto">
         <label color={colorOnSecondaryContainer} fontSize={18} lineBreak="end" margin={10} maxLines={5} row={1} selectable={true} text={pack?.description || ' '} textAlignment="center" />
@@ -262,16 +264,7 @@
         <!-- </GridLayout> -->
         <label color={colorOnSecondaryContainer} fontSize={20} fontWeight="bold" height={50} margin="0 10 0 10" maxLines={2} row={3} text={getStageName(currentStage)} textAlignment="center" />
 
-        <slider
-            backgroundColor={colorPrimaryContainer}
-            color={colorPrimaryContainer}
-            maxValue=" 100"
-            minValue="0"
-            row="4"
-            trackBackgroundColor={colorSecondary}
-            value={progress}
-            verticalAlignment="bottom"
-            on:valueChange={onSliderChange} />
+        <slider maxValue=" 100" minValue="0" row="4" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
         <canvaslabel color={colorOnSecondaryContainer} fontSize="14" height="18" margin="0 20 0 20" row={5}>
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
