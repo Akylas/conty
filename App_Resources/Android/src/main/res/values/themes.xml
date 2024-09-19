@@ -12,9 +12,12 @@
     <style name="LaunchScreenTheme" parent="LaunchScreenThemeBase">
     </style>
     <style name="AppThemeBase" parent="Theme.Material3.DynamicColors.DayNight">
-        <item name="windowActionBar">false</item>
+        
+    </style>
+    <style name="AppTheme" parent="AppThemeBase">
+    <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:statusBarColor">@color/md_theme_background</item>
+        <!-- <item name="android:statusBarColor">@color/md_theme_background</item> -->
         <!-- <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material3</item> -->
         <!-- <item name="linearProgressIndicatorStyle">@style/Widget.Material3.LinearProgressIndicator</item> -->
 
@@ -67,9 +70,8 @@
         <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
     </style>
-    <style name="AppTheme" parent="AppThemeBase"></style>
     <style name="AppTheme.Lunii" parent="AppTheme">
-        <item name="android:statusBarColor">@color/md_theme_lunii_background</item>
+        <!-- <item name="android:statusBarColor">@color/md_theme_lunii_background</item> -->
         <item name="colorPrimary">@color/md_theme_lunii_primary</item>
         <item name="colorOnPrimary">@color/md_theme_lunii_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_lunii_primaryContainer</item>
@@ -118,7 +120,7 @@
         <item name="colorSurfaceContainerHighest">@color/md_theme_lunii_surfaceContainerHighest</item>
     </style>
     <style name="AppTheme.EInk" parent="AppTheme">
-        <item name="android:statusBarColor">@color/md_theme_eink_background</item>
+        <!-- <item name="android:statusBarColor">@color/md_theme_eink_background</item> -->
         <item name="colorPrimary">@color/md_theme_eink_primary</item>
         <item name="colorOnPrimary">@color/md_theme_eink_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_eink_primaryContainer</item>

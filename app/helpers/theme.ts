@@ -148,6 +148,7 @@ export async function selectColorTheme() {
 const AppCompatDelegate = __ANDROID__ ? androidx.appcompat.app.AppCompatDelegate : undefined;
 export function applyTheme(theme: Themes) {
     try {
+        DEV_LOG && console.log('applyTheme', theme);
         switch (theme) {
             case 'auto':
                 Theme.setMode(Theme.Auto);
@@ -274,6 +275,7 @@ export function start() {
                         break;
                 }
                 const themeId = context.getResources().getIdentifier(nativeTheme, 'style', context.getPackageName());
+                DEV_LOG && console.log('color_theme', nativeTheme, themeId);
                 ApplicationSettings.setNumber('SET_THEME_ON_LAUNCH', themeId);
             } else {
                 ApplicationSettings.remove('SET_THEME_ON_LAUNCH');
@@ -339,13 +341,9 @@ export function start() {
             Application.once(Application.launchEvent, onReady);
         }
 
-        // we need to update the theme on every activity start
-        // to get dynamic colors
-        if (useDynamicColors) {
-            Application.on('activity_started', () => {
-                getRealThemeAndUpdateColors();
-            });
-        }
+        Application.on('activity_started', () => {
+            getRealThemeAndUpdateColors();
+        });
     } else {
         // without rootController systemAppearance will be null
         if (Application.ios?.rootController) {
