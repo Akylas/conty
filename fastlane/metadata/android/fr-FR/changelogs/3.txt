@@ -1,0 +1,5 @@
+### Bug fixes
+- more sotry playing issue fixes ([267c245](/267c2450523e48556bace566368b10fee790b8a3))
+- better style of audio players ([5a6ce2e](/5a6ce2e68db76756bb182d4b43b3949ff4b4ce11))
+- better remote download UX ([76e4636](/76e4636486ae79a3a3a3bcc5964a72fd5e3b0d27))
+- cant scroll on main view ([3f5220d](/3f5220d7921d0214d4fab6372c459796f1118cf7))
