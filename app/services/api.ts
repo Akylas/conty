@@ -363,7 +363,9 @@ export async function downloadStories(story: RemoteContent) {
         // if (existingStory?.length) {
         //     throw new Error(`existing story ${story.title}`);
         // }
-        const downloadFilePath = androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
+        const compressed = __ANDROID__;
+
+        const downloadFilePath = (!compressed || androidUseContent) ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
         const file = await getFile(
             {
                 url: story.download,
@@ -377,12 +379,12 @@ export async function downloadStories(story: RemoteContent) {
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
             destinationFilePath = downloadFilePath;
-            if (__ANDROID__ && androidUseContent) {
+            if (__ANDROID__ && compressed && androidUseContent) {
                 //we need to copy the file
                 const context = Utils.android.getApplicationContext();
                 destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, 'application/zip', true);
             }
-            if (__IOS__) {
+            if (!compressed) {
                 destinationFilePath = documentsService.dataFolder.getFolder(name).path;
                 await Folder.fromPath(destinationFilePath).remove();
                 // ProgressNotification.update(progressNotification, {
@@ -404,7 +406,7 @@ export async function downloadStories(story: RemoteContent) {
                 DEV_LOG && console.log('unzipped ', destinationFilePath);
             }
 
-            await documentsService.importStory(name, destinationFilePath, __ANDROID__, {
+            await documentsService.importStory(name, destinationFilePath, compressed, {
                 createdDate: dayjs(story.created_at).valueOf(),
                 modifiedDate: dayjs(story.updated_at).valueOf(),
                 size,
