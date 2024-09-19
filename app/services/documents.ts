@@ -10,6 +10,7 @@ import { getFileOrFolderSize } from '~/utils';
 const sql = SqlQuery.createFromTemplateString;
 
 export async function getFileTextContentFromPackFile(filePath, asset, compressed: boolean) {
+    DEV_LOG && console.log('getFileTextContentFromPackFile', filePath, asset);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -232,7 +233,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
 
     async createModelFromAttributes(attributes: Required<any> | Pack): Promise<Pack> {
         const { id, thumbnail, compressed, ...others } = attributes;
-        DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, documentsService.dataFolder.path);
+        // DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, documentsService.dataFolder.path);
         const pack = new Pack(id);
         Object.assign(pack, {
             id,
@@ -346,12 +347,11 @@ export class DocumentsService extends Observable {
     async updateContentFromDataFolder() {
         try {
             const entities = await this.dataFolder.getEntities();
-            const r = (
-                await documentsService.packRepository.database.query(new SqlQuery([`SELECT id FROM Pack WHERE id IN (${entities.map((e) => '"' + e.name.slice(0, -e._extension.length) + '"')})`]))
-            ).map((d) => d.id);
+            const test = entities.map((e) => '"' + (e._extension ? e.name.slice(0, -e._extension.length) : e.name) + '"');
+            const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id FROM Pack WHERE id IN (${test})`]))).map((d) => d.id);
             for (let index = 0; index < entities.length; index++) {
                 const entity = entities[index];
-                const id = entity.name.slice(0, -entity._extension.length);
+                const id = entity._extension ? entity.name.slice(0, -entity._extension?.length) : entity.name;
                 if (r.indexOf(id) === -1) {
                     const compressed = entity.name.endsWith('.zip');
                     const storyJSON = JSON.parse(await getFileTextContentFromPackFile(entity.path, 'story.json', compressed));

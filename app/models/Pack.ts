@@ -7,7 +7,6 @@ import { showError } from '~/utils/showError';
 
 const imageCache = new ImageCache();
 
-
 export interface RemoteContentProvider {
     name?: string;
     url: string;
@@ -110,6 +109,9 @@ export function getDocumentsService() {
     return documentsService;
 }
 
+export function cleanupStageName(s: Stage) {
+    return s?.name.replace(/\.mp3\s*item$/, '');
+}
 export function stageIsStory(s: Stage) {
     return s.type === 'story' || (s.audio && s.controlSettings.pause === true && s.controlSettings.home === true);
 }
@@ -143,7 +145,7 @@ export class Pack extends Observable implements IPack {
     }
 
     async getData() {
-        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath, 'story.json', this.compressed === 1 ? true : false)) as StoryJSON;
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'story.json', this.compressed === 1 ? true : false)) as StoryJSON;
         return {
             stageNodes: storyJSON.stageNodes,
             actionNodes: storyJSON.actionNodes
