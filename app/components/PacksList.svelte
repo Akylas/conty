@@ -82,7 +82,6 @@
                 orderBy: SqlQuery.createFromTemplateString`id DESC`
                 // , postfix: SqlQuery.createFromTemplateString`LIMIT 50`
             });
-            DEV_LOG && console.log(JSON.stringify(r));
             packs = new ObservableArray(
                 r.map((pack) => ({
                     pack,
@@ -528,7 +527,7 @@
     <gridlayout rows="auto,*">
         <!-- {/if} -->
         <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
-            <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={packs} paddingBottom={100} rowHeight={getItemRowHeight(viewStyle) * $fontScale} width="100%">
+            <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={packs} paddingBottom={100} rowHeight={getItemRowHeight(viewStyle) * $fontScale} width="100%" height="100%">
                 <Template let:item>
                     <canvasview
                         backgroundColor={colorSurfaceContainerHigh}
