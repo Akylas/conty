@@ -147,33 +147,51 @@ public class ZipMediaDataSource extends MediaDataSource {
     private ZipFile zipFile;
     private String zipFilePath;
     private String asset;
-
+    private long offset = 0;
 
     public ZipMediaDataSource(String zipFilePath, String asset) throws IOException {
         this.zipFilePath = zipFilePath;
         this.asset = asset;
+        // ensureInputStream();
     }
 
-    @Override
-    public int readAt(long position, byte[] buffer, int offset, int size) throws IOException {
+    private void ensureInputStream() throws IOException 
+    {
         if (inputStream == null) {
             if (zipFile == null) {
                 zipFile = new ZipFile(zipFilePath);
             }
             ZipEntry ze = zipFile.getEntry(asset);
             inputStream = zipFile.getInputStream(ze);
-
         }
+    }
+    @Override
+    public int readAt(long position, byte[] buffer, int offset, int size) throws IOException {
+        ensureInputStream();
+        // Log.d(TAG,"readAt "  + asset + " " + position  + " " + buffer + " "+ offset + " "+ size + " ");
+        // if (position != this.offset) {
+        //     inputStream.skip(position - this.offset);
+        //     this.offset = position;
+        // }
+        // int bytesRead = inputStream.read(buffer, offset, size);
+        // if (bytesRead > 0) {
+        //     this.offset += bytesRead;
+        // }
+        // return bytesRead;
         return inputStream.read(buffer, offset, size);
     }
 
     @Override
     public long getSize() throws IOException {
-        return inputStream.available();
+        ensureInputStream();
+        // Log.d(TAG,"getSize "  + asset + " " + inputStream.available());
+        // return inputStream.available();
+        return -1;
     }
 
     @Override
     public void close() throws IOException {
+        // Log.d(TAG,"close " + asset);
         if (inputStream != null) {
             inputStream.close();
             inputStream = null;

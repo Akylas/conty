@@ -2,7 +2,7 @@ import { TNSPlayer } from '@nativescript-community/audio';
 import { EventData, ImageSource, Observable } from '@nativescript/core';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { AdditiveTweening } from 'additween';
-import { Action, Pack, Stage, stageIsStory } from '~/models/Pack';
+import { Action, Pack, Stage, cleanupStageName, stageIsStory } from '~/models/Pack';
 import { showError } from '~/utils/showError';
 import { Handler } from './Handler';
 
@@ -93,7 +93,7 @@ export class StoryHandler extends Handler {
                     name = this.getStoryName(this.pack, currentStage);
                 } else if (currentStage.type === 'menu.optionstage' || (currentStage.type === 'stage' && currentStage.controlSettings.ok)) {
                     description = name;
-                    name = currentStage.name;
+                    name = cleanupStageName(currentStage);
                 }
             }
             DEV_LOG && console.log('updating playing info', currentStage.uuid, duration, name);
@@ -123,7 +123,14 @@ export class StoryHandler extends Handler {
         }
     }
 
-    async playAudio({ fileName, loop = false, notify = false, throwErrorUp = false }: { fileName: string; loop?: boolean; notify?: boolean; throwErrorUp?: boolean }) {
+    clearPlayer() {
+        const oldPlayer = this.mPlayer;
+        oldPlayer?.stop();
+        this.mPlayer = new TNSPlayer();
+        oldPlayer?.dispose();
+    }
+
+    async playAudio({ fileName, loop = false, throwErrorUp = true }: { fileName: string; loop?: boolean; throwErrorUp?: boolean }) {
         DEV_LOG && console.log('playAudio', fileName);
         // if (!File.exists(fileName)) {
         //     throw new Error(lc('file_not_found', fileName));
@@ -132,19 +139,26 @@ export class StoryHandler extends Handler {
             try {
                 const compressed = this.pack.compressed;
                 let resolved = false;
+                const dataSource = compressed && __ANDROID__ ? new com.akylas.conty.ZipMediaDataSource(this.pack.zipPath, fileName.split('@').pop()) : undefined;
+                DEV_LOG && console.log('playAudio', dataSource);
                 await this.mPlayer.playFromFile({
                     autoPlay: true,
                     audioFile: compressed ? undefined : fileName,
-                    dataSource: compressed && __ANDROID__ ? new com.akylas.conty.ZipMediaDataSource(this.pack.zipPath, fileName.split('@').pop()) : undefined,
+                    dataSource,
                     loop,
-                    completeCallback: () => {
+                    completeCallback: async () => {
+                        DEV_LOG && console.log('completeCallback', fileName);
                         if (!loop && !resolved) {
                             resolved = true;
                             resolve();
                         }
+                        // dataSource?.close();
                         this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+                        this.clearPlayer();
                     },
-                    errorCallback: () => {
+                    errorCallback: async (e) => {
+                        DEV_LOG && console.log('errorCallback', fileName, e.error);
+                        // dataSource?.close();
                         this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
                         if (!resolved) {
                             resolved = true;
@@ -154,6 +168,7 @@ export class StoryHandler extends Handler {
                                 resolve();
                             }
                         }
+                        this.clearPlayer();
                     }
                 });
                 DEV_LOG && console.log('playAudio', 'updating playing info');
@@ -275,7 +290,7 @@ export class StoryHandler extends Handler {
             if (stageIsStory(stage)) {
                 return this.getStoryName(pack, stage);
             }
-            return stage.name;
+            return cleanupStageName(stage);
         }
     }
     getStoryName(pack: Pack, stage: Stage) {
@@ -285,9 +300,9 @@ export class StoryHandler extends Handler {
                 const action = this.actionNodes.find((a) => a.options.indexOf(stage.uuid) !== -1);
                 const beforeStage = this.stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
                 DEV_LOG && console.log('getStoryName beforeStage', beforeStage.uuid, beforeStage.name);
-                return beforeStage?.name;
+                return cleanupStageName(beforeStage);
             }
-            return stage.name;
+            return cleanupStageName(stage);
         }
     }
 
@@ -460,14 +475,8 @@ export class StoryHandler extends Handler {
             //     this.lyric.pause();
             //     this.lyric = null;
             // }
-            this.mPlayer.stop();
-            this.mPlayer['_options']?.errorCallback();
-            try {
-                await this.mPlayer.dispose();
-            } catch (err) {
-                console.error('error disposing player', err, err.stack);
-            }
-            this.mPlayer = new TNSPlayer();
+            this.clearPlayer();
+
             if (this.toPlayNext) {
                 this.toPlayNext();
             }
