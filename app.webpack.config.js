@@ -48,7 +48,7 @@ module.exports = (env, params = {}) => {
             {},
             {
                 production: true,
-                noconsole: true,
+                noconsole: !process.env['NS_LOGGING'],
                 sentry: false,
                 uploadSentry: false,
                 sourceMap: false,
