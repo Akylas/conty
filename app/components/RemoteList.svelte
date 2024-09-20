@@ -386,15 +386,15 @@
 
             <CActionBar modalWindow={true} title={l('download_packs')}>
                 <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={showSearch ? 'collapsed' : 'visible'} on:tap={() => (showSearch = true)} />
-                    <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
+                <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
 
                 <textfield
                     slot="center"
                     autocapitalizationType="none"
+                    col={1}
                     hint={lc('search')}
                     placeholder={lc('search')}
                     returnKeyType="search"
-                    col={1}
                     text={filter}
                     visibility={showSearch ? 'visible' : 'hidden'}
                     on:returnPress={blurTextField}
