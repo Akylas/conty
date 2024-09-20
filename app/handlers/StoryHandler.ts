@@ -30,6 +30,7 @@ function getRandomFromArray(array) {
 export const PlaybackEvent = 'playback';
 export const PackStartEvent = 'packStart';
 export const PackStopEvent = 'packStop';
+export const StagesChangeEvent = 'stagesChange';
 
 export interface PackStartEventData extends Optional<EventData<Observable>, 'object'> {
     pack?: Pack;
@@ -89,8 +90,10 @@ export class StoryHandler extends Handler {
             let description = this.pack.description;
             if (currentStage) {
                 if (duration > 10000 || stageIsStory(currentStage)) {
-                    description = name;
-                    name = this.getStoryName(this.pack, currentStage);
+                    name = this.getStoryName(this.pack, currentStage) || name;
+                    if (name !== this.pack.title) {
+                        description = name;
+                    }
                 } else if (currentStage.type === 'menu.optionstage' || (currentStage.type === 'stage' && currentStage.controlSettings.ok)) {
                     description = name;
                     name = cleanupStageName(currentStage);
@@ -296,7 +299,7 @@ export class StoryHandler extends Handler {
     getStoryName(pack: Pack, stage: Stage) {
         if (pack) {
             DEV_LOG && console.log('getStoryName', stage.uuid, stage.name);
-            if (/\s*(story|stage)[\s-_]*node\s*/.test(stage.name.toLowerCase())) {
+            if (stage.name && /\s*(story|stage)[\s-_]*node\s*/.test(stage.name.toLowerCase())) {
                 const action = this.actionNodes.find((a) => a.options.indexOf(stage.uuid) !== -1);
                 const beforeStage = this.stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
                 DEV_LOG && console.log('getStoryName beforeStage', beforeStage.uuid, beforeStage.name);
@@ -313,8 +316,8 @@ export class StoryHandler extends Handler {
         const action = this.actionNodes.find((a) => a.options.indexOf(s.uuid) !== -1);
         const beforeStage = this.stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
         DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
-        if (!stageIsStory(beforeStage)) {
-            return beforeStage?.image;
+        if (!stageIsStory(beforeStage) && beforeStage?.image) {
+            return beforeStage.image;
         } else {
             return this.findStoryImage(beforeStage);
         }
@@ -333,11 +336,15 @@ export class StoryHandler extends Handler {
         return { pack: this.pack, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex, currentStage: this.currentStageSelected() };
     }
     async notifyStageChange() {
-        const stage = this.currentStageSelected();
-        DEV_LOG && console.log('notifyStageChange', stage.uuid);
-        this.currentStageImage = stageIsStory(stage) ? this.findStoryImage(stage) : stage?.image;
-        this.currentPlayingInfo = this.playingInfo();
-        this.notify({ eventName: 'stagesChange', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as StageEventData);
+        try {
+            const stage = this.currentStageSelected();
+            this.currentStageImage = stageIsStory(stage) ? this.findStoryImage(stage) : stage?.image;
+            this.currentPlayingInfo = this.playingInfo();
+            DEV_LOG && console.info('notifyStageChange', stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage, JSON.stringify(this.currentPlayingInfo));
+            this.notify({ eventName: StagesChangeEvent, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as StageEventData);
+        } catch (error) {
+            showError(error);
+        }
     }
     async onStageOk() {
         const oldSelected = this.currentStageSelected();

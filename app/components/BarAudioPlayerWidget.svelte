@@ -2,7 +2,7 @@
     import { GridLayout, Screen } from '@nativescript/core';
     import { onDestroy, onMount } from 'svelte';
     import { NativeViewElementNode } from 'svelte-native/dom';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StoryHandler } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StagesChangeEvent, StoryHandler } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
@@ -76,7 +76,7 @@
         storyHandler = handler;
         handler.on(PlaybackEvent, onPlayerState);
         handler.on('selectedStageChange', onSelectedStageChanged);
-        handler.on('stagesChange', onStageChanged);
+        handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
 
@@ -84,7 +84,7 @@
         if (pack) {
             DEV_LOG && console.log('onSetup', selectedStageIndex, JSON.stringify(currentStages));
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
-            onStageChanged({ eventName: 'stagesChange', stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
         }
     });
 
@@ -93,7 +93,7 @@
         storyHandler = null;
         handler?.off(PlaybackEvent, onPlayerState);
         handler?.off('selectedStageChange', onSelectedStageChanged);
-        handler?.off('stagesChange', onStageChanged);
+        handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
     });

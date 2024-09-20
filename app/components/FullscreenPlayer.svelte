@@ -6,7 +6,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { NativeViewElementNode } from 'svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StoryHandler } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StagesChangeEvent, StoryHandler } from '~/handlers/StoryHandler';
     import { Template } from 'svelte-native/components';
     import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
@@ -16,7 +16,7 @@
     import { ALERT_OPTION_MAX_HEIGHT, COLORMATRIX_BLACK_TRANSPARENT, IMAGE_COLORMATRIX } from '~/utils/constants';
     import { formatDuration } from '~/helpers/formatter';
     import { goBack } from '~/utils/svelte/ui';
-    import { showBottomsheetOptionSelect } from '~/utils/ui';
+    import { openLink, showBottomsheetOptionSelect } from '~/utils/ui';
 
     const PAGER_PEAKING = 30;
     const PAGER_PAGE_PADDING = 16;
@@ -83,14 +83,14 @@
         storyHandler = handler;
         handler.on(PlaybackEvent, onPlayerState);
         handler.on('selectedStageChange', onSelectedStageChanged);
-        handler.on('stagesChange', onStageChanged);
+        handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
 
         DEV_LOG && console.log('onSetup', handler.selectedStageIndex, JSON.stringify(handler.currentStages), JSON.stringify(handler.currentPlayingInfo));
         pack = handler.pack;
         if (pack) {
-            onStageChanged({ eventName: 'stagesChange', stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
         } else {
             close();
@@ -102,7 +102,7 @@
         storyHandler = null;
         handler?.off(PlaybackEvent, onPlayerState);
         handler?.off('selectedStageChange', onSelectedStageChanged);
-        handler?.off('stagesChange', onStageChanged);
+        handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
     });
@@ -156,7 +156,7 @@
     function onStageChanged(event) {
         currentStages = event.stages;
         selectedStageIndex = event.selectedStageIndex;
-        DEV_LOG && console.log('onStageChanged', currentStages.length, selectedStageIndex);
+        DEV_LOG && console.warn('FullScreen', 'onStageChanged', currentStages.length, selectedStageIndex, JSON.stringify(currentStages));
         showReplay = false;
         storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
     }
@@ -237,17 +237,24 @@
             showError(error);
         }
     }
+    function onLinkTap(e) {
+        openLink(e.link);
+    }
 </script>
 
-<page
-    bind:this={page}
-    actionBarHidden={true}
-    backgroundColor={colorSecondaryContainer}
-    navigationBarColor={colorSecondaryContainer}
-    {statusBarStyle}
-    on:navigatedFrom={onNavigatedFrom}>
+<page bind:this={page} actionBarHidden={true} backgroundColor={colorSecondaryContainer} navigationBarColor={colorSecondaryContainer} {statusBarStyle} on:navigatedFrom={onNavigatedFrom}>
     <gridlayout paddingBottom={$windowInset.bottom} rows="auto,*,auto, auto, auto,auto,auto">
-        <label color={colorOnSecondaryContainer} fontSize={18} lineBreak="end" margin={10} maxLines={5} row={1} selectable={true} text={pack?.description || ' '} textAlignment="center" />
+        <label
+            color={colorOnSecondaryContainer}
+            fontSize={18}
+            html={pack?.description || pack?.subtitle || ' '}
+            lineBreak="end"
+            margin={10}
+            maxLines={5}
+            row={1}
+            selectable={true}
+            textAlignment="center"
+            on:linkTap={onLinkTap} />
         <!-- <GridLayout row="2" verticalAlignment="center"> -->
 
         <gridlayout height={0.8 * screenWidth * 0.86} row={2}>
