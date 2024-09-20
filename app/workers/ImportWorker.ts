@@ -230,7 +230,9 @@ export default class ImportWorker extends Observable {
                     let destinationFolderPath = inputFilePath;
                     if (compressed && realId !== id) {
                         inputFilePath = path.join(documentsService.dataFolder.path, `${realId}.zip`);
-                        await File.fromPath(destinationFolderPath).rename(inputFilePath);
+                        if (compressed && supportsCompressedData) {
+                            await File.fromPath(destinationFolderPath).rename(inputFilePath);
+                        }
                         id = realId;
                         destinationFolderPath = inputFilePath;
                     }

@@ -384,7 +384,7 @@ export async function downloadStories(story: RemoteContent) {
             if (__ANDROID__ && compressed && androidUseContent) {
                 //we need to copy the file
                 const context = Utils.android.getApplicationContext();
-                destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, 'application/zip', true);
+                destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, '*/*', true);
             }
             if (!compressed) {
                 destinationFilePath = documentsService.dataFolder.getFolder(name).path;

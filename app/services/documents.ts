@@ -100,6 +100,7 @@ export class TagRepository extends BaseRepository<Tag, Tag> {
 
 export class PackRepository extends BaseRepository<Pack, IPack> {
     constructor(
+        private documentsService: DocumentsService,
         database: NSQLDatabase,
         public tagsRepository: TagRepository
     ) {
@@ -155,7 +156,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         // pack.createdDate = pack.modifiedDate = Date.now();
         DEV_LOG && console.log('createPack', data);
         const pack = await this.create(cleanUndefined({ id: Date.now() + '', ...data }));
-        documentsService.notify({ eventName: EVENT_PACK_ADDED, pack } as PackAddedEventData);
+        this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack } as PackAddedEventData);
 
         return pack;
     }
@@ -240,7 +241,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         Object.assign(pack, {
             id,
             compressed,
-            thumbnail: compressed ? thumbnail : path.join(documentsService.dataFolder.path, id, thumbnail),
+            thumbnail: compressed ? thumbnail : path.join(this.documentsService.dataFolder.path, id, thumbnail),
             ...others
         });
         return pack;
@@ -322,7 +323,7 @@ export class DocumentsService extends Observable {
         }
 
         this.tagRepository = new TagRepository(this.db);
-        this.packRepository = new PackRepository(this.db, this.tagRepository);
+        this.packRepository = new PackRepository(this, this.db, this.tagRepository);
         await this.packRepository.createTables();
         await this.tagRepository.createTables();
 

@@ -17,10 +17,10 @@ export async function copyFolderContent(src: string, dst: string) {
     DEV_LOG && console.log('copyFolderContent ', src, dst, Folder.exists(dst));
     return Promise.all(
         (await folder.getEntities()).map((e) => {
-            if (e instanceof File) {
+            if (typeof e['getFolder'] === 'undefined') {
                 const dstFile = path.join(dst, e.name);
                 DEV_LOG && console.log('copyFile ', e.path, dstFile);
-                return e.copy(dstFile).then((r) => {
+                return (e as File).copy(dstFile).then((r) => {
                     if (!File.exists(dstFile)) {
                         throw new Error('failed copying file ' + dstFile);
                     }

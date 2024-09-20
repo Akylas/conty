@@ -1,4 +1,5 @@
 <script context="module" lang="ts">
+    import { request } from '@nativescript-community/perms';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
@@ -556,10 +557,12 @@
                         }
                     }
                     break;
+                    
                 case 'data_location': {
                     if (!(await requestManagePermission())) {
                         throw new Error(lc('missing_manage_permission'));
                     }
+                    await request('storage');
                     const result = await pickFolder({
                         permissions: {
                             read: true,

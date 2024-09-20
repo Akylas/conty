@@ -64,7 +64,7 @@ export class ImportService extends Observable {
                     // DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData));
                     if (eventData.target === 'documentsService') {
                         if (eventData.pack) {
-                            eventData.pack = Pack.fromJSON(eventData.doc);
+                            eventData.pack = Pack.fromJSON(eventData.pack);
                         }
                         // if (eventData.documents) {
                         //     eventData.documents = eventData.documents.map((d) => OCRDocument.fromJSON(d));
