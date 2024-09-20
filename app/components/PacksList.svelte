@@ -7,6 +7,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
+    import { debounce } from '@nativescript/core/utils';
     import { AnimationDefinition, Application, ApplicationSettings, EventData, File, Folder, NavigatedData, ObservableArray, Page, StackLayout, Utils, path } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { throttle } from '@nativescript/core/utils';
@@ -40,6 +41,7 @@
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import { getFileOrFolderSize } from '~/utils';
+    import { TextField } from '@nativescript-community/ui-material-textfield';
 
     // technique for only specific properties to get updated on store change
     let { colorPrimaryContainer, colorTertiaryContainer, colorOnTertiaryContainer, colorOnBackground } = $colors;
@@ -70,8 +72,12 @@
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
     let fabHolder: NativeViewElementNode<StackLayout>;
+    let searchTF: NativeViewElementNode<TextField>;
 
     let stepIndex = 1;
+
+    let filter: string = null;
+    let showSearch = false;
 
     let colWidth = null;
     let viewStyle: ViewStyle = ApplicationSettings.getString('packs_list_view_style', 'expanded') as ViewStyle;
@@ -80,13 +86,27 @@
     // let items: ObservableArray<{
     //     doc: Pack; selected: boolean
     // }> = null;
-
-    async function refresh() {
+    let loading = false;
+    let lastRefreshFilter = null;
+    async function refresh(filter?: string, force = false) {
+        if (loading || (!force && lastRefreshFilter === filter)) {
+            return;
+        }
+        lastRefreshFilter = filter;
+        loading = true;
         try {
+            DEV_LOG && console.log('refresh', filter);
+            const whereQuery = filter ? `title LIKE '%${filter}%' or description LIKE '%${filter}%' or keywords LIKE '%${filter}%'` : undefined;
             const r = await documentsService.packRepository.search({
-                orderBy: SqlQuery.createFromTemplateString`id DESC`
+                orderBy: SqlQuery.createFromTemplateString`id DESC`,
                 // , postfix: SqlQuery.createFromTemplateString`LIMIT 50`
+                ...(filter
+                    ? {
+                          where: new SqlQuery([whereQuery])
+                      }
+                    : {})
             });
+            DEV_LOG && console.log('refresh done', filter, r.length);
             packs = new ObservableArray(
                 r.map((pack) => ({
                     pack,
@@ -113,6 +133,56 @@
             // await Promise.all(r.map((d) => d.pages[0]?.imagePath));
         } catch (error) {
             showError(error);
+        } finally {
+            loading = false;
+        }
+    }
+
+    let searchAsTypeTimer;
+    function clearSearch(clearQuery = true, hideSearch = true) {
+        if (searchAsTypeTimer) {
+            clearTimeout(searchAsTypeTimer);
+            searchAsTypeTimer = null;
+        }
+
+        if (clearQuery) {
+            if (filter?.length) {
+                filter = null;
+                refresh();
+            }
+            searchTF.nativeView.text = '';
+        }
+        if (hideSearch) {
+            searchTF?.nativeView?.clearFocus();
+            showSearch = false;
+        }
+    }
+    function onTextChanged(text: string) {
+        const query = text.toLowerCase();
+        DEV_LOG && console.log('onTextChanged', query, filter);
+        if (query !== filter) {
+            if (query) {
+                if (searchAsTypeTimer) {
+                    clearTimeout(searchAsTypeTimer);
+                    searchAsTypeTimer = null;
+                }
+                if (query && query.length > 2) {
+                    searchAsTypeTimer = setTimeout(() => {
+                        searchAsTypeTimer = null;
+                        refresh(query);
+                    }, 1000);
+                } else {
+                    // the timeout is to allow svelte to see changes with $:
+                    setTimeout(() => {
+                        clearSearch(false, false);
+                    }, 0);
+
+                    if (query.length === 0 && filter && filter.length > 0) {
+                        unfocus();
+                    }
+                }
+            }
+            filter = query;
         }
     }
 
@@ -204,6 +274,7 @@
         DEV_LOG && console.log('permResult', permResult);
     });
     onDestroy(() => {
+        blurTextField();
         DEV_LOG && console.log('PackList', 'onDestroy');
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
@@ -214,6 +285,20 @@
         documentsService.off(EVENT_PACK_ADDED, onPackAdded);
         documentsService.off(EVENT_PACK_DELETED, onPacksDeleted);
     });
+    function showSearchTF() {
+        showSearch = true;
+        searchTF?.nativeView?.requestFocus();
+    }
+    function blurTextField() {
+        Utils.dismissSoftInput();
+    }
+    function unfocus() {
+        if (searchAsTypeTimer) {
+            clearTimeout(searchAsTypeTimer);
+            searchAsTypeTimer = null;
+        }
+        blurTextField();
+    }
 
     const canImportFile = !__ANDROID__ || !PLAY_STORE_BUILD || SDK_VERSION < 30;
 
@@ -316,9 +401,9 @@
                     ApplicationSettings.setBoolean('showFirstPresentation', false);
                 }
                 if (documentsService.started) {
-                    refresh();
+                    refresh(null, true);
                 } else {
-                    documentsService.once('started', refresh);
+                    documentsService.once('started', () => refresh(null, true));
                 }
             }
         } catch (error) {
@@ -576,7 +661,7 @@
         }
     }
 
-    async function showOptions(event) {
+    async function showSelectedOptions(event) {
         const options = new ObservableArray([{ id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }] as any);
         return showPopoverMenu({
             options,
@@ -619,7 +704,7 @@
     });
 </script>
 
-<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
+<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatedFrom={blurTextField}>
     <gridlayout rows="auto,*">
         <!-- {/if} -->
         <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
@@ -693,14 +778,28 @@
         {/if}
 
         <CActionBar title={l('packs')}>
+            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={showSearch ? 'collapsed' : 'visible'} on:tap={showSearchTF} />
+
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
+            <gridlayout slot="center" col={1} colSpan={2} visibility={showSearch ? 'visible' : 'hidden'}>
+                <textfield
+                    bind:this={searchTF}
+                    autocapitalizationType="none"
+                    hint={lc('search')}
+                    paddingRight={45}
+                    placeholder={lc('search')}
+                    returnKeyType="search"
+                    on:returnPress={blurTextField}
+                    on:textChange={(e) => onTextChanged(e['value'])} />
+                <mdbutton class="actionBarButton" horizontalAlignment="right" isVisible={filter?.length > 0} text="mdi-close" variant="text" on:tap={() => clearSearch()} />
+            </gridlayout>
         </CActionBar>
         <!-- {#if nbSelected > 0} -->
         {#if nbSelected > 0}
             <CActionBar forceCanGoBack={true} onGoBack={unselectAll} title={l('selected', nbSelected)} titleProps={{ maxLines: 1, autoFontSize: true }}>
                 <!-- <mdbutton class="actionBarButton" text="mdi-share-variant" variant="text" visibility={nbSelected ? 'visible' : 'collapse'} on:tap={showImageExportPopover} /> -->
-                <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+                <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showSelectedOptions} />
             </CActionBar>
         {/if}
     </gridlayout>
