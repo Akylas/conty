@@ -1,5 +1,4 @@
-import { Application, ApplicationSettings, CSSUtils, Color, File, Folder, getRootView } from '@nativescript/core';
-import dayjs from 'dayjs';
+import { Application, CSSUtils, Color, File, Folder } from '@nativescript/core';
 
 function chunk<T>(array: T[], size) {
     return Array.from<T, T[]>({ length: Math.ceil(array.length / size) }, (value, index) => array.slice(index * size, index * size + size));

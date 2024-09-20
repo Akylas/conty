@@ -37,6 +37,7 @@ declare namespace com {
                     static getColorFromName(context: android.content.Context, intToGet);
                     static restartApp(context: android.content.Context, activity: android.app.Activity);
                     static getSystemLocale(): java.util.Locale;
+                    static cleanFilenameString(str: string): string;
                 }
             }
             export namespace FileUtils {

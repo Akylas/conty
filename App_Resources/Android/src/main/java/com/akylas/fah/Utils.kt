@@ -10,6 +10,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import com.google.android.material.color.DynamicColors
 import java.util.Locale
+import java.text.Normalizer
 
 class Utils {
     companion object {
@@ -64,6 +65,12 @@ class Utils {
 
         fun prepareWindow(window: Window?) {
             WindowCompat.setDecorFitsSystemWindows(window!!, false)
+        }
+
+        fun cleanFilenameString(s: String): String {
+            var normalized = Normalizer.normalize(s, Normalizer.Form.NFD)
+            normalized = normalized.replace(Regex("\\p{InCombiningDiacriticalMarks}"), "")
+            return normalized
         }
     }
 }

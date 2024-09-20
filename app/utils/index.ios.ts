@@ -75,3 +75,8 @@ export async function removeFolderContent(src: string, dst: string) {
 //         }
 //     }
 // }
+export function cleanFilename(str) {
+    return ContyUtils.cleanFilenameString(str)
+        .replace(/[\(\)|?*<\":>+\[\]'"]+/g, '')
+        .replace(/[\\\s\t\n\/]+/g, '_');
+}

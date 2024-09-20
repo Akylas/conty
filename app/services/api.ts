@@ -316,7 +316,8 @@ export async function downloadStories(story: RemoteContent) {
 
         // if (forceReload || lastSize !== newContentSize || !Folder.exists(storyDirPath)) {
         const runningRequestTag: string = story.download;
-        const name = cleanFilename(story.title);
+        // const name = cleanFilename(story.title);
+        const name = Date.now() + '';
 
         const progressNotification = ProgressNotifications.show({
             id: progressNotificationId, //required
@@ -363,9 +364,10 @@ export async function downloadStories(story: RemoteContent) {
         // if (existingStory?.length) {
         //     throw new Error(`existing story ${story.title}`);
         // }
-        const compressed = __ANDROID__;
+        const compressed = documentsService.supportsCompressedData;
+        // const compressed = __ANDROID__;
 
-        const downloadFilePath = (!compressed || androidUseContent) ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
+        const downloadFilePath = !compressed || androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
         const file = await getFile(
             {
                 url: story.download,

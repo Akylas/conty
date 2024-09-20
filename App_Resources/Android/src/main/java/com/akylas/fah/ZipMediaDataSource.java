@@ -3,6 +3,7 @@ package com.akylas.conty;
 import android.media.MediaDataSource;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.zip.ZipFile;
@@ -35,6 +36,7 @@ public class ZipMediaDataSource extends MediaDataSource {
             ZipFile zipFile = null;
             InputStream inputStream = null;
             try {
+                Log.d(TAG, "readTextFromAsset " +  zipFilePath + " " + asset);
                 if (zipFilePath.startsWith("content:/")) {
                     long startTime = System.nanoTime();
                     zis = new ZipInputStream(new BufferedInputStream(context.getContentResolver().openInputStream(android.net.Uri.parse(zipFilePath))));
@@ -46,7 +48,10 @@ public class ZipMediaDataSource extends MediaDataSource {
                         }
                     }
                 } else {
-                    zipFile = new ZipFile(zipFilePath);
+                    File file = new File(zipFilePath);
+                    Log.d(TAG, "readTextFromAsset ZipFile " +  zipFilePath + " " + file.canRead());
+                    zipFile = new ZipFile(file, 1);
+                    Log.d(TAG, "readTextFromAsset ZipFile1" +  zipFile);
                     ZipEntry ze = zipFile.getEntry(asset);
                     inputStream = zipFile.getInputStream(ze);
                 }

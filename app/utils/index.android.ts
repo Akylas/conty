@@ -158,3 +158,8 @@ export function getAndroidRealPath(src: string) {
     }
     return src;
 }
+export function cleanFilename(str: string) {
+    return com.akylas.conty.Utils.Companion.cleanFilenameString(str)
+        .replace(/[\(\)|?*<\":>+\[\]'"]+/g, '')
+        .replace(/[\\\s\t\n\/]+/g, '_');
+}
