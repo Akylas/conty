@@ -1,11 +1,7 @@
-import { File, ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
-import dayjs from 'dayjs';
-import { StoryHandler } from '~/handlers/StoryHandler';
+import { ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { EVENT_PACK_UPDATED } from '~/utils/constants';
-import { showError } from '~/utils/showError';
 
-const imageCache = new ImageCache();
 
 export interface RemoteContentProvider {
     name?: string;
@@ -89,6 +85,8 @@ export interface IPack {
     tags: string[];
     thumbnail?: string;
     description?: string;
+    keywords?: string;
+    subtitle?: string;
     age?: number;
     size: number;
     version?: number;
@@ -110,7 +108,7 @@ export function getDocumentsService() {
 }
 
 export function cleanupStageName(s: Stage) {
-    return s?.name.replace(/\.mp3\s*item$/, '');
+    return s?.name?.replace(/\.mp3\s*item$/, '');
 }
 export function stageIsStory(s: Stage) {
     return s.type === 'story' || (s.audio && s.controlSettings.pause === true && s.controlSettings.home === true);
@@ -126,6 +124,8 @@ export class Pack extends Observable implements IPack {
     title?: string;
     tags: string[];
     thumbnail?: string;
+    keywords?: string;
+    subtitle?: string;
     description?: string;
     version?: number;
     format?: string;
@@ -135,6 +135,13 @@ export class Pack extends Observable implements IPack {
 
     constructor(public id: string) {
         super();
+    }
+
+    static fromJSON(jsonObj: Pack) {
+        // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
+        const doc = new Pack(jsonObj.id);
+        Object.assign(doc, jsonObj);
+        return doc;
     }
 
     get folderPath() {
@@ -160,7 +167,7 @@ export class Pack extends Observable implements IPack {
             }
         }
     }
-    loadedImages: string[] = [];
+    // loadedImages: string[] = [];
 
     async readBitmapFromZip(asset: string) {
         if (__ANDROID__) {
@@ -191,7 +198,7 @@ export class Pack extends Observable implements IPack {
             if (this.compressed) {
                 const realPath = assetPath ? path.join(assetPath, asset) : asset;
                 const key = this.zipPath + '@' + realPath;
-                let image = imageCache.get(key);
+                let image = documentsService.imageCache.get(key);
                 if (image) {
                     return new ImageSource(image);
                 }
@@ -203,8 +210,8 @@ export class Pack extends Observable implements IPack {
                 const promise = (Pack.runningImagePromises[key] = new Promise(async (resolve, reject) => {
                     try {
                         image = await this.readBitmapFromZip(realPath);
-                        imageCache.set(key, image);
-                        this.loadedImages.push(image);
+                        documentsService.imageCache.set(key, image);
+                        // this.loadedImages.push(image);
                         resolve(new ImageSource(image));
                     } catch (error) {
                         reject(error);
@@ -223,14 +230,10 @@ export class Pack extends Observable implements IPack {
     }
 
     async getThumbnail(reuse = false) {
-        try {
-            if (this.compressed) {
-                return this.getImageInternal(this.thumbnail);
-            } else {
-                return this.thumbnail;
-            }
-        } catch (error) {
-            showError(error);
+        if (this.compressed) {
+            return this.getImageInternal(this.thumbnail);
+        } else {
+            return this.thumbnail;
         }
     }
 

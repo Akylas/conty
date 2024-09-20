@@ -57,6 +57,7 @@ export interface PlayingInfo {
 
 const TAG = '[Story]';
 export class StoryHandler extends Handler {
+    appExited = false;
     positionState: { [k: string]: any } = {};
     pack: Pack;
     selectedStageIndex: number = 0;
@@ -87,7 +88,7 @@ export class StoryHandler extends Handler {
             const currentStage = this.currentStageSelected();
             const duration = this.mPlayer?.duration || 0;
             let name = this.pack.title;
-            let description = this.pack.description;
+            let description = this.pack.subtitle || this.pack.description;
             if (currentStage) {
                 if (duration > 10000 || stageIsStory(currentStage)) {
                     name = this.getStoryName(this.pack, currentStage) || name;
@@ -404,6 +405,10 @@ export class StoryHandler extends Handler {
             DEV_LOG && console.info('runStage', JSON.stringify(stage));
             if (stage.audio) {
                 await this.playAudio({ fileName: this.pack.getAudio(stage.audio) });
+                if (stageIsStory(stage) && this.appExited) {
+                    this.stopPlaying();
+                    return;
+                }
                 // DEV_LOG && console.log('runStage playAudio done', stage.controlSettings);
                 if (stage === this.currentStageSelected() && stage?.controlSettings?.autoplay === true) {
                     await this.onStageOk();
@@ -437,7 +442,7 @@ export class StoryHandler extends Handler {
             this.currentStages = [this.stageNodes.find((s) => s.squareOne === true)];
             this.notify({ eventName: PackStartEvent, ...this.stageChangeEventData() } as PackStartEventData);
             // DEV_LOG && console.log('playPack1', JSON.stringify(this.currentStages));
-            // this.notify({ eventName: 'stagesChange', stages: this.currentStages, selectedStageIndex: this.selectedStageIndex });
+            // this.notify({ eventName: StagesChangeEvent, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex });
             // this.notify({ eventName: PlaybackEvent, data: 'play' });
             // we call onStageOk directly to
             this.onStageOk();

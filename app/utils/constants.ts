@@ -10,6 +10,8 @@ export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';
 export const EVENT_PACK_DELETED = 'packDeleted';
+export const EVENT_IMPORT_STATE = 'importState';
+export const EVENT_STATE = 'state';
 
 export const IMAGE_COLORMATRIX = createColorMatrix('#ffffff');
 export const COLORMATRIX_BLACK_TRANSPARENT = [

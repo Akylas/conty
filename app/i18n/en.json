@@ -11,6 +11,7 @@
     "auto_black": "Use true black for auto-dark theme",
     "backup_restore": "backup / restore",
     "cancel": "cancel",
+    "card": "card",
     "color_theme": {
         "default": "default",
         "dynamic": "dynamic colors",
@@ -20,6 +21,7 @@
     },
     "comments": "comments",
     "condensed": "condensed",
+    "confirm_copy_file_import": "imported zip files will be copied to the app data folder",
     "confirm_delete_packs": "are you sure you want to delete those %1$s packs?",
     "data_location": "data location",
     "delete": "delete",
@@ -38,6 +40,7 @@
     "feedback_sent": "feedback sent",
     "first_presentation": "Conty can play stories you manually add to your phone. You can also download stories from remote. Right now you don't have any remote source configured. Do you want to add one?",
     "general": "general",
+    "import_files": "import files",
     "import_settings": "import settings",
     "import_settings_desc": "import all settings from a previous backup",
     "ios": {

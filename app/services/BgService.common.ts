@@ -173,4 +173,14 @@ export abstract class BgServiceCommon extends Observable {
         this.appInBackground = true;
     }
     // updateNotifText(text: string) {}
+    appExited = false;
+    handleAppExit() {
+        this.appExited = true;
+        DEV_LOG && console.log('handleAppExit', this.storyHandler.isPlaying);
+        if (this.storyHandler.isPlaying) {
+            this.storyHandler.appExited = true;
+            return;
+        }
+        this.stop();
+    }
 }

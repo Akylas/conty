@@ -1,16 +1,15 @@
-import { ApplicationSettings, EventData, File, Folder, Observable, Utils, knownFolders, path } from '@nativescript/core';
+import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, Pack, Tag } from '~/models/Pack';
-import NSQLDatabase from './NSQLDatabase';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
-import dayjs from 'dayjs';
-import { showError } from '~/utils/showError';
-import { getFileOrFolderSize } from '~/utils';
+import NSQLDatabase from './NSQLDatabase';
+
 const sql = SqlQuery.createFromTemplateString;
 
 export async function getFileTextContentFromPackFile(filePath, asset, compressed: boolean) {
-    DEV_LOG && console.log('getFileTextContentFromPackFile', filePath, asset);
+    DEV_LOG && console.log('getFileTextContentFromPackFile', filePath, asset, File.fromPath(filePath).size);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -147,7 +146,10 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         return this.applyMigrations();
     }
 
-    migrations = Object.assign({});
+    migrations = Object.assign({
+        addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
+        addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`
+    });
 
     async createPack(data: Partial<Pack>) {
         // pack.createdDate = pack.modifiedDate = Date.now();
@@ -260,6 +262,8 @@ export type DocumentEvents = PackAddedEventData | PackUpdatedEventData | PackDel
 
 let ID = 0;
 export class DocumentsService extends Observable {
+    imageCache: ImageCache;
+
     static DB_NAME = 'db.sqlite';
     static DB_VERSION = 1;
     rootDataFolder: string;
@@ -271,8 +275,11 @@ export class DocumentsService extends Observable {
     packRepository: PackRepository;
     tagRepository: TagRepository;
 
-    constructor() {
+    constructor(withCache = true) {
         super();
+        if (withCache) {
+            this.imageCache = new ImageCache();
+        }
         this.id = ID++;
     }
     async start(db?) {
@@ -321,7 +328,6 @@ export class DocumentsService extends Observable {
 
         this.notify({ eventName: 'started' });
         this.started = true;
-        this.updateContentFromDataFolder();
     }
     async deletePacks(packs: Pack[]) {
         DEV_LOG &&
@@ -344,35 +350,8 @@ export class DocumentsService extends Observable {
         this.db && this.db.disconnect();
     }
 
-    async updateContentFromDataFolder() {
-        try {
-            const entities = await this.dataFolder.getEntities();
-            const test = entities.map((e) => '"' + (e._extension ? e.name.slice(0, -e._extension.length) : e.name) + '"');
-            const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id FROM Pack WHERE id IN (${test})`]))).map((d) => d.id);
-            for (let index = 0; index < entities.length; index++) {
-                const entity = entities[index];
-                const id = entity._extension ? entity.name.slice(0, -entity._extension?.length) : entity.name;
-                if (r.indexOf(id) === -1) {
-                    const compressed = entity.name.endsWith('.zip');
-                    const storyJSON = JSON.parse(await getFileTextContentFromPackFile(entity.path, 'story.json', compressed));
-                    await this.importStory(id, entity.path, compressed, {
-                        size: getFileOrFolderSize(entity.path),
-                        title: storyJSON.title,
-                        description: storyJSON.description,
-                        format: storyJSON.format,
-                        age: storyJSON.age,
-                        version: storyJSON.version
-                    });
-                }
-            }
-        } catch (error) {
-            showError(error);
-        }
-    }
-
-    async savePack(doc: Pack) {
-        this.packRepository.update(doc);
-        // doc.save();
+    get supportsCompressedData() {
+        return false;
     }
 
     async importStory(id: string, folderOrZipPath: string, compressed: boolean, data: Partial<Pack> = {}) {
@@ -392,4 +371,9 @@ export class DocumentsService extends Observable {
         });
     }
 }
-export const documentsService = new DocumentsService();
+export let documentsService: DocumentsService;
+export function createSharedDocumentsService() {
+    if (!documentsService) {
+        documentsService = new DocumentsService();
+    }
+}

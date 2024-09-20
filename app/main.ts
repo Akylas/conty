@@ -20,9 +20,10 @@ import PacksList from './components/PacksList.svelte';
 import { setDocumentsService } from './models/Pack';
 import { NestedScrollView } from './NestedScrollView';
 import { networkService } from './services/api';
-import { documentsService } from './services/documents';
+import { createSharedDocumentsService, documentsService } from './services/documents';
 import { showError } from './utils/showError';
 import { navigate } from './utils/svelte/ui';
+import { importService } from './services/importservice';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -30,6 +31,7 @@ declare module '@nativescript/core/application/application-common' {
     }
 }
 try {
+    createSharedDocumentsService();
     startSentry();
     installGestures(true);
     installMixins();
@@ -117,6 +119,11 @@ try {
             Application.servicesStarted = true;
             DEV_LOG && console.log('servicesStarted');
             Application.notify({ eventName: 'servicesStarted' });
+            try {
+                await importService.updateContentFromDataFolder();
+            } catch (error) {
+                console.error('start import from data error', error, error.stack);
+            }
         } catch (error) {
             showError(error, { forcedMessage: lc('startup_error') });
         }
@@ -140,7 +147,9 @@ try {
         //  ocrService.stop();
         try {
             // wait for sync to stop to stop documentService as their could be writes to the db
+            await importService.stop();
             documentsService.stop();
+            bgService.handleAppExit();
         } catch (error) {
             console.error(error, error.stack);
         }

@@ -4,7 +4,7 @@ import type { HTTPSOptions } from '~/services/api';
 
 Error.stackTraceLimit = Infinity;
 
-function evalTemplateString(resource: string, obj: {}) {
+function evalTemplateString(resource: string, obj: object) {
     if (!obj) {
         return resource;
     }
