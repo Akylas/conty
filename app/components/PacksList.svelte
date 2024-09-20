@@ -2,14 +2,15 @@
     import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
     import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { Img, getImagePipeline } from '@nativescript-community/ui-image';
+    import { openFilePicker } from '@nativescript-community/ui-document-picker';
+    import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, NavigatedData, ObservableArray, Page, StackLayout, Utils } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, File, Folder, NavigatedData, ObservableArray, Page, StackLayout, Utils, path } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { throttle } from '@nativescript/core/utils';
-    import dayjs from 'dayjs';
+    import { SDK_VERSION } from '@nativescript/core/utils';
     import { filesize } from 'filesize';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -17,26 +18,28 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
-    import { getRealTheme, onThemeChanged } from '~/helpers/theme';
+    import { onThemeChanged } from '~/helpers/theme';
     import { Pack, RemoteContent } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
-    import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
-    import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService, getFileTextContentFromPackFile } from '~/services/documents';
+    import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
     import { showError } from '~/utils/showError';
-    import { fade, navigate, showModal } from '~/utils/svelte/ui';
-    import { onBackButton, playPack, showPopoverMenu, showSettings } from '~/utils/ui';
+    import { fade, showModal } from '~/utils/svelte/ui';
+    import { hideLoading, onBackButton, playPack, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
     import { colors, fontScale, windowInset } from '~/variables';
+    import { Zip } from '@nativescript/zip';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
+    type ViewStyle = 'expanded' | 'condensed' | 'card';
 </script>
 
 <script lang="ts">
-    import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
-    import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent } from '~/handlers/StoryHandler';
-    import { getBGServiceInstance } from '~/services/BgService.android';
     import { request } from '@nativescript-community/perms';
+    import { PackStartEvent, PackStopEvent } from '~/handlers/StoryHandler';
+    import { onSetup, onUnsetup } from '~/services/BgService.common';
+    import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
+    import { getFileOrFolderSize } from '~/utils';
 
     // technique for only specific properties to get updated on store change
     let { colorPrimaryContainer, colorTertiaryContainer, colorOnTertiaryContainer, colorOnBackground } = $colors;
@@ -70,8 +73,10 @@
 
     let stepIndex = 1;
 
-    let viewStyle: string = ApplicationSettings.getString('packs_list_view_style', 'expanded');
+    let colWidth = null;
+    let viewStyle: ViewStyle = ApplicationSettings.getString('packs_list_view_style', 'expanded') as ViewStyle;
     $: condensed = viewStyle === 'condensed';
+    $: colWidth = viewStyle === 'card' ? '50%' : '100%';
     // let items: ObservableArray<{
     //     doc: Pack; selected: boolean
     // }> = null;
@@ -210,12 +215,69 @@
         documentsService.off(EVENT_PACK_DELETED, onPacksDeleted);
     });
 
+    const canImportFile = !__ANDROID__ || !PLAY_STORE_BUILD || SDK_VERSION < 30;
+
     async function importPack(importPDFs = true) {
         DEV_LOG && console.log('importPack', importPDFs);
         try {
-            // await importAndScanImage(null, importPDFs);
+            const pickerResult = await openFilePicker({
+                extensions: ['zip'],
+                multipleSelection: true,
+                pickerMode: 0,
+                forceSAF: true
+            });
+            const files = pickerResult?.files;
+            if (files?.length) {
+                const confirmed = await confirm({
+                    title: lc('import_files'),
+                    message: lc('confirm_copy_file_import'),
+                    okButtonText: lc('ok'),
+                    cancelButtonText: lc('cancel')
+                });
+                if (confirmed) {
+                    const supportsCompressedData = documentsService.supportsCompressedData;
+                    showLoading('loading');
+                    for (let index = 0; index < files.length; index++) {
+                        const inputFilePath = __ANDROID__ ? com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), android.net.Uri.parse(files[index])) : files[index];
+                        let destinationFolderPath = inputFilePath;
+                        const id = Date.now() + '';
+                        destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
+                        if (!supportsCompressedData) {
+                            destinationFolderPath = path.join(documentsService.dataFolder.path, id);
+                            if (!Folder.exists(destinationFolderPath)) {
+                                await Zip.unzip({
+                                    archive: inputFilePath,
+                                    directory: documentsService.dataFolder.getFolder(id).path,
+                                    overwrite: true
+                                    // onProgress: (percent) => {
+                                    //     ProgressNotifications.update(progressNotification, {
+                                    //         rightIcon: `${Math.round(percent)}%`,
+                                    //         progress: percent
+                                    //     });
+                                    // }
+                                });
+                            }
+                        } else {
+                            await File.fromPath(inputFilePath).copy(destinationFolderPath);
+                        }
+                        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData));
+                        await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
+                            size: getFileOrFolderSize(destinationFolderPath),
+                            title: storyJSON.title,
+                            description: storyJSON.description,
+                            format: storyJSON.format,
+                            age: storyJSON.age,
+                            version: storyJSON.version,
+                            subtitle: storyJSON.subtitle,
+                            keywords: storyJSON.keywords
+                        });
+                    }
+                }
+            }
         } catch (error) {
             showError(error);
+        } finally {
+            hideLoading();
         }
     }
     async function downloadPack() {
@@ -371,8 +433,9 @@
             await showPopoverMenu({
                 options: [
                     { id: 'default', name: lc('expanded') },
-                    { id: 'condensed', name: lc('condensed') }
-                ],
+                    { id: 'condensed', name: lc('condensed') },
+                    { id: 'card', name: lc('card') }
+                ] as { id: ViewStyle; name: string }[],
                 anchor: event.object,
                 vertPos: VerticalPosition.BELOW,
                 onClose: (item) => {
@@ -405,27 +468,59 @@
     //         }
     //     }
     // }
-
     function getItemImageHeight(viewStyle) {
-        return (condensed ? 44 : 94) * $fontScale;
+        switch (viewStyle) {
+            case 'condensed':
+                return 44 * $fontScale;
+            case 'card':
+                return null;
+            default:
+                return 94 * $fontScale;
+        }
     }
     function getItemRowHeight(viewStyle) {
-        return condensed ? 80 : 170;
+        switch (viewStyle) {
+            case 'condensed':
+                return 100;
+            case 'card':
+                return 200;
+            default:
+                return 170;
+        }
     }
     function getImageMargin(viewStyle) {
-        return 10;
-        // switch (viewStyle) {
-        //     case 'condensed':
-        //         return 10;
-        //     default:
-        //         return 10;
-        // }
+        switch (viewStyle) {
+            case 'card':
+                return 0;
+            default:
+                return 10;
+        }
+    }
+    function getImageHorizontalAlignment(viewStyle) {
+        switch (viewStyle) {
+            case 'card':
+                return 'stretch';
+            default:
+                return 'left';
+        }
+    }
+
+    function getItemTitle(item: Item, viewStyle) {
+        switch (viewStyle) {
+            case 'card':
+                return item.pack.title;
+            default:
+                return null;
+        }
     }
 
     $: textPaint.color = colorOnBackground || 'black';
     $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
 
     function onCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
+        if (viewStyle === 'card') {
+            return;
+        }
         const w = canvas.getWidth();
         const h = canvas.getHeight();
         // const w2 = w / 2;
@@ -441,7 +536,8 @@
         //     h - (condensed ? 0 : 16) - 10,
         //     textPaint
         // );
-        textPaint.color = colorOnSurfaceVariant;
+        // textPaint.color = colorOnSurfaceVariant;
+
         const topText = createNativeAttributedString({
             spans: [
                 {
@@ -460,7 +556,7 @@
             ]
         });
         canvas.save();
-        let staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx, 100);
+        let staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx - 10, h - 20 - 20);
         canvas.translate(dx, (condensed ? 0 : 0) + 10);
         staticLayout.draw(canvas);
         canvas.restore();
@@ -527,7 +623,15 @@
     <gridlayout rows="auto,*">
         <!-- {/if} -->
         <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
-            <collectionView bind:this={collectionView} iosOverflowSafeArea={true} items={packs} paddingBottom={100} rowHeight={getItemRowHeight(viewStyle) * $fontScale} width="100%" height="100%">
+            <collectionView
+                bind:this={collectionView}
+                {colWidth}
+                height="100%"
+                iosOverflowSafeArea={true}
+                items={packs}
+                paddingBottom={100}
+                rowHeight={getItemRowHeight(viewStyle) * $fontScale}
+                width="100%">
                 <Template let:item>
                     <canvasview
                         backgroundColor={colorSurfaceContainerHigh}
@@ -542,20 +646,30 @@
                             borderRadius={12}
                             decodeWidth={IMAGE_DECODE_WIDTH}
                             failureImageUri="res://icon_not_found"
-                            horizontalAlignment="left"
-                            marginBottom={getImageMargin(viewStyle)}
-                            marginLeft={10}
-                            marginTop={getImageMargin(viewStyle)}
+                            horizontalAlignment={getImageHorizontalAlignment(viewStyle)}
+                            margin={getImageMargin(viewStyle)}
                             src={item.pack.getThumbnail()}
                             stretch="aspectFill"
                             width={getItemImageHeight(viewStyle)} />
+                        <label
+                            backgroundImage="linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)"
+                            borderRadius="0 0 12 12"
+                            color="white"
+                            fontSize={14}
+                            fontWeight="500"
+                            padding={4}
+                            text={getItemTitle(item, viewStyle)}
+                            textAlignment="center"
+                            verticalAlignment="bottom" />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
                     </canvasview>
                 </Template>
             </collectionView>
             <gridlayout prop:bottomSheet rows="90,78" width="100%">
                 <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
-                    <!-- <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} /> -->
+                    {#if canImportFile}
+                        <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
+                    {/if}
                     <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
                 </stacklayout>
                 <BarAudioPlayerWidget padding={2} row={1} />
