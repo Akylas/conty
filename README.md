@@ -36,9 +36,28 @@
 </div>
 <hr>
 
-Open Source app to access detailed weather data from OpenWeather, Open-Meteo and Meteo France. Weather radar provided by RainViewer.
-You can create a free OWM key to access OpenWeather weather data.
-There is a default key included in the app but the access is limited and you could get errors related to rate limits.
+Welcome to Conty, the ultimate app for kids to enjoy immersive, interactive stories! With our app, you can download and listen to captivating, free-to-play stories that encourage creativity, imagination, and learning. Whether at home or on the go, your child can dive into exciting adventures that play right from your phone, with or without internet access!
+Key Features:
+
+🌟 Interactive Stories for All Ages:
+Explore a growing library of stories designed to entertain and engage young minds. Each story is interactive, allowing children to make choices that shape the narrative, making every adventure unique!
+
+📥 Download & Play Offline:
+Download your favorite stories from the app and store them on your phone. No internet? No problem! Once downloaded, your kids can listen and enjoy the stories offline, anytime, anywhere.
+
+🌍 Community-Created Stories:
+Access free stories created by a vibrant community of storytellers and enthusiasts. Discover new voices and perspectives as the library continues to grow.
+
+💡 Safe & Kid-Friendly Environment:
+We prioritize child safety. The app offers a secure, ad-free experience with age-appropriate content, designed specifically for young children.
+
+How It Works:
+
+    Browse: Open the app and explore the library of available stories.
+    Download: Choose a story to download and save it to your device.
+    Listen & Interact: Hit play and let your child start their interactive story adventure!
+    Offline Access: Once downloaded, you can access and play the stories anytime, even without an internet connection.
+
 
 ## Screenshots
 
