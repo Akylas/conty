@@ -22,7 +22,7 @@ export function show(options: ProgressOptions): CommonNotification {
             // console.log('actions', _options.actions);
             const context = Utils.android.getApplicationContext();
             options.actions.forEach((action) => {
-                const intent = new android.content.Intent(context, com.akylas.conty.ActionReceiver.class);
+                const intent = new android.content.Intent(context, java.lang.Class.forName(__APP_ID__ + '.ActionReceiver'));
                 intent.setAction(action.id);
                 intent.putExtra('notificationId', options.id);
                 const actionBuilder = new androidx.core.app.NotificationCompat.Action.Builder(

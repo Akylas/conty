@@ -54,7 +54,7 @@ export class BgService extends BgServiceCommon {
                 if (bgService) {
                     const context = this.context;
                     NotificationHelper.hideAllNotifications();
-                    const intent = new android.content.Intent(context, com.akylas.conty.BgService.class);
+                    const intent = new android.content.Intent(context, java.lang.Class.forName(__APP_ID__ + '.BgService'));
                     DEV_LOG && console.log(TAG, 'stopService');
                     context.stopService(intent);
                     context.unbindService(this.serviceConnection);

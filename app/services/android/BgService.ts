@@ -141,7 +141,7 @@ export class BgService extends android.app.Service {
             mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
             const mediaButtonIntent = new android.content.Intent(android.content.Intent.ACTION_MEDIA_BUTTON);
-            mediaButtonIntent.setClass(context, com.akylas.conty.CustomMediaButtonReceiver.class);
+            mediaButtonIntent.setClass(context, java.lang.Class.forName(__APP_ID__ + '.CustomMediaButtonReceiver'));
             const pendingIntent = android.app.PendingIntent.getBroadcast(this, 0, mediaButtonIntent, FLAG_IMMUTABLE);
             mediaSessionCompat.setMediaButtonReceiver(pendingIntent);
 
@@ -238,7 +238,7 @@ export class BgService extends android.app.Service {
         if (notifBuilder) {
             const intent = new android.content.Intent('android.intent.action.MEDIA_CUSTOM_BUTTON');
             intent.setType(id);
-            intent.setClass(context, com.akylas.conty.CustomMediaButtonReceiver.class);
+            intent.setClass(context, java.lang.Class.forName(__APP_ID__ + '.CustomMediaButtonReceiver'));
             const pendingIntent = android.app.PendingIntent.getBroadcast(this, 0, intent, FLAG_IMMUTABLE);
             notifBuilder.addAction(resId, name, pendingIntent);
         }
