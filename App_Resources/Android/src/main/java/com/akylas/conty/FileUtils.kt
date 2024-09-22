@@ -1,22 +1,40 @@
 package com.akylas.conty
 
+import com.akylas.conty.utils.FunctionCallback
+
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import android.content.Context
-import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
-
-import java.io.IOException
 import java.io.InputStream
 import java.io.BufferedInputStream
+import java.io.IOException
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipEntry
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+
+import androidx.documentfile.provider.DocumentFile
+
+import com.anggrayudi.storage.file.decompressZip
+import com.anggrayudi.storage.result.ZipDecompressionResult
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
+
 class FileUtils {
+    interface ProgressCallback {
+        fun onProgress(bytesDecompressed: Long, writeSpeed: Int, fileCount: Int)
+    }
     companion object {
 
         fun copyFile(context: Context, inputFilePath: String, destFolder: String, fileName: String, mimeType: String, overwrite: Boolean): String {
@@ -53,53 +71,36 @@ class FileUtils {
                     else -> 0L
                 }
             }
-
             return totalSize
         }
+        
+        @JvmStatic
+        fun unzip(context: Context, zipFile: String, destFolder: String, callback: FunctionCallback? = null, progress: ProgressCallback? = null) {
+            GlobalScope.launch(Dispatchers.IO)  {
+                val targetFolder = DocumentFile.fromTreeUri(context, Uri.parse(destFolder))
+                val srcFile = DocumentFile.fromSingleUri(context, Uri.parse(zipFile))
+                srcFile!!.decompressZip(context, targetFolder!!)
+                    .onCompletion  {
+                        if (it is CancellationException) {
+                            callback?.onResult(Exception("Decompression is aborted"), null)
+                        }
+                    }.collect {
+                        when (it) {
+                            is ZipDecompressionResult.Decompressing ->  {
+                                progress?.onProgress(it.bytesDecompressed, it.writeSpeed, it.fileCount)
+                            }
+                            is ZipDecompressionResult.Completed ->  {
+                                callback?.onResult(null, true)
+                            }
 
-        fun startUnzippingProcess(context: Context, zipFileUri: Uri, destFolderUri: Uri) {
-            // Use a background thread to unzip
-            val executorService = Executors.newSingleThreadExecutor()
-            executorService.execute {
-                try {
-                    unzipFileUsingSAF(context, zipFileUri, destFolderUri)
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-        }
+                            is ZipDecompressionResult.Error ->  {
+                                callback?.onResult(Exception("error while decompressing zip ${it.errorCode.name}: ${it.message}"), null)
+                            }
 
-        @Throws(IOException::class)
-        fun unzipFileUsingSAF(context: Context, zipFileUri: Uri, destFolderUri: Uri) {
-            // Get the destination DocumentFile from Uri
-            val destFolder = DocumentFile.fromTreeUri(context, destFolderUri)
-
-            // Open the zip file input stream using SAF
-            context.contentResolver.openInputStream(zipFileUri).use { zipInputStream ->
-                ZipInputStream(BufferedInputStream(zipInputStream)).use { zis ->
-                    var zipEntry: ZipEntry?
-
-                    while (zis.nextEntry.also { zipEntry = it } != null) {
-                        val fileName = zipEntry?.name ?: continue
-
-                        if (zipEntry!!.isDirectory) {
-                            // Create the directory in the destination folder
-                            destFolder?.createDirectory(fileName)
-                        } else {
-                            // Create a new file in the destination folder
-                            val newFile = destFolder?.createFile("*/*", fileName)
-
-                            // Write the contents of the zip entry to the new file
-                            context.contentResolver.openOutputStream(newFile!!.uri).use { outputStream ->
-                                val buffer = ByteArray(1024)
-                                var length: Int
-                                while (zis.read(buffer).also { length = it } > 0) {
-                                    outputStream?.write(buffer, 0, length)
-                                }
+                            ZipDecompressionResult.Validating ->  {
                             }
                         }
                     }
-                }
             }
         }
     }
