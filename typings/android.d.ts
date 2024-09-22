@@ -26,7 +26,23 @@ declare namespace com {
                     public static setValue(key: string, value);
                 }
             }
+            export namespace utils {
+                export class FunctionCallback extends java.lang.Object {
+                    public static class: java.lang.Class<FunctionCallback>;
+                    /**
+                     * Constructs a new instance of the com.akylas.documentscanner.utils.FunctionCallback interface with the provided implementation. An empty constructor exists calling super() when extending the interface class.
+                     */
+                    public constructor(implementation: { onResult(param0: java.lang.Exception, param1: any): void });
+                    public constructor();
+                    public onResult(param0: java.lang.Exception, param1: any): void;
+                }
+            }
             export namespace Utils {
+                export class ProgressCallback extends java.lang.Object {
+                    public constructor(implementation: { onProgress(param0: number, param1: number, param2: number): void });
+                    public constructor();
+                    public onProgress(param0: number, param1: number, param2: number): void;
+                }
                 export class Companion {
                     static prepareActivity(arg0: androidx.appcompat.app.AppCompatActivity, applyDynamicColors: boolean);
                     static prepareWindow(arg0: android.view.Window);
@@ -43,6 +59,8 @@ declare namespace com {
             export namespace FileUtils {
                 export class Companion {
                     static copyFile(context: android.content.Context, inputFilePath: string, destFolder: string, fileName: string, mimeType: string, overwrite: boolean);
+                    static unzip(context: android.content.Context, src: string, src: string, callback?: FunctionCallback, progress?: ProgressCallback);
+                    static getFolderSize(file: java.io.File): number;
                 }
             }
         }

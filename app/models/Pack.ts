@@ -1,7 +1,6 @@
-import { ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
+import { Folder, ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { EVENT_PACK_UPDATED } from '~/utils/constants';
-
 
 export interface RemoteContentProvider {
     name?: string;
@@ -163,7 +162,7 @@ export class Pack extends Observable implements IPack {
             if (this.compressed) {
                 return 'zip://' + this.zipPath + '@assets/' + audio;
             } else {
-                return path.join(this.folderPath.path, 'assets', audio);
+                return this.folderPath.getFolder('assets').getFile(audio).path;
             }
         }
     }
@@ -241,7 +240,8 @@ export class Pack extends Observable implements IPack {
         return (await this.getImage(stage?.image)) || this.getThumbnail();
     }
     async removeFromDisk() {
-        const docData = documentsService.dataFolder.getFolder(this.id);
+        // to remove we need to real path with content://
+        const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id);
         return docData.remove();
     }
 

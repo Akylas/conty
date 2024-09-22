@@ -1,5 +1,7 @@
-import { AndroidActivityResultEventData, Application, File, Folder, Utils, path } from '@nativescript/core';
-import { SDK_VERSION } from '@nativescript/core/utils';
+import { AndroidActivityResultEventData, Application, File, Folder, Utils } from '@nativescript/core';
+import { SDK_VERSION, wrapNativeException } from '@nativescript/core/utils';
+import { Zip } from '@nativescript/zip';
+import { doInBatch } from './index.common';
 
 export * from './index.common';
 
@@ -8,29 +10,52 @@ export function restartApp() {
 }
 
 export async function copyFolderContent(src: string, dst: string) {
-    const folder = Folder.fromPath(src);
     // ensure we create the folder
-    Folder.fromPath(dst);
+    const dstFolder = Folder.fromPath(dst);
     if (!Folder.exists(dst)) {
         throw new Error('failed copying folder ' + dst);
     }
+    const folder = Folder.fromPath(src);
     DEV_LOG && console.log('copyFolderContent ', src, dst, Folder.exists(dst));
-    return Promise.all(
-        (await folder.getEntities()).map((e) => {
+    await doInBatch(
+        await folder.getEntities(),
+        async (e, index) => {
+            DEV_LOG && console.log('doInBatch ', src, index);
             if (typeof e['getFolder'] === 'undefined') {
-                const dstFile = path.join(dst, e.name);
+                const dstFile = dstFolder.getFile(e.name, true).path;
                 DEV_LOG && console.log('copyFile ', e.path, dstFile);
-                return (e as File).copy(dstFile).then((r) => {
-                    if (!File.exists(dstFile)) {
-                        throw new Error('failed copying file ' + dstFile);
-                    }
-                });
+                const r = await (e as File).copy(dstFile);
+                DEV_LOG && console.info('copyFile done ', e.path, dstFile, r, File.exists(dstFile));
+                if (!File.exists(dstFile)) {
+                    throw new Error('failed copying file ' + dstFile);
+                }
             } else {
-                const dstFolder = path.join(dst, e.name);
-                return copyFolderContent(path.join(src, e.name), dstFolder);
+                const newDstFolder = dstFolder.getFolder(e.name, true);
+                // DEV_LOG && console.log('copyFolder ', e.path, dstFolder.path, e.name, newDstFolder.path);
+                await copyFolderContent(e.path, newDstFolder.path);
             }
-        })
+            DEV_LOG && console.log('doInBatch done ', src, index);
+        },
+        2
     );
+    // return Promise.all(
+    //     (await folder.getEntities()).map((e) => {
+    //         if (typeof e['getFolder'] === 'undefined') {
+    //             const dstFile = dstFolder.getFile(e.name, true).path;
+    //             DEV_LOG && console.log('copyFile ', e.path, dstFile);
+    //             return (e as File).copy(dstFile).then((r) => {
+    //                 DEV_LOG && console.log('copyFile done ', e.path, dstFile, r, File.exists(dstFile));
+    //                 if (!File.exists(dstFile)) {
+    //                     throw new Error('failed copying file ' + dstFile);
+    //                 }
+    //             });
+    //         } else {
+    //             const newDstFolder = dstFolder.getFolder(e.name, true);
+    //             // DEV_LOG && console.log('copyFolder ', e.path, dstFolder.path, e.name, newDstFolder.path);
+    //             return copyFolderContent(e.path, newDstFolder.path);
+    //         }
+    //     })
+    // );
 }
 export async function removeFolderContent(src: string) {
     const folder = Folder.fromPath(src);
@@ -131,6 +156,9 @@ export async function requestManagePermission() {
 }
 export function getAndroidRealPath(src: string) {
     if (__ANDROID__) {
+        if (!src.startsWith('content://')) {
+            return src;
+        }
         let filePath = '';
 
         // ExternalStorageProvider
@@ -162,4 +190,47 @@ export function cleanFilename(str: string) {
     return com.akylas.conty.Utils.Companion.cleanFilenameString(str)
         .replace(/[\(\)|?*<\":>+\[\]'"]+/g, '')
         .replace(/[\\\s\t\n\/]+/g, '_');
+}
+let callback;
+function androidFunctionCallbackPromise<T>(onCallback: (calback: com.akylas.conty.utils.FunctionCallback) => void, transformer = (v) => v, errorHandler = (e) => wrapNativeException(e)) {
+    return new Promise<T>((resolve, reject) => {
+        callback = new com.akylas.conty.utils.FunctionCallback({
+            onResult(e, result) {
+                if (e) {
+                    reject(errorHandler(e));
+                    callback = null;
+                } else {
+                    try {
+                        resolve(transformer(result));
+                    } catch (error) {
+                        reject(error);
+                    } finally {
+                        callback = null;
+                    }
+                }
+            }
+        });
+        onCallback(callback);
+    });
+}
+
+export async function unzip(srcPath, dstPath) {
+    DEV_LOG && console.log('unzip', srcPath, dstPath);
+    return androidFunctionCallbackPromise<any[]>((callback) => {
+        com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
+    });
+    // return Zip.unzip({
+    //     archive: srcPath,
+    //     directory: dstPath,
+    //     overwrite: true
+    //     // onProgress: (percent) => {
+    //     //     ProgressNotifications.update(progressNotification, {
+    //     //         rightIcon: `${Math.round(percent)}%`,
+    //     //         progress: percent
+    //     //     });
+    //     // }
+    // });
+}
+export function getFileOrFolderSize(filePath: string) {
+    return com.akylas.conty.FileUtils.Companion.getFolderSize(new java.io.File(getAndroidRealPath(filePath)));
 }

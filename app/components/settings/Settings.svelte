@@ -557,7 +557,7 @@
                         }
                     }
                     break;
-                    
+
                 case 'data_location': {
                     if (!(await requestManagePermission())) {
                         throw new Error(lc('missing_manage_permission'));
@@ -574,22 +574,26 @@
                     const resultPath = result.folders[0];
                     if (resultPath) {
                         DEV_LOG && console.log('resultPath', resultPath);
-                        const dstFolder = getAndroidRealPath(resultPath);
+                        const dstFolder = resultPath;
                         DEV_LOG && console.log('dstFolder', dstFolder);
-                        const confirmed = await confirm({
-                            title: lc('move_data'),
-                            message: lc('move_data_desc'),
-                            okButtonText: lc('ok'),
-                            cancelButtonText: lc('cancel')
-                        });
+                        const srcFolder = documentsService.dataFolder.path;
+                        let confirmed = true;
+                        if (srcFolder !== getAndroidRealPath(dstFolder)) {
+                            confirmed = await confirm({
+                                title: lc('move_data'),
+                                message: lc('move_data_desc'),
+                                okButtonText: lc('ok'),
+                                cancelButtonText: lc('cancel')
+                            });
+                        }
                         if (confirmed) {
-                            const srcFolder = documentsService.dataFolder.path;
                             DEV_LOG && console.log('confirmed move data to', srcFolder, dstFolder);
                             showLoading(lc('moving_files'));
-                            await copyFolderContent(path.join(srcFolder), path.join(dstFolder));
+                            await copyFolderContent(srcFolder, dstFolder);
                             ApplicationSettings.setString('data_folder', dstFolder);
-                            documentsService.dataFolder = Folder.fromPath(dstFolder);
-                            await removeFolderContent(path.join(srcFolder));
+                            DEV_LOG && console.log('copyFolderContent done');
+                            // documentsService.dataFolder = Folder.fromPath(dstFolder);
+                            await removeFolderContent(srcFolder);
                             await alert({
                                 cancelable: false,
                                 message: lc('restart_app'),
@@ -819,7 +823,7 @@
                     title={item.title}
                     titleProps={item.titlProps}
                     on:tap={(event) => onTap(item, event)}>
-                    <image height={45} marginRight={4} marginTop={20} src={item.image()} verticalAlignment="top" />
+                    <image height={45} marginRight={4} marginTop={20} src={item.image()} verticalAlignment="top" width={45} />
                     <mdbutton col={2} marginTop={20} text={item.buttonText} verticalAlignment="top" on:tap={(event) => onButtonTap(item, event)} />
                 </ListItemAutoSize>
             </Template>

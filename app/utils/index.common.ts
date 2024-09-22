@@ -43,19 +43,6 @@ export function getAndroidRealPath(src: string) {
     return src;
 }
 
-export function getFileOrFolderSize(filePath: string) {
-    if (__ANDROID__) {
-        //@ts-ignore
-        return com.akylas.conty.FileUtils.Companion.getFolderSize(new java.io.File(filePath));
-    } else {
-        if (Folder.exists(filePath)) {
-            //@ts-ignore
-            return NSFileManager.defaultManager.allocatedSizeOfDirectoryAt(NSURL.URLWithString(filePath));
-        } else {
-            return File.fromPath(filePath).size;
-        }
-    }
-}
 
 export function setCustomCssRootClass(className, oldClassName?) {
     const rootView = Application.getRootView();
@@ -81,4 +68,22 @@ export function setCustomCssRootClass(className, oldClassName?) {
     if (oldClassName) {
         removeCssClass(rootView, oldClassName);
     }
+}
+
+export async function doInBatch<T, U>(array: T[], handler: (T, index: number) => Promise<U>, chunkSize: number = 5) {
+    const chunks = chunk(array, chunkSize);
+    const result: U[] = [];
+    // we use allSettled to wait for all even if one failed
+    // that way we are sure we are finished on error and we can handle things correctly
+    const promises = chunks.map((s, i) => () => Promise.allSettled(s.map((value, j) => handler(value, i * chunkSize + j))));
+    for (let index = 0; index < promises.length; index++) {
+        const subResult = await promises[index]();
+        const firstError = subResult.find((s) => s.status === 'rejected')?.['reason'];
+        if (firstError) {
+            throw firstError;
+        }
+        const values: U[] = subResult.map((s) => s['value']);
+        result.push(...values);
+    }
+    return result;
 }

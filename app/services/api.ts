@@ -1,25 +1,21 @@
-import { getFile } from '@nativescript/core/http';
+import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import * as https from '@nativescript-community/https';
-import * as ProgressNotifications from '~/services/ProgressNotifications';
-import { Application, ApplicationEventData, ApplicationSettings, File, Folder, Utils, knownFolders, path } from '@nativescript/core';
+import { l, lc } from '@nativescript-community/l';
+import { Application, ApplicationEventData, File, Folder, Utils, knownFolders, path } from '@nativescript/core';
 import { connectionType, getConnectionType, startMonitoring, stopMonitoring } from '@nativescript/core/connectivity';
 import { EventData, Observable } from '@nativescript/core/data/observable';
+import { getFile } from '@nativescript/core/http';
 import { throttle, wrapNativeException } from '@nativescript/core/utils';
-import { cleanFilename, hashCode } from '~/utils';
-import { HTTPError, NoNetworkError, TimeoutError } from '~/utils/error';
-import { Zip } from '@nativescript/zip';
-import { documentsService } from './documents';
-import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import dayjs from 'dayjs';
-import { confirm } from '@nativescript-community/ui-material-dialogs';
-import { l, lc } from '@nativescript-community/l';
 import { filesize } from 'filesize';
-import { hideLoading, showLoading, showSnack, showSnackMessage } from '~/utils/ui';
-import { request as permRequest } from '@nativescript-community/perms';
 import { RemoteContent } from '~/models/Pack';
-import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+import * as ProgressNotifications from '~/services/ProgressNotifications';
+import { hashCode, unzip } from '~/utils';
 import { ANDROID_CONTENT } from '~/utils/constants';
+import { HTTPError, NoNetworkError, TimeoutError } from '~/utils/error';
 import { showError } from '~/utils/showError';
+import { showSnackMessage } from '~/utils/ui';
+import { documentsService } from './documents';
 
 export type HTTPSOptions = https.HttpsRequestOptions;
 export type { Headers } from '@nativescript-community/https';
@@ -394,17 +390,8 @@ export async function downloadStories(story: RemoteContent) {
                 //     rightIcon: '0%',
                 //     progress: 0
                 // });
-                await Zip.unzip({
-                    archive: file.path,
-                    directory: destinationFilePath,
-                    overwrite: true
-                    // onProgress: (percent) => {
-                    //     ProgressNotifications.update(progressNotification, {
-                    //         rightIcon: `${Math.round(percent)}%`,
-                    //         progress: percent
-                    //     });
-                    // }
-                });
+                await unzip(file.path, destinationFilePath);
+
                 DEV_LOG && console.log('unzipped ', destinationFilePath);
             }
 

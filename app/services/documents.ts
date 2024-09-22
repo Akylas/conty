@@ -5,17 +5,18 @@ import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, Pack, Tag } from '~/models/Pack';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
 import NSQLDatabase from './NSQLDatabase';
+import { getAndroidRealPath } from '~/utils';
 
 const sql = SqlQuery.createFromTemplateString;
 
-export async function getFileTextContentFromPackFile(filePath, asset, compressed: boolean) {
-    DEV_LOG && console.log('getFileTextContentFromPackFile', filePath, asset, File.fromPath(filePath).size);
+export async function getFileTextContentFromPackFile(folderPath, asset, compressed: boolean) {
+    DEV_LOG && console.log('getFileTextContentFromPackFile', folderPath, asset, File.fromPath(folderPath).size);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {
                 com.akylas.conty.ZipMediaDataSource.readTextFromAsset(
                     Utils.android.getApplicationContext(),
-                    filePath,
+                    folderPath,
                     asset,
                     'UTF-8',
                     new com.akylas.conty.ZipMediaDataSource.Callback({ onError: reject, onSuccess: resolve })
@@ -26,7 +27,8 @@ export async function getFileTextContentFromPackFile(filePath, asset, compressed
             }
         });
     } else {
-        return File.fromPath(path.join(filePath, asset)).readText();
+        return Folder.fromPath(folderPath).getFile(asset).readText();
+        // return File.fromPath(path.join(folderPath, asset)).readText();
     }
 }
 
@@ -267,6 +269,7 @@ export class DocumentsService extends Observable {
 
     static DB_NAME = 'db.sqlite';
     static DB_VERSION = 1;
+    realDataFolderPath: string;
     rootDataFolder: string;
     dataFolder: Folder;
     id: number;
@@ -303,8 +306,9 @@ export class DocumentsService extends Observable {
             rootDataFolder = knownFolders.externalDocuments().path;
         }
         this.rootDataFolder = rootDataFolder;
-        DEV_LOG && console.log('DocumentsService', 'start', this.id, rootDataFolder, !!db);
-        this.dataFolder = Folder.fromPath(ApplicationSettings.getString('data_folder', path.join(rootDataFolder, 'data')));
+        this.realDataFolderPath = ApplicationSettings.getString('data_folder', path.join(rootDataFolder, 'data'));
+        DEV_LOG && console.log('DocumentsService', 'start', this.id, !!db, this.realDataFolderPath);
+        this.dataFolder = Folder.fromPath(getAndroidRealPath(this.realDataFolderPath));
         if (db) {
             this.db = new NSQLDatabase(db, {
                 // for now it breaks

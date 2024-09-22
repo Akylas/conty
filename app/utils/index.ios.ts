@@ -1,5 +1,5 @@
-import { wrapNativeException } from '@nativescript/core/utils';
-import { File, ImageSource, path } from '@nativescript/core';
+import { File, Folder } from '@nativescript/core';
+import { Zip } from '@nativescript/zip';
 
 export * from './index.common';
 
@@ -79,4 +79,27 @@ export function cleanFilename(str) {
     return ContyUtils.cleanFilenameString(str)
         .replace(/[\(\)|?*<\":>+\[\]'"]+/g, '')
         .replace(/[\\\s\t\n\/]+/g, '_');
+}
+
+export function unzip(srcPath, dstPath) {
+    return Zip.unzip({
+        archive: srcPath,
+        directory: dstPath,
+        overwrite: true
+        // onProgress: (percent) => {
+        //     ProgressNotifications.update(progressNotification, {
+        //         rightIcon: `${Math.round(percent)}%`,
+        //         progress: percent
+        //     });
+        // }
+    });
+}
+
+export function getFileOrFolderSize(filePath: string) {
+    if (Folder.exists(filePath)) {
+        //@ts-ignore
+        return NSFileManager.defaultManager.allocatedSizeOfDirectoryAt(NSURL.URLWithString(filePath));
+    } else {
+        return File.fromPath(filePath).size;
+    }
 }

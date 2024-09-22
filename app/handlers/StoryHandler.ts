@@ -1,5 +1,5 @@
 import { TNSPlayer } from '@nativescript-community/audio';
-import { EventData, ImageSource, Observable } from '@nativescript/core';
+import { Application, EventData, ImageSource, Observable } from '@nativescript/core';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { AdditiveTweening } from 'additween';
 import { Action, Pack, Stage, cleanupStageName, stageIsStory } from '~/models/Pack';
@@ -202,7 +202,7 @@ export class StoryHandler extends Handler {
             // this.lyric?.pause();
             this.isPlayingPaused = true;
             this.pausedStoryPlayTime = this.mPlayer.currentTime;
-            // DEV_LOG && console.log(TAG, 'pauseStory', this.pausedStoryPlayTime);
+            DEV_LOG && console.log(TAG, 'pauseStory', this.pausedStoryPlayTime);
             this.notify({ eventName: PlaybackEvent, state: 'pause', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
         }
     }
@@ -221,13 +221,13 @@ export class StoryHandler extends Handler {
             this.mPlayer.resume();
             // this.lyric?.play(this.pausedStoryPlayTime);
             this.isPlayingPaused = false;
-            // DEV_LOG && console.log(TAG, 'resumeStory', this.pausedStoryPlayTime);
+            DEV_LOG && console.log(TAG, 'resumeStory', this.pausedStoryPlayTime);
             this.pausedStoryPlayTime = 0;
             this.notify({ eventName: PlaybackEvent, state: 'play', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
         }
     }
     async setPlayerTimestamp(playTime: number) {
-        // DEV_LOG && console.log(TAG, 'setStoryTimestamp', playTime, this.isPlaying, this.isPlayingPaused);
+        DEV_LOG && console.log(TAG, 'setStoryTimestamp', playTime, this.isPlaying, this.isPlayingPaused);
         if (this.isPlaying) {
             this.mPlayer.seekTo(playTime / 1000);
             if (this.isPlayingPaused) {

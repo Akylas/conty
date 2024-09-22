@@ -1,12 +1,11 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { time } from '@akylas/nativescript/profiling';
-import { type EventData, File, Folder, Observable, Utils, path } from '@nativescript/core';
+import { ApplicationSettings, type EventData, File, Folder, Observable, Utils, path } from '@nativescript/core';
 import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
-import { Zip } from '@nativescript/zip';
 import { setDocumentsService } from '~/models/Pack';
 import { DocumentsService, getFileTextContentFromPackFile } from '~/services/documents';
-import { getFileOrFolderSize } from '~/utils';
+import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE } from '~/utils/constants';
 import Queue from './queue';
 
@@ -147,11 +146,11 @@ export default class ImportWorker extends Observable {
             type: 'error'
         });
     }
-
+    dataFolder: Folder;
     async handleStart(event: WorkerEvent) {
         if (!documentsService) {
             documentsService = new DocumentsService(false);
-            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, event.data.nativeData.db);
+            // documentsService is using real path on android, not content://. We need content:// or we wont have write access
             documentsService.notify = (e) => {
                 if (e.eventName === 'started') {
                     return;
@@ -161,6 +160,8 @@ export default class ImportWorker extends Observable {
             };
             setDocumentsService(documentsService);
             await documentsService.start(event.data.nativeData.db);
+            this.dataFolder = Folder.fromPath(ApplicationSettings.getString('data_folder', path.join(documentsService.rootDataFolder, 'data')));
+            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, event.data.nativeData.db);
         }
     }
 
@@ -168,19 +169,23 @@ export default class ImportWorker extends Observable {
         const handled = this.receivedMessageBase(event);
         DEV_LOG && console.log(TAG, 'receivedMessage', handled, event.data.type);
         if (!handled) {
-            const data = event.data;
-            switch (data.type) {
-                case 'import_data':
-                    await worker.handleStart(event);
-                    this.importFromCurrentDataFolderQueue();
-                    break;
-                case 'import_from_files':
-                    await worker.handleStart(event);
-                    this.importFromFilesQueue(event.data.messageData);
-                    break;
-                case 'stop':
-                    worker.stop(data.messageData?.error, data.id);
-                    break;
+            try {
+                const data = event.data;
+                switch (data.type) {
+                    case 'import_data':
+                        await worker.handleStart(event);
+                        this.importFromCurrentDataFolderQueue();
+                        break;
+                    case 'import_from_files':
+                        await worker.handleStart(event);
+                        this.importFromFilesQueue(event.data.messageData);
+                        break;
+                    case 'stop':
+                        worker.stop(data.messageData?.error, data.id);
+                        break;
+                }
+            } catch (error) {
+                this.sendError(error);
             }
         }
         return true;
@@ -196,7 +201,8 @@ export default class ImportWorker extends Observable {
     async importFromCurrentDataFolderInternal() {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
-            const entities = await documentsService.dataFolder.getEntities();
+            DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
+            const entities = await this.dataFolder.getEntities();
             DEV_LOG &&
                 console.log(
                     'updateContentFromDataFolder',
@@ -228,33 +234,29 @@ export default class ImportWorker extends Observable {
                     // we need to clean up the name because some char will break android ZipFile
                     const realId = Date.now() + '';
                     let destinationFolderPath = inputFilePath;
-                    if (compressed && realId !== id) {
-                        inputFilePath = path.join(documentsService.dataFolder.path, `${realId}.zip`);
+                    if (compressed && realId !== id && supportsCompressedData) {
+                        inputFilePath = path.join(this.dataFolder.path, `${realId}.zip`);
                         if (compressed && supportsCompressedData) {
                             await File.fromPath(destinationFolderPath).rename(inputFilePath);
                         }
                         id = realId;
                         destinationFolderPath = inputFilePath;
                     }
+                    //TODO: for now we ignore compressed!
                     if (compressed && !supportsCompressedData) {
-                        destinationFolderPath = path.join(documentsService.dataFolder.path, id);
-                        if (!Folder.exists(destinationFolderPath)) {
-                            await Zip.unzip({
-                                archive: inputFilePath,
-                                directory: documentsService.dataFolder.getFolder(id).path,
-                                overwrite: true
-                                // onProgress: (percent) => {
-                                //     ProgressNotifications.update(progressNotification, {
-                                //         rightIcon: `${Math.round(percent)}%`,
-                                //         progress: percent
-                                //     });
-                                // }
-                            });
-                        }
-                        await File.fromPath(entity.path).remove();
+                        // continue;
+                        id = realId;
+                        destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                        DEV_LOG && console.log('importing from zip', id, inputFilePath, destinationFolderPath, Folder.exists(destinationFolderPath));
+                        // if (!Folder.exists(destinationFolderPath)) {
+                        await unzip(inputFilePath, destinationFolderPath);
+                        // }
+                        DEV_LOG && console.log('deleting zip', inputFilePath);
+                        await File.fromPath(inputFilePath).remove();
                     }
                     if (!supportsCompressedData) {
-                        const sizeTest = File.exists(path.join(destinationFolderPath, 'story.json')) && File.fromPath(path.join(destinationFolderPath, 'story.json')).size;
+                        const testPath = Folder.fromPath(destinationFolderPath).getFile('story.json', false).path;
+                        const sizeTest = File.exists(testPath) && File.fromPath(testPath).size;
                         if (!sizeTest) {
                             // broken folder
                             await Folder.fromPath(destinationFolderPath).remove();
@@ -274,19 +276,10 @@ export default class ImportWorker extends Observable {
                     });
                 } else if (compressed && !supportsCompressedData) {
                     // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
-                    const destinationFolderPath = path.join(documentsService.dataFolder.path, id);
+                    const destinationFolderPath = this.dataFolder.getFolder(id, false).path;
+                    DEV_LOG && console.log('we need to unzip existing entry in db', entity.path, destinationFolderPath);
                     if (!Folder.exists(destinationFolderPath)) {
-                        await Zip.unzip({
-                            archive: entity.path,
-                            directory: documentsService.dataFolder.getFolder(id).path,
-                            overwrite: true
-                            // onProgress: (percent) => {
-                            //     ProgressNotifications.update(progressNotification, {
-                            //         rightIcon: `${Math.round(percent)}%`,
-                            //         progress: percent
-                            //     });
-                            // }
-                        });
+                        await unzip(entity.path, destinationFolderPath);
                         (await documentsService.packRepository.get(id)).save({
                             compressed: 0
                         });
@@ -313,19 +306,9 @@ export default class ImportWorker extends Observable {
                 const id = Date.now() + '';
                 destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
-                    destinationFolderPath = path.join(documentsService.dataFolder.path, id);
+                    destinationFolderPath = documentsService.dataFolder.getFolder(id, false).path;
                     if (!Folder.exists(destinationFolderPath)) {
-                        await Zip.unzip({
-                            archive: inputFilePath,
-                            directory: documentsService.dataFolder.getFolder(id).path,
-                            overwrite: true
-                            // onProgress: (percent) => {
-                            //     ProgressNotifications.update(progressNotification, {
-                            //         rightIcon: `${Math.round(percent)}%`,
-                            //         progress: percent
-                            //     });
-                            // }
-                        });
+                        await unzip(inputFilePath, destinationFolderPath);
                     }
                 } else {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
