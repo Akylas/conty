@@ -276,6 +276,9 @@ export class StoryHandler extends Handler {
             const selected = this.currentStageSelected();
             // DEV_LOG && console.log('getStageImage', stage.uuid, selected.uuid, stageIsStory(stage), this.currentStageImage);
             if (stage === selected) {
+                if (stageIsStory(stage)) {
+                    return pack.getThumbnail();
+                }
                 return (await pack.getImage(this.currentStageImage)) || pack.getThumbnail();
             } else {
                 return (await pack.getImage(stageIsStory(stage) ? this.findStoryImage(stage) : stage?.image)) || pack.getThumbnail();
