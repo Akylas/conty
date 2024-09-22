@@ -488,11 +488,14 @@ export class StoryHandler extends Handler {
             //     this.lyric = null;
             // }
             this.clearPlayer();
-
-            if (this.toPlayNext) {
-                this.toPlayNext();
+            if (this.appExited) {
+                Application.notify({ eventName: 'shouldStopBgService' });
+            } else {
+                if (this.toPlayNext) {
+                    this.toPlayNext();
+                }
+                this.toPlayNext = null;
             }
-            this.toPlayNext = null;
         };
         if (this.mPlayer.isAudioPlaying()) {
             if (fade) {
