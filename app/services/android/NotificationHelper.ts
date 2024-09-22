@@ -21,14 +21,6 @@ function titlecase(value) {
     });
 }
 
-let notificationManager: android.app.NotificationManager;
-function getNotificationManager() {
-    if (!notificationManager) {
-        const context: android.content.Context = Utils.android.getApplicationContext();
-        notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
-    }
-    return notificationManager;
-}
 export interface NotificationOptions {
     title?: string;
     channel?: string;
