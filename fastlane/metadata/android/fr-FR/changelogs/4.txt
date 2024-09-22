@@ -1,0 +1,13 @@
+### Features
+- new card style view
+- You can now import zip files. The data folder is also checked for added packs and automatically import them
+- allow to search through packs
+
+### Bug fixes
+- multiple story playing issues fix
+- more custom eink theme changes (more to come)
+- color themes not being applied correcly
+- You can now define custom remote sources. Now there is none by default, but you are proposed to add one
+- better icon!
+- more sotry playing issue fixes
+- better style of audio play
