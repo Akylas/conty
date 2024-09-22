@@ -7,11 +7,9 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { debounce } from '@nativescript/core/utils';
     import { AnimationDefinition, Application, ApplicationSettings, EventData, File, Folder, NavigatedData, ObservableArray, Page, StackLayout, Utils, path } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
-    import { throttle } from '@nativescript/core/utils';
-    import { SDK_VERSION } from '@nativescript/core/utils';
+    import { SDK_VERSION, throttle } from '@nativescript/core/utils';
     import { filesize } from 'filesize';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -27,32 +25,32 @@
     import { showError } from '~/utils/showError';
     import { fade, showModal } from '~/utils/svelte/ui';
     import { hideLoading, onBackButton, playPack, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
-    import { colors, fontScale, windowInset } from '~/variables';
-    import { Zip } from '@nativescript/zip';
+    import { colors, fontScale, fonts, windowInset } from '~/variables';
 
     const textPaint = new Paint();
+    const iconPaint = new Paint();
+    iconPaint.color = '#ffffffcc';
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
     type ViewStyle = 'expanded' | 'condensed' | 'card';
 </script>
 
 <script lang="ts">
     import { request } from '@nativescript-community/perms';
+    import { TextField } from '@nativescript-community/ui-material-textfield';
     import { PackStartEvent, PackStopEvent } from '~/handlers/StoryHandler';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
+    import { getFileOrFolderSize, unzip } from '~/utils';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
-    import { getFileOrFolderSize } from '~/utils';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
 
     // technique for only specific properties to get updated on store change
-    let { colorPrimaryContainer, colorTertiaryContainer, colorOnTertiaryContainer, colorOnBackground } = $colors;
+    const { mdi } = $fonts;
+    let { colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorOnBackground } = $colors;
     $: ({
+        colorBackground,
         colorTertiaryContainer,
         colorOnTertiaryContainer,
         colorSurfaceContainerHigh,
         colorOnBackground,
-        colorSurfaceContainerLow,
-        colorOnSecondary,
-        colorSurfaceContainer,
         colorOnSurfaceVariant,
         colorOutline,
         colorOutlineVariant,
@@ -61,6 +59,7 @@
         colorOnPrimaryContainer,
         colorError
     } = $colors);
+    iconPaint.fontFamily = mdi;
 
     interface Item {
         pack: Pack;
@@ -330,17 +329,7 @@
                         if (!supportsCompressedData) {
                             destinationFolderPath = path.join(documentsService.dataFolder.path, id);
                             if (!Folder.exists(destinationFolderPath)) {
-                                await Zip.unzip({
-                                    archive: inputFilePath,
-                                    directory: documentsService.dataFolder.getFolder(id).path,
-                                    overwrite: true
-                                    // onProgress: (percent) => {
-                                    //     ProgressNotifications.update(progressNotification, {
-                                    //         rightIcon: `${Math.round(percent)}%`,
-                                    //         progress: percent
-                                    //     });
-                                    // }
-                                });
+                                await unzip(inputFilePath, documentsService.dataFolder.getFolder(id).path);
                             }
                         } else {
                             await File.fromPath(inputFilePath).copy(destinationFolderPath);
@@ -553,10 +542,10 @@
     //         }
     //     }
     // }
-    function getItemImageHeight(viewStyle) {
+    function getItemImageWidth(viewStyle) {
         switch (viewStyle) {
             case 'condensed':
-                return 44 * $fontScale;
+                return 54 * $fontScale;
             case 'card':
                 return null;
             default:
@@ -570,7 +559,7 @@
             case 'card':
                 return 200;
             default:
-                return 170;
+                return 150;
         }
     }
     function getImageMargin(viewStyle) {
@@ -603,25 +592,19 @@
     $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
 
     function onCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
-        if (viewStyle === 'card') {
-            return;
-        }
         const w = canvas.getWidth();
         const h = canvas.getHeight();
-        // const w2 = w / 2;
-        // const h2 = h / 2;
-        const dx = 10 + getItemImageHeight(viewStyle) + 16;
+        const dx = 10 + getItemImageWidth(viewStyle) + 10;
+
+        // iconPaint.textSize = h / 2;
+
+        // if (viewStyle === 'card') {
+        //     canvas.drawText('mdi-play-outline', w / 4, (6 * h) / 9, iconPaint);
+        //     return;
+        // }
+        // canvas.drawText('mdi-play-outline', (1 * dx) / 4, (6 * h) / 9, iconPaint);
+
         textPaint.color = colorOnSurfaceVariant;
-        // canvas.drawText(
-        //     filesize(
-        //         item.doc.pages.reduce((acc, v) => acc + v.size, 0),
-        //         { output: 'string' }
-        //     ),
-        //     dx,
-        //     h - (condensed ? 0 : 16) - 10,
-        //     textPaint
-        // );
-        // textPaint.color = colorOnSurfaceVariant;
 
         const topText = createNativeAttributedString({
             spans: [
@@ -641,16 +624,17 @@
             ]
         });
         canvas.save();
-        let staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx - 10, h - 20 - 20);
+        let staticLayout = new StaticLayout(topText, textPaint, w - dx - 10, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx - 10, h - 20 - 20);
         canvas.translate(dx, (condensed ? 0 : 0) + 10);
         staticLayout.draw(canvas);
         canvas.restore();
+        // textPaint.textSize = 14 * $fontScale;
 
-        canvas.drawText(filesize(item.pack.size, { output: 'string' }), dx, h - 13, textPaint);
+        canvas.drawText(filesize(item.pack.size, { output: 'string', round: 0 }), dx, h - 13, textPaint);
 
         if (item.pack.age) {
             textPaint.color = colorOnTertiaryContainer;
-            staticLayout = new StaticLayout(' ' + lc('age', item.pack.age) + ' ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+            staticLayout = new StaticLayout(' ' + item.pack.age + '+ ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
             const width = staticLayout.getLineWidth(0);
             const height = staticLayout.getHeight();
             canvas.translate(w - width - 20, h - height - 10);
@@ -723,7 +707,6 @@
                         borderRadius={12}
                         fontSize={14 * $fontScale}
                         margin={8}
-                        rippleColor={colorSurface}
                         on:tap={() => onItemTap(item)}
                         on:longPress={(e) => onItemLongPress(item, e)}
                         on:draw={(e) => onCanvasDraw(item, e)}>
@@ -733,19 +716,11 @@
                             failureImageUri="res://icon_not_found"
                             horizontalAlignment={getImageHorizontalAlignment(viewStyle)}
                             margin={getImageMargin(viewStyle)}
+                            rippleColor={colorSurface}
                             src={item.pack.getThumbnail()}
                             stretch="aspectFill"
-                            width={getItemImageHeight(viewStyle)} />
-                        <label
-                            backgroundImage="linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)"
-                            borderRadius="0 0 12 12"
-                            color="white"
-                            fontSize={14}
-                            fontWeight="500"
-                            padding={4}
-                            text={getItemTitle(item, viewStyle)}
-                            textAlignment="center"
-                            verticalAlignment="bottom" />
+                            width={getItemImageWidth(viewStyle)} />
+                        <label class="cardLabel" text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
                     </canvasview>
                 </Template>
@@ -782,7 +757,7 @@
 
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
-            <gridlayout slot="center" col={1} colSpan={2} visibility={showSearch ? 'visible' : 'hidden'}>
+            <gridlayout slot="center" backgroundColor={colorBackground} col={1} colSpan={2} visibility={showSearch ? 'visible' : 'hidden'}>
                 <textfield
                     bind:this={searchTF}
                     autocapitalizationType="none"
@@ -790,9 +765,19 @@
                     paddingRight={45}
                     placeholder={lc('search')}
                     returnKeyType="search"
+                    variant="outline"
                     on:returnPress={blurTextField}
                     on:textChange={(e) => onTextChanged(e['value'])} />
-                <mdbutton class="actionBarButton" horizontalAlignment="right" isVisible={filter?.length > 0} text="mdi-close" variant="text" on:tap={() => clearSearch()} />
+                <mdbutton
+                    class="actionBarButton"
+                    height={40}
+                    horizontalAlignment="right"
+                    isVisible={filter?.length > 0}
+                    marginTop={8}
+                    text="mdi-close"
+                    variant="text"
+                    width={40}
+                    on:tap={() => clearSearch()} />
             </gridlayout>
         </CActionBar>
         <!-- {#if nbSelected > 0} -->
