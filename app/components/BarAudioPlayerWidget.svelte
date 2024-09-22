@@ -120,12 +120,10 @@
     }
     function onPackStop(event) {}
     function onPlayerState(event: PlaybackEventData) {
-        DEV_LOG && console.log('onPlayerState', event.playingInfo?.name);
         playingInfo = event.playingInfo;
         if (event.state !== state) {
             state = event.state;
             if (state === 'play') {
-                DEV_LOG && console.log('onPlayerState1', playingInfo?.name);
                 startPlayerInterval();
             } else {
                 stopPlayerInterval();
@@ -142,10 +140,8 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            DEV_LOG && console.log('BarPlayer, onStageChanged');
             storyHandler?.getCurrentStageImage().then((r) => {
                 currentImage = r;
-                DEV_LOG && console.log('currentImage', r);
                 return r;
             });
         } catch (error) {

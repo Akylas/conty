@@ -183,6 +183,7 @@ export class BgService extends android.app.Service {
         }
     }
     hidePlayingNotification() {
+        this.getMediaSessionCompat().setActive(false);
         NotificationHelper.hideNotification(PLAYING_NOTIFICATION_ID);
         this.playingNotifBuilder = null;
     }
@@ -269,6 +270,11 @@ export class BgService extends android.app.Service {
             }
             let playbackState = PlaybackStateCompat.STATE_PLAYING;
             let currentTime = 0;
+
+            if (controlSettings.ok) {
+                actionsInCompactView.push(actionIndex++);
+                this.addAction(context, 'ok', lc('ok'), ic_check_id, notifBuilder, playbackstateBuilder);
+            }
             if (controlSettings.pause) {
                 currentTime = this.storyHandler.playerCurrentTime;
                 // playbackState = PlaybackStateCompat.STATE_STOPPED;
@@ -289,10 +295,6 @@ export class BgService extends android.app.Service {
                 actionIndex++;
                 this.addAction(context, 'home', lc('home'), ic_home_id, notifBuilder, playbackstateBuilder);
             }
-            if (controlSettings.ok) {
-                actionsInCompactView.push(actionIndex++);
-                this.addAction(context, 'ok', lc('ok'), ic_check_id, notifBuilder, playbackstateBuilder);
-            }
             actionIndex++;
             this.addAction(context, 'stop', lc('stop'), ic_close_id, notifBuilder, playbackstateBuilder);
             playbackstateBuilder.setState(playbackState, currentTime, 1);
@@ -309,7 +311,6 @@ export class BgService extends android.app.Service {
     async onPackStop(event) {
         this.playingInfo = null;
         try {
-            this.getMediaSessionCompat().setActive(false);
             this.hidePlayingNotification();
         } catch (error) {
             console.error('onPackStop', error, error.stack);

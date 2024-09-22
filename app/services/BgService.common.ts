@@ -179,6 +179,9 @@ export abstract class BgServiceCommon extends Observable {
         DEV_LOG && console.log('handleAppExit', this.storyHandler.isPlaying);
         if (this.storyHandler.isPlaying) {
             this.storyHandler.appExited = true;
+            Application.on('shouldStopBgService', () => {
+                this.stop();
+            });
             return;
         }
         this.stop();
