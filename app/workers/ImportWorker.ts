@@ -258,7 +258,7 @@ export default class ImportWorker extends Observable {
                         const testPath = Folder.fromPath(destinationFolderPath).getFile('story.json', false).path;
                         const sizeTest = File.exists(testPath) && File.fromPath(testPath).size;
                         if (!sizeTest) {
-                            // broken folder
+                            // broken folder, let s remove it
                             await Folder.fromPath(destinationFolderPath).remove();
                             continue;
                         }
