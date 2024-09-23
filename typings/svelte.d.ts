@@ -60,6 +60,10 @@ declare namespace svelteNative.JSX {
         verticalAlignment?: string;
         verticalTextAlignment?: string;
     }
+    interface ProgressAttributes {
+        busy?: boolean;
+        indeterminate?: boolean;
+    }
     interface SliderAttributes {
         stepSize?: number;
         trackBackgroundColor?: string;
