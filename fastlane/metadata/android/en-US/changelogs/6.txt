@@ -1,0 +1,2 @@
+### Bug fixes
+- card view layout fix
