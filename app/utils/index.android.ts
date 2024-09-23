@@ -214,22 +214,24 @@ function androidFunctionCallbackPromise<T>(onCallback: (calback: com.akylas.cont
     });
 }
 
-export async function unzip(srcPath, dstPath) {
+export async function unzip(srcPath: string, dstPath: string) {
     DEV_LOG && console.log('unzip', srcPath, dstPath);
-    return androidFunctionCallbackPromise<any[]>((callback) => {
-        com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
+    if (srcPath.startsWith('content:/')) {
+        return androidFunctionCallbackPromise<any[]>((callback) => {
+            com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
+        });
+    }
+    return Zip.unzip({
+        archive: srcPath,
+        directory: dstPath,
+        overwrite: true
+        // onProgress: (percent) => {
+        //     ProgressNotifications.update(progressNotification, {
+        //         rightIcon: `${Math.round(percent)}%`,
+        //         progress: percent
+        //     });
+        // }
     });
-    // return Zip.unzip({
-    //     archive: srcPath,
-    //     directory: dstPath,
-    //     overwrite: true
-    //     // onProgress: (percent) => {
-    //     //     ProgressNotifications.update(progressNotification, {
-    //     //         rightIcon: `${Math.round(percent)}%`,
-    //     //         progress: percent
-    //     //     });
-    //     // }
-    // });
 }
 export function getFileOrFolderSize(filePath: string) {
     return com.akylas.conty.FileUtils.Companion.getFolderSize(new java.io.File(getAndroidRealPath(filePath)));
