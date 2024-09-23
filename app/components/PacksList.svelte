@@ -538,10 +538,10 @@
 
         // iconPaint.textSize = h / 2;
 
-        // if (viewStyle === 'card') {
-        //     canvas.drawText('mdi-play-outline', w / 4, (6 * h) / 9, iconPaint);
-        //     return;
-        // }
+        if (viewStyle === 'card') {
+            // canvas.drawText('mdi-play-outline', w / 4, (6 * h) / 9, iconPaint);
+            return;
+        }
         // canvas.drawText('mdi-play-outline', (1 * dx) / 4, (6 * h) / 9, iconPaint);
 
         textPaint.color = colorOnSurfaceVariant;
