@@ -62,13 +62,15 @@ How It Works:
 ## Screenshots
 
 <p align="left">
-    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1726604226.png" width=30%/>
-    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1726604340.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098547.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098553.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098555.png" width=30%/>
 </p>
 
 <p align="left">
-    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1726604383.png" width=30%/>
-    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1726604428.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098564.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098572.png" width=30%/>
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_1727098594.png" width=30%/>
 </p>
 
 ### Having issues, suggestions and feedback?
