@@ -28,6 +28,7 @@
     import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
+    import { SilentError } from '~/utils/error';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -375,7 +376,7 @@
                             url: result.password
                         });
                     } else {
-                        throw new Error(lc('missing_name_or_url'));
+                        throw new SilentError(lc('missing_name_or_url'));
                     }
                     break;
                 }
@@ -444,7 +445,7 @@
                             cancelButtonText: l('cancel'),
                             view
                         });
-                        if (result) {
+                        if (result && nameTF.text?.length && commentsTF.text?.length) {
                             const eventId = Sentry.captureMessage('User Feedback');
 
                             Sentry.captureUserFeedback({
