@@ -1,0 +1,4 @@
+### Bug fixes
+- rewrote remote search and fix error
+- use correct unzip when possible
+- better pack search
