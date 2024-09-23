@@ -24,6 +24,7 @@
     import { onBackButton, showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import ActionBarSearch from './common/ActionBarSearch.svelte';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -53,12 +54,13 @@
     }
     let packs: ObservableArray<Item> = null;
     let filteredPacks: ObservableArray<Item> = null;
-    let filter: string = null;
     let nbPacks: number = 0;
     let showSearch = false;
+    let lastRefreshFilter = null;
     let showNoPack = false;
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
+    let search: ActionBarSearch;
     let loading = false;
     let sources: RemoteContentProvider[] = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
     let currentRemoteSource: RemoteContentProvider = sources[0];
@@ -71,61 +73,42 @@
 
     function updateFiltered(filter: string) {
         if (filter) {
-            const toFilter = filter.toLowerCase();
-            filteredPacks = packs.filter((d) => d.pack.title.toLowerCase().indexOf(filter) !== -1 || d.pack.description.toLowerCase().indexOf(filter) !== -1);
+            filteredPacks = packs?.filter((d) => d.pack.title.toLowerCase().indexOf(filter) !== -1 || d.pack.description.toLowerCase().indexOf(filter) !== -1);
         } else {
             filteredPacks = packs;
         }
     }
-    const updateFilteredDebounce = debounce(updateFiltered, 500);
 
-    $: updateFilteredDebounce(filter);
-
-    onDestroy(() => {
-        blurTextField();
-    });
-    function blurTextField() {
-        Utils.dismissSoftInput();
-    }
-
-    async function refresh() {
-        if (loading || !currentRemoteSource) {
+    async function refresh(force = true, filter?: string) {
+        if (loading || !currentRemoteSource || (!force && lastRefreshFilter === filter)) {
             return;
         }
+        lastRefreshFilter = filter;
         loading = true;
         try {
-            const r = await request({
-                method: 'GET',
-                url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json'
-            });
-            DEV_LOG && console.log('got remote packs', JSON.stringify(r));
-            packs = new ObservableArray(
-                r.data.map((pack) => ({
-                    pack,
-                    selected: false
-                }))
-            );
+            if (force || !packs) {
+                const r = await request({
+                    method: 'GET',
+                    url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json'
+                });
+                DEV_LOG && console.log('got remote packs', JSON.stringify(r));
+                packs = new ObservableArray(
+                    r.data.map((pack) => ({
+                        pack,
+                        selected: false
+                    }))
+                );
+            }
+            loading = false;
             updateFiltered(filter);
             updateNoPack();
-
-            // if (DEV_LOG) {
-            //     const component = (await import('~/components/PDFPreview.svelte')).default;
-            //     await showModal({
-            //         page: component,
-            //         animated: true,
-            //         fullscreen: true,
-            //         props: {
-            //             packs: [packs.getItem(0).doc]
-            //         }
-            //     });
-            // }
-            // await Promise.all(r.map((d) => d.pages[0]?.imagePath));
         } catch (error) {
             showError(error);
         } finally {
             loading = false;
         }
     }
+    const refreshSimple = () => refresh();
 
     function updateNoPack() {
         nbPacks = packs?.length ?? 0;
@@ -141,22 +124,20 @@
     });
 
     async function onNavigatedTo(e: NavigatedData) {
+        DEV_LOG && console.log('onNavigatedTo', sources.length);
         sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
         currentRemoteSource = sources[0];
-        DEV_LOG && console.log('onNavigatedTo', sources.length);
         if (!e.isBackNavigation) {
             if (documentsService.started) {
                 refresh();
             } else {
-                documentsService.once('started', refresh);
+                documentsService.once('started', refreshSimple);
             }
         }
     }
 
     async function onItemTap(item: Item) {
         try {
-            // console.log('onItemTap', event && event.ios && event.ios.state, selectedSessions.length);
-
             const component = (await import('~/components/DownloadWebview.svelte')).default;
             const actualUrl = await showBottomSheet({
                 view: component,
@@ -171,7 +152,6 @@
                 await timeout(500);
                 closeModal(item.pack);
             }
-            // await goToPackView(item.doc);
         } catch (error) {
             showError(error);
         }
@@ -182,22 +162,6 @@
     }
     onThemeChanged(refreshCollectionView);
 
-    // let lottieLightColor = new Color(colorPrimaryContainer);
-    // const
-    // let lottieDarkFColor;
-    // let lottieLightColor;
-    // $: {
-    //     if (colorPrimaryContainer) {
-    //         lottieDarkFColor = new Color(colorPrimaryContainer);
-    //         const realTheme = getRealTheme();
-    //         if (realTheme === 'light') {
-    //             lottieLightColor = new Color(colorPrimaryContainer).darken(10);
-    //         } else {
-    //             lottieLightColor = new Color(colorPrimaryContainer).lighten(10);
-    //         }
-    //     }
-    // }
-
     function getItemImageHeight(viewStyle) {
         return (condensed ? 44 : 94) * $fontScale;
     }
@@ -206,12 +170,6 @@
     }
     function getImageMargin(viewStyle) {
         return 10;
-        // switch (viewStyle) {
-        //     case 'condensed':
-        //         return 10;
-        //     default:
-        //         return 10;
-        // }
     }
 
     $: textPaint.color = colorOnBackground || 'black';
@@ -224,15 +182,6 @@
         // const h2 = h / 2;
         const dx = 10 + getItemImageHeight(viewStyle) + 16;
         textPaint.color = colorOnSurfaceVariant;
-        // canvas.drawText(
-        //     filesize(
-        //         item.doc.pages.reduce((acc, v) => acc + v.size, 0),
-        //         { output: 'string' }
-        //     ),
-        //     dx,
-        //     h - (condensed ? 0 : 16) - 10,
-        //     textPaint
-        // );
         textPaint.color = colorOnBackground;
         const topText = createNativeAttributedString({
             spans: [
@@ -267,7 +216,6 @@
     }
     async function selectSource(event) {
         try {
-            // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
             const options = sources.map((s) => ({
                 ...s
             }));
@@ -283,28 +231,6 @@
                     refresh();
                 }
             });
-            // await showPopover({
-            //     backgroundColor: colorSurfaceContainer,
-            //     view: OptionSelect,
-            //     anchor: event.object,
-            //     horizPos: HorizontalPosition.ALIGN_LEFT,
-            //     vertPos: VerticalPosition.CENTER,
-            //     props: {
-            //         borderRadius: 10,
-            //         elevation: 4,
-            //         margin: 4,
-            //         backgroundColor: colorSurfaceContainer,
-            //         containerColumns: 'auto',
-            //         rowHeight: 58 * $fontScale,
-            //         height: Math.min(58 * options.length * $fontScale + 8, 300),
-            //         width: 150,
-            //         options,
-            //         onClose: (item) => {
-            //             closePopover();
-            //             updateOption(option, valueTransformer ? valueTransformer(item.id) : item.id, fullRefresh);
-            //         }
-            //     }
-            // });
         } catch (error) {
             showError(error);
         }
@@ -312,7 +238,7 @@
 </script>
 
 <frame>
-    <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
+    <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
         <gridlayout rows="auto,auto,*,auto">
             <textfield
                 editable={false}
@@ -356,23 +282,9 @@
                 </Template>
             </collectionView>
             {#if showNoPack || !currentRemoteSource || loading}
-                <flexlayout flexDirection="column" horizontalAlignment="center" paddingLeft={16} paddingRight={16} row={3} verticalAlignment="center" width="80%" transition:fade={{ duration: 200 }}>
-                    <!-- <lottie
-                    bind:this={lottieView}
-                    async={true}
-                    autoPlay={true}
-                    flexShrink={2}
-                    keyPathColors={{
-                        'background|**': lottieDarkFColor,
-                        'full|**': lottieLightColor,
-                        'scanner|**': lottieLightColor,
-                        'lines|**': lottieDarkFColor
-                    }}
-                    loop={true}
-                    src="~/assets/lottie/scanning.lottie" /> -->
+                <flexlayout flexDirection="column" horizontalAlignment="center" paddingLeft={16} paddingRight={16} row={2} verticalAlignment="center" width="80%" transition:fade={{ duration: 200 }}>
                     <image flexShrink={2} src="res://icon_star" visibility={!loading ? 'visible' : 'collapse'} />
                     <mdactivityindicator busy={loading} height={$actionBarButtonHeight} verticalAlignment="middle" visibility={loading ? 'visible' : 'collapse'} width={$actionBarButtonHeight} />
-
                     <label
                         color={colorOnSurfaceVariant}
                         flexShrink={0}
@@ -385,20 +297,10 @@
             {/if}
 
             <CActionBar modalWindow={true} title={l('download_packs')}>
-                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={showSearch ? 'collapsed' : 'visible'} on:tap={() => (showSearch = true)} />
+                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
                 <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
 
-                <textfield
-                    slot="center"
-                    autocapitalizationType="none"
-                    col={1}
-                    hint={lc('search')}
-                    placeholder={lc('search')}
-                    returnKeyType="search"
-                    text={filter}
-                    visibility={showSearch ? 'visible' : 'hidden'}
-                    on:returnPress={blurTextField}
-                    on:textChange={(e) => (filter = e['value'])} />
+                <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
             </CActionBar>
         </gridlayout>
     </page>
