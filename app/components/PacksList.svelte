@@ -41,6 +41,7 @@
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { getFileOrFolderSize, unzip } from '~/utils';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
+    import ActionBarSearch from './common/ActionBarSearch.svelte';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -71,23 +72,23 @@
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
     let fabHolder: NativeViewElementNode<StackLayout>;
-    let searchTF: NativeViewElementNode<TextField>;
+    let search: ActionBarSearch;
 
     let stepIndex = 1;
 
-    let filter: string = null;
     let showSearch = false;
+    let lastRefreshFilter = null;
+
+    let loading = false;
 
     let colWidth = null;
     let viewStyle: ViewStyle = ApplicationSettings.getString('packs_list_view_style', 'expanded') as ViewStyle;
+
+    $: if (nbSelected > 0) search.unfocusSearch();
     $: condensed = viewStyle === 'condensed';
     $: colWidth = viewStyle === 'card' ? '50%' : '100%';
-    // let items: ObservableArray<{
-    //     doc: Pack; selected: boolean
-    // }> = null;
-    let loading = false;
-    let lastRefreshFilter = null;
-    async function refresh(filter?: string, force = false) {
+
+    async function refresh(force = true, filter?: string) {
         if (loading || (!force && lastRefreshFilter === filter)) {
             return;
         }
@@ -136,54 +137,7 @@
             loading = false;
         }
     }
-
-    let searchAsTypeTimer;
-    function clearSearch(clearQuery = true, hideSearch = true) {
-        if (searchAsTypeTimer) {
-            clearTimeout(searchAsTypeTimer);
-            searchAsTypeTimer = null;
-        }
-
-        if (clearQuery) {
-            if (filter?.length) {
-                filter = null;
-                refresh();
-            }
-            searchTF.nativeView.text = '';
-        }
-        if (hideSearch) {
-            searchTF?.nativeView?.clearFocus();
-            showSearch = false;
-        }
-    }
-    function onTextChanged(text: string) {
-        const query = text.toLowerCase();
-        DEV_LOG && console.log('onTextChanged', query, filter);
-        if (query !== filter) {
-            if (query) {
-                if (searchAsTypeTimer) {
-                    clearTimeout(searchAsTypeTimer);
-                    searchAsTypeTimer = null;
-                }
-                if (query && query.length > 2) {
-                    searchAsTypeTimer = setTimeout(() => {
-                        searchAsTypeTimer = null;
-                        refresh(query);
-                    }, 1000);
-                } else {
-                    // the timeout is to allow svelte to see changes with $:
-                    setTimeout(() => {
-                        clearSearch(false, false);
-                    }, 0);
-
-                    if (query.length === 0 && filter && filter.length > 0) {
-                        unfocus();
-                    }
-                }
-            }
-            filter = query;
-        }
-    }
+    const refreshSimple = () => refresh();
 
     function updateNoPack() {
         nbPacks = packs?.length ?? 0;
@@ -273,7 +227,6 @@
         DEV_LOG && console.log('permResult', permResult);
     });
     onDestroy(() => {
-        blurTextField();
         DEV_LOG && console.log('PackList', 'onDestroy');
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
@@ -284,20 +237,6 @@
         documentsService.off(EVENT_PACK_ADDED, onPackAdded);
         documentsService.off(EVENT_PACK_DELETED, onPacksDeleted);
     });
-    function showSearchTF() {
-        showSearch = true;
-        searchTF?.nativeView?.requestFocus();
-    }
-    function blurTextField() {
-        Utils.dismissSoftInput();
-    }
-    function unfocus() {
-        if (searchAsTypeTimer) {
-            clearTimeout(searchAsTypeTimer);
-            searchAsTypeTimer = null;
-        }
-        blurTextField();
-    }
 
     const canImportFile = !__ANDROID__ || !PLAY_STORE_BUILD || SDK_VERSION < 30;
 
@@ -370,6 +309,7 @@
             showError(error);
         }
     }
+
     async function onNavigatedTo(e: NavigatedData) {
         try {
             if (!e.isBackNavigation) {
@@ -390,9 +330,9 @@
                     ApplicationSettings.setBoolean('showFirstPresentation', false);
                 }
                 if (documentsService.started) {
-                    refresh(null, true);
+                    refresh();
                 } else {
-                    documentsService.once('started', () => refresh(null, true));
+                    documentsService.once('started', refreshSimple);
                 }
             }
         } catch (error) {
@@ -688,7 +628,7 @@
     });
 </script>
 
-<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatedFrom={blurTextField}>
+<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
     <gridlayout rows="auto,*">
         <!-- {/if} -->
         <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
@@ -725,6 +665,8 @@
                     </canvasview>
                 </Template>
             </collectionView>
+            <mdprogress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
+
             <gridlayout prop:bottomSheet rows="90,78" width="100%">
                 <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
                     {#if canImportFile}
@@ -753,32 +695,11 @@
         {/if}
 
         <CActionBar title={l('packs')}>
-            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={showSearch ? 'collapsed' : 'visible'} on:tap={showSearchTF} />
+            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
 
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
-            <gridlayout slot="center" backgroundColor={colorBackground} col={1} colSpan={2} visibility={showSearch ? 'visible' : 'hidden'}>
-                <textfield
-                    bind:this={searchTF}
-                    autocapitalizationType="none"
-                    hint={lc('search')}
-                    paddingRight={45}
-                    placeholder={lc('search')}
-                    returnKeyType="search"
-                    variant="outline"
-                    on:returnPress={blurTextField}
-                    on:textChange={(e) => onTextChanged(e['value'])} />
-                <mdbutton
-                    class="actionBarButton"
-                    height={40}
-                    horizontalAlignment="right"
-                    isVisible={filter?.length > 0}
-                    marginTop={8}
-                    text="mdi-close"
-                    variant="text"
-                    width={40}
-                    on:tap={() => clearSearch()} />
-            </gridlayout>
+            <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
         </CActionBar>
         <!-- {#if nbSelected > 0} -->
         {#if nbSelected > 0}
