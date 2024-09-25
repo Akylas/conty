@@ -195,7 +195,7 @@ export class ImportService extends Observable {
     }
     async importContentFromFiles(files: string[]) {
         this.ensureWorker();
-        await this.sendMessageToWorker('import_data', files, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_from_files', files, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
 }
 export const importService = new ImportService();

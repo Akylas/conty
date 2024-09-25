@@ -94,6 +94,7 @@
     "show_love": "If you like the project please share some love or even contribute",
     "source": "source",
     "startup_error": "there was an error while starting the app. Please restart the app to try again. If it persists please report it",
+    "story": "story",
     "theme": {
         "auto": "auto",
         "black": "black",

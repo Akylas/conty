@@ -103,3 +103,12 @@ export function getFileOrFolderSize(filePath: string) {
         return File.fromPath(filePath).size;
     }
 }
+
+export async function getAudioDuration(audioFile) {
+    const audioAsset = AVURLAsset.URLAssetWithURLOptions(NSURL.fileURLWithPath(audioFile), null);
+    return new Promise<number>((resolve, reject) => {
+        audioAsset.loadValuesAsynchronouslyForKeysCompletionHandler(['duration'], () => {
+            resolve(CMTimeGetSeconds(audioAsset.duration) * 1000);
+        });
+    });
+}

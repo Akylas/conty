@@ -116,6 +116,15 @@ export function stageCanGoHome(s: Stage) {
     return s && !!s.controlSettings?.home && s.homeTransition;
 }
 
+export interface Story {
+    pack: Pack;
+    name: string;
+    audioFiles: any[];
+    images: any[];
+    durations: number[];
+    duration: number;
+}
+
 export class Pack extends Observable implements IPack {
     importedDate: number;
     createdDate: number;

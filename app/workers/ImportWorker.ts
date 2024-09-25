@@ -276,14 +276,14 @@ export default class ImportWorker extends Observable {
                     });
                 } else if (compressed && !supportsCompressedData) {
                     // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
-                    const destinationFolderPath = this.dataFolder.getFolder(id, false).path;
+                    const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
                     DEV_LOG && console.log('we need to unzip existing entry in db', entity.path, destinationFolderPath);
-                    if (!Folder.exists(destinationFolderPath)) {
-                        await unzip(entity.path, destinationFolderPath);
-                        (await documentsService.packRepository.get(id)).save({
-                            compressed: 0
-                        });
-                    }
+                    // if (!Folder.exists(destinationFolderPath)) {
+                    await unzip(entity.path, destinationFolderPath);
+                    (await documentsService.packRepository.get(id)).save({
+                        compressed: 0
+                    });
+                    // }
                     await File.fromPath(entity.path).remove();
                 } else if (supportsCompressedData && compressed && existing.compressed === 0) {
                     (await documentsService.packRepository.get(id)).save({
@@ -298,18 +298,19 @@ export default class ImportWorker extends Observable {
     }
 
     async importFromFilesInternal(files: string[]) {
+        DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             for (let index = 0; index < files.length; index++) {
-                const inputFilePath = __ANDROID__ ? com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), android.net.Uri.parse(files[index])) : files[index];
+                const inputFilePath = files[index];
                 let destinationFolderPath = inputFilePath;
                 const id = Date.now() + '';
-                destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
+                destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
-                    destinationFolderPath = documentsService.dataFolder.getFolder(id, false).path;
-                    if (!Folder.exists(destinationFolderPath)) {
-                        await unzip(inputFilePath, destinationFolderPath);
-                    }
+                    destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                    // if (!Folder.exists(destinationFolderPath)) {
+                    await unzip(inputFilePath, destinationFolderPath);
+                    // }
                 } else {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }

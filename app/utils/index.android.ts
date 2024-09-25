@@ -236,3 +236,10 @@ export async function unzip(srcPath: string, dstPath: string) {
 export function getFileOrFolderSize(filePath: string) {
     return com.akylas.conty.FileUtils.Companion.getFolderSize(new java.io.File(getAndroidRealPath(filePath)));
 }
+export async function getAudioDuration(audioFile) {
+    const uri = android.net.Uri.parse(audioFile);
+    const mmr = new android.media.MediaMetadataRetriever();
+    mmr.setDataSource(Utils.android.getApplicationContext(), uri);
+    const durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+    return parseInt(durationStr, 10);
+}

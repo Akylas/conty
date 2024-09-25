@@ -271,11 +271,11 @@ export class BgService extends android.app.Service {
             let playbackState = PlaybackStateCompat.STATE_PLAYING;
             let currentTime = 0;
 
-            if (controlSettings.ok) {
+            if (controlSettings?.ok) {
                 actionsInCompactView.push(actionIndex++);
                 this.addAction(context, 'ok', lc('ok'), ic_check_id, notifBuilder, playbackstateBuilder);
             }
-            if (controlSettings.pause) {
+            if (!controlSettings || controlSettings?.pause) {
                 currentTime = this.storyHandler.playerCurrentTime;
                 // playbackState = PlaybackStateCompat.STATE_STOPPED;
                 if (playingState === 'play') {
@@ -291,7 +291,7 @@ export class BgService extends android.app.Service {
                 }
             }
 
-            if (stageCanGoHome(currentStage)) {
+            if (currentStage && stageCanGoHome(currentStage)) {
                 actionIndex++;
                 this.addAction(context, 'home', lc('home'), ic_home_id, notifBuilder, playbackstateBuilder);
             }

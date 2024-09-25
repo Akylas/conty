@@ -1,22 +1,19 @@
 <script context="module" lang="ts">
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { Color, Page, Screen, StackLayout } from '@nativescript/core';
+    import { Color, Page, Screen } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
-    import dayjs from 'dayjs';
     import { onDestroy, onMount } from 'svelte';
+    import { Template } from 'svelte-native/components';
     import { NativeViewElementNode } from 'svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StagesChangeEvent, StoryHandler } from '~/handlers/StoryHandler';
-    import { Template } from 'svelte-native/components';
-    import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
-    import { getBGServiceInstance } from '~/services/BgService';
-    import { colors, windowInset } from '~/variables';
-    import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { showError } from '~/utils/showError';
-    import { ALERT_OPTION_MAX_HEIGHT, COLORMATRIX_BLACK_TRANSPARENT, IMAGE_COLORMATRIX } from '~/utils/constants';
+    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StagesChangeEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
+    import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
+    import { onSetup, onUnsetup } from '~/services/BgService.common';
+    import { ALERT_OPTION_MAX_HEIGHT, IMAGE_COLORMATRIX } from '~/utils/constants';
+    import { showError } from '~/utils/showError';
     import { goBack } from '~/utils/svelte/ui';
     import { openLink, showBottomsheetOptionSelect } from '~/utils/ui';
+    import { colors, windowInset } from '~/variables';
 
     const PAGER_PEAKING = 30;
     const PAGER_PAGE_PADDING = 16;
@@ -59,7 +56,8 @@
     let showReplay = false;
     let progress = 0;
     let playingInfo: PlayingInfo = null;
-    let pack: Pack;
+    let pack: Pack = null;
+    let story: Story = null;
     let playerStateInterval;
     let controlSettings: ControlSettings;
     $: controlSettings = currentStages?.[selectedStageIndex]?.controlSettings;
@@ -86,11 +84,16 @@
         handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
+        handler.on(StoryStartEvent, onStoryStart);
+        handler.on(StoryStopEvent, onStoryStop);
 
         DEV_LOG && console.log('onSetup', handler.selectedStageIndex, JSON.stringify(handler.currentStages), JSON.stringify(handler.currentPlayingInfo));
-        pack = handler.pack;
+        pack = handler.playingPack;
+        story = handler.playingStory;
         if (pack) {
             onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
+        } else if (story) {
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
         } else {
             close();
@@ -105,10 +108,16 @@
         handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
+        handler?.off(StoryStartEvent, onStoryStart);
+        handler?.off(StoryStopEvent, onStoryStop);
     });
 
     function onPlayerProgressInterval() {
-        currentTime = storyHandler?.playerCurrentTime || 0;
+        if (story) {
+            currentTime = storyHandler?.playerCurrentTime || 0 + playingInfo.durations.splice(0, storyHandler?.currentStoryAudioIndex).reduce((acc, d) => acc + d, 0);
+        } else {
+            currentTime = storyHandler?.playerCurrentTime || 0;
+        }
         progress = playingInfo ? (currentTime / (playingInfo.duration || 1)) * 100 : 0;
     }
     function startPlayerInterval() {
@@ -129,6 +138,12 @@
         pack = event.pack;
         DEV_LOG && console.log('onPackStart', JSON.stringify(playingInfo));
     }
+    function onStoryStart(event) {
+        // state = 'play';
+        story = event.story;
+        story.pack.getThumbnail().then((r) => (currentImage = r));
+        DEV_LOG && console.log('onStoryStart', JSON.stringify(playingInfo));
+    }
 
     function close() {
         goBack({
@@ -136,6 +151,20 @@
         });
     }
     function onPackStop(event) {
+        pack = null;
+        currentImage = null;
+        controlSettings = null;
+        currentStage = null;
+        currentStages = [];
+        selectedStageIndex = 0;
+        showReplay = false;
+        if (event.closeFullscreenPlayer) {
+            close();
+        }
+    }
+    function onStoryStop(event) {
+        currentImage = null;
+        story = null;
         close();
     }
     function onPlayerState(event: PlaybackEventData) {
@@ -182,9 +211,9 @@
 
     function togglePlayState() {
         if (state === 'play') {
-            storyHandler.pauseStory();
+            storyHandler.pausePlayback();
         } else {
-            storyHandler.resumeStory();
+            storyHandler.resumePlayback();
         }
     }
     async function onOkButton() {
@@ -203,10 +232,13 @@
         storyHandler?.onStageHome();
     }
     async function onPagerChanged(e) {
-        storyHandler?.setSelectedStage(e.value);
-        selectedStageIndex = e.value;
+        if (pack) {
+            storyHandler?.setSelectedStage(e.value);
+            selectedStageIndex = e.value;
+        }
     }
     async function getImage(stage: Stage) {
+        DEV_LOG && console.log('getImage', stage.uuid);
         return storyHandler?.getStageImage(pack, stage);
     }
 
@@ -219,19 +251,20 @@
     }
     async function showAllPlayableStories() {
         try {
-            const stages = storyHandler.getAllPlayingStoriesFromPack();
+            const stories = await storyHandler.findAllStories(pack);
             const data: any = await showBottomsheetOptionSelect({
-                height: Math.min(stages.length * 56, ALERT_OPTION_MAX_HEIGHT),
+                height: Math.min(stories.length * 56, ALERT_OPTION_MAX_HEIGHT),
                 rowHeight: 56,
-                options: stages.map((stage) => ({
+                options: stories.map((story) => ({
                     type: 'image',
-                    image: getImage(stage),
-                    name: storyHandler.getStoryName(pack, stage),
-                    stage
+                    image: pack.getThumbnail(),
+                    name: story.name,
+                    subtitle: formatDuration(story.duration),
+                    story
                 }))
             });
-            if (data?.stage) {
-                storyHandler.setStage(data.stage);
+            if (data?.story) {
+                storyHandler.playStory(data?.story as Story);
             }
         } catch (error) {
             showError(error);
@@ -254,19 +287,32 @@
             row={1}
             selectable={true}
             textAlignment="center"
+            visibility={pack ? 'visible' : 'collapsed'}
             on:linkTap={onLinkTap} />
         <!-- <GridLayout row="2" verticalAlignment="center"> -->
 
         <gridlayout height={0.8 * screenWidth * 0.86} row={2}>
             <!-- <image id="image" backgroundColor="black" borderRadius={20} elevation={4} margin={10} src={currentImage} stretch="aspectFit" /> -->
-            <pager items={currentStages} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} on:selectedIndexChange={onPagerChanged}>
-                <Template let:item>
-                    <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
-                        <!-- <image backgroundColor={colorSecondary} borderRadius={20} colorMatrix={COLORMATRIX_BLACK_TRANSPARENT} elevation={4} margin="0 6 0 6" src={getImage(item)} stretch="aspectFit" /> -->
-                        <image borderRadius={20} elevation={4} horizontalAlignment="center" src={getImage(item)} verticalAlignment="center" />
-                    </gridlayout>
-                </Template>
-            </pager>
+            {#if pack}
+                <pager items={currentStages} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} on:selectedIndexChange={onPagerChanged}>
+                    <Template let:index let:item>
+                        <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
+                            <!-- <image backgroundColor={colorSecondary} borderRadius={20} colorMatrix={COLORMATRIX_BLACK_TRANSPARENT} elevation={4} margin="0 6 0 6" src={getImage(item)} stretch="aspectFit" /> -->
+                            <image borderRadius={20} elevation={4} horizontalAlignment="center" sharedTransitionTag={index === 0 ? 'cover' : null} src={getImage(item)} verticalAlignment="center" />
+                        </gridlayout>
+                    </Template>
+                </pager>
+            {:else}
+                <image
+                    backgroundColor="red"
+                    borderRadius={20}
+                    elevation={4}
+                    horizontalAlignment="center"
+                    margin={PAGER_PAGE_PADDING - 10}
+                    sharedTransitionTag="cover"
+                    src={currentImage}
+                    verticalAlignment="center" />
+            {/if}
         </gridlayout>
         <!-- </GridLayout> -->
         <label color={colorOnSecondaryContainer} fontSize={20} fontWeight="bold" height={50} margin="0 10 0 10" maxLines={2} row={3} text={getStageName(currentStage)} textAlignment="center" />
@@ -276,7 +322,7 @@
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
-        <stacklayout horizontalAlignment="center" orientation="horizontal" row={6}>
+        <stacklayout horizontalAlignment="center" orientation="horizontal" row={6} visibility={pack ? 'visible' : 'hidden'}>
             <mdbutton
                 class="playerButton"
                 horizontalAlignment="right"
@@ -307,7 +353,7 @@
             onGoBack={close}
             showMenuIcon={true}
             textAlignment="center"
-            title={pack?.title}
+            title={pack?.title || story?.name}
             titleProps={{ fontWeight: 'bold' }}>
             <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-format-list-bulleted" variant="text" on:tap={showAllPlayableStories} />
         </CActionBar>

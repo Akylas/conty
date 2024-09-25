@@ -5,6 +5,8 @@
         "com.akylas.conty*:*",
         "android.content:ServiceConnection", 
         "android.content.pm:ServiceInfo",
+        
+        "android.media:MediaMetadataRetriever",
 
         "android.view:View.OnApplyWindowInsetsListener",
         "android.view:WindowInsets",

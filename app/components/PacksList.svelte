@@ -7,6 +7,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
+    import { getBGServiceInstance } from '~/services/BgService';
     import { AnimationDefinition, Application, ApplicationSettings, EventData, File, Folder, NavigatedData, ObservableArray, Page, StackLayout, Utils, path } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { SDK_VERSION, throttle } from '@nativescript/core/utils';
@@ -37,11 +38,12 @@
 <script lang="ts">
     import { request } from '@nativescript-community/perms';
     import { TextField } from '@nativescript-community/ui-material-textfield';
-    import { PackStartEvent, PackStopEvent } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { getFileOrFolderSize, unzip } from '~/utils';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
+    import { importService } from '~/services/importservice';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -260,31 +262,33 @@
                 if (confirmed) {
                     const supportsCompressedData = documentsService.supportsCompressedData;
                     showLoading('loading');
-                    for (let index = 0; index < files.length; index++) {
-                        const inputFilePath = __ANDROID__ ? com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), android.net.Uri.parse(files[index])) : files[index];
-                        let destinationFolderPath = inputFilePath;
-                        const id = Date.now() + '';
-                        destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
-                        if (!supportsCompressedData) {
-                            destinationFolderPath = path.join(documentsService.dataFolder.path, id);
-                            if (!Folder.exists(destinationFolderPath)) {
-                                await unzip(inputFilePath, documentsService.dataFolder.getFolder(id).path);
-                            }
-                        } else {
-                            await File.fromPath(inputFilePath).copy(destinationFolderPath);
-                        }
-                        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData));
-                        await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
-                            size: getFileOrFolderSize(destinationFolderPath),
-                            title: storyJSON.title,
-                            description: storyJSON.description,
-                            format: storyJSON.format,
-                            age: storyJSON.age,
-                            version: storyJSON.version,
-                            subtitle: storyJSON.subtitle,
-                            keywords: storyJSON.keywords
-                        });
-                    }
+                    DEV_LOG && console.log('importContentFromFiles', files);
+                    await importService.importContentFromFiles(files);
+                    // for (let index = 0; index < files.length; index++) {
+                    //     const inputFilePath = files[index];
+                    //     let destinationFolderPath = inputFilePath;
+                    //     const id = Date.now() + '';
+                    //     destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
+                    //     if (!supportsCompressedData) {
+                    //         destinationFolderPath = path.join(documentsService.dataFolder.path, id);
+                    //         if (!Folder.exists(destinationFolderPath)) {
+                    //             await unzip(inputFilePath, documentsService.dataFolder.getFolder(id).path);
+                    //         }
+                    //     } else {
+                    //         await File.fromPath(inputFilePath).copy(destinationFolderPath);
+                    //     }
+                    //     const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData));
+                    //     await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
+                    //         size: getFileOrFolderSize(destinationFolderPath),
+                    //         title: storyJSON.title,
+                    //         description: storyJSON.description,
+                    //         format: storyJSON.format,
+                    //         age: storyJSON.age,
+                    //         version: storyJSON.version,
+                    //         subtitle: storyJSON.subtitle,
+                    //         keywords: storyJSON.keywords
+                    //     });
+                    // }
                 }
             }
         } catch (error) {
@@ -377,6 +381,7 @@
     }
     let ignoreTap = false;
     function onItemLongPress(item: Item, event?) {
+
         // if (event && event.ios && event.ios.state !== 1) {
         //     return;
         // }
@@ -602,29 +607,33 @@
         });
     }
 
-    function onPackStart() {
+    function showPlayer() {
         stepIndex = 2;
     }
-    function onPackStop() {
+    function hidePlayer() {
         DEV_LOG && console.log('home onPackStop');
         stepIndex = 1;
     }
 
     onSetup((storyHandler) => {
-        DEV_LOG && console.info('home onSetup', stepIndex, storyHandler.isPlaying, !!storyHandler.pack);
-        storyHandler.on(PackStartEvent, onPackStart);
-        storyHandler.on(PackStopEvent, onPackStop);
-        if (storyHandler.pack) {
-            onPackStart();
+        DEV_LOG && console.info('home onSetup', stepIndex, storyHandler.isPlaying, !!storyHandler.playingPack);
+        storyHandler.on(StoryStartEvent, showPlayer);
+        storyHandler.on(PackStartEvent, showPlayer);
+        storyHandler.on(PackStopEvent, hidePlayer);
+        storyHandler.on(StoryStopEvent, hidePlayer);
+        if (storyHandler.playingPack) {
+            showPlayer();
         } else {
-            onPackStop();
+            hidePlayer();
         }
     });
 
     onUnsetup((storyHandler) => {
         DEV_LOG && console.info('home onUnsetup', stepIndex, !!storyHandler);
-        storyHandler.off(PackStartEvent, onPackStart);
-        storyHandler.off(PackStopEvent, onPackStop);
+        storyHandler.off(StoryStartEvent, showPlayer);
+        storyHandler.off(PackStartEvent, showPlayer);
+        storyHandler.off(PackStopEvent, hidePlayer);
+        storyHandler.off(StoryStopEvent, hidePlayer);
     });
 </script>
 

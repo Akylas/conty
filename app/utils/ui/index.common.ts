@@ -4,17 +4,31 @@ import { AlertDialog, MDCAlertControlerOptions, alert } from '@nativescript-comm
 import { SnackBarOptions, showSnack as mdShowSnack } from '@nativescript-community/ui-material-snackbar';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import { AlertOptions, Animation, AnimationDefinition, Application, GridLayout, Utils, View, ViewBase } from '@nativescript/core';
+import {
+    AlertOptions,
+    Animation,
+    AnimationDefinition,
+    Application,
+    GridLayout,
+    ModalTransition,
+    PageTransition,
+    Screen,
+    SharedTransition,
+    SharedTransitionConfig,
+    Utils,
+    View,
+    ViewBase
+} from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
 import { ComponentProps } from 'svelte';
-import { NativeViewElementNode, createElement } from 'svelte-native/dom';
+import { NativeViewElementNode, ShowModalOptions, createElement } from 'svelte-native/dom';
 import { get } from 'svelte/store';
 import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
 import type LoadingIndicator__SvelteComponent_ from '~/components/common/LoadingIndicator.svelte';
 import LoadingIndicator from '~/components/common/LoadingIndicator.svelte';
 import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
 import { colors, fontScale, screenWidthDips } from '~/variables';
-import { navigate } from '../svelte/ui';
+import { navigate, showModal } from '../svelte/ui';
 import { showError } from '../showError';
 import BottomSnack from '~/components/common/BottomSnack.svelte';
 import { getBGServiceInstance } from '~/services/BgService';
@@ -414,15 +428,51 @@ export async function hideSnackMessage() {
 }
 
 export async function showFullscreenPlayer() {
+    const config: SharedTransitionConfig = {
+        interactive: {
+            dismiss: {
+                finishThreshold: 0.5
+            }
+        },
+        pageStart: {
+            opacity: 1,
+            x: 0,
+            // good practice to use heightPixels on Android
+            // whereas on iOS, good to use heightDIPs (rely on defaults here)
+            y: __ANDROID__ ? Screen.mainScreen.heightPixels : null
+        },
+        pageEnd: {
+            duration: 300,
+            spring: { tension: 70, friction: 9, mass: 1 }
+        },
+        pageReturn: {
+            duration: 300,
+            opacity: 1,
+            spring: { tension: 70, friction: 9, mass: 2 }
+        }
+    };
     const component = (await import('~/components/FullscreenPlayer.svelte')).default;
-    navigate({
-        page: component,
-        transition: { name: 'fade' }
-    });
+    DEV_LOG && console.log('showFullscreenPlayer', config);
+    if (__IOS__) {
+        showModal({
+            page: component,
+            fullscreen: true,
+            transition: SharedTransition.custom(new ModalTransition(), config)
+        } as any);
+    } else {
+        navigate({
+            page: component,
+            transition: SharedTransition.custom(new PageTransition(), config)
+        });
+    }
+    // navigate({
+    //     page: component,
+    //     transition: { name: 'fade' }
+    // });
 }
 
 export async function playPack(pack: Pack, showFullscreen = true) {
-    getBGServiceInstance().storyHandler.playPack(pack);
+    await getBGServiceInstance().storyHandler.playPack(pack);
     if (showFullscreen) {
         showFullscreenPlayer();
     }

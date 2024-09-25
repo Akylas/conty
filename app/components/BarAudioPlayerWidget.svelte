@@ -2,9 +2,20 @@
     import { GridLayout, Screen } from '@nativescript/core';
     import { onDestroy, onMount } from 'svelte';
     import { NativeViewElementNode } from 'svelte-native/dom';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StagesChangeEvent, StoryHandler } from '~/handlers/StoryHandler';
+    import {
+        PackStartEvent,
+        PackStopEvent,
+        PlaybackEvent,
+        PlaybackEventData,
+        PlayingInfo,
+        StageEventData,
+        StagesChangeEvent,
+        StoryHandler,
+        StoryStartEvent,
+        StoryStopEvent
+    } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
-    import { ControlSettings, Pack, Stage, stageCanGoHome } from '~/models/Pack';
+    import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { IMAGE_COLORMATRIX } from '~/utils/constants';
     import { showError } from '~/utils/showError';
@@ -23,7 +34,8 @@
     let showReplay = false;
     let progress = 0;
     let playingInfo: PlayingInfo = null;
-    let pack: Pack;
+    let pack: Pack = null;
+    let story: Story = null;
     // let visible = false;
     let storyHandler: StoryHandler;
     let playerStateInterval;
@@ -79,12 +91,19 @@
         handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
+        handler.on(StoryStartEvent, onStoryStart);
+        handler.on(StoryStopEvent, onStoryStop);
 
-        pack = handler.pack;
+        pack = handler.playingPack;
+        story = handler.playingStory;
+        DEV_LOG && console.log('onSetup', selectedStageIndex, JSON.stringify(currentStages));
         if (pack) {
-            DEV_LOG && console.log('onSetup', selectedStageIndex, JSON.stringify(currentStages));
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
             onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+        }
+        if (story) {
+            onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
+            // onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
         }
     });
 
@@ -96,10 +115,18 @@
         handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
+        handler?.off(PackStartEvent, onPackStart);
+        handler?.off(PackStopEvent, onPackStop);
+        handler?.off(StoryStartEvent, onStoryStart);
+        handler?.off(StoryStopEvent, onStoryStop);
     });
 
     function onPlayerProgressInterval() {
-        currentTime = storyHandler?.playerCurrentTime || 0;
+        if (story) {
+            currentTime = storyHandler?.playerCurrentTime || 0 + playingInfo.durations.splice(0, storyHandler?.currentStoryAudioIndex).reduce((acc, d) => acc + d, 0);
+        } else {
+            currentTime = storyHandler?.playerCurrentTime || 0;
+        }
         progress = playingInfo ? (currentTime / (playingInfo.duration || 1)) * 100 : 0;
     }
     function startPlayerInterval() {
@@ -118,7 +145,24 @@
     function onPackStart(event) {
         pack = event.pack;
     }
-    function onPackStop(event) {}
+    function onPackStop(event) {
+        currentImage = null;
+        pack = null;
+        controlSettings = null;
+        currentStage = null;
+        currentStages = [];
+        selectedStageIndex = 0;
+        showReplay = false;
+    }
+
+    function onStoryStart(event) {
+        story = event.story;
+        story.pack.getThumbnail().then((r) => (currentImage = r));
+    }
+    function onStoryStop(event) {
+        story = null;
+        currentImage = null;
+    }
     function onPlayerState(event: PlaybackEventData) {
         playingInfo = event.playingInfo;
         if (event.state !== state) {
@@ -140,10 +184,8 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            storyHandler?.getCurrentStageImage().then((r) => {
-                currentImage = r;
-                return r;
-            });
+            DEV_LOG && console.log('onStageChanged');
+            storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
             showError(error);
         }
@@ -159,9 +201,9 @@
 
     function togglePlayState() {
         if (state === 'play') {
-            storyHandler.pauseStory();
+            storyHandler.pausePlayback();
         } else {
-            storyHandler.resumeStory();
+            storyHandler.resumePlayback();
         }
     }
     async function onOkButton() {
@@ -179,9 +221,9 @@
     }
 </script>
 
-<gridlayout {...$$restProps}>
+<gridlayout {...$$restProps} on:tap={() => {}}>
     <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*">
-        <image src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
+        <image sharedTransitionTag="cover" src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
         <label col={1} colSpan={2} color="white" fontSize={15} lineBreak="end" margin="0 3 0 3" maxLines={2} row={1} verticalTextAlignment="top">
             <span fontFamily={$fonts.mdi} text="mdi-music  " verticalAlignment="bottom" />
             <span text={playingInfo?.name || ''} />
@@ -191,16 +233,16 @@
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
         <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
             <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton
                 class="whiteSmallActionBarButton"
-                text={state === 'play' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}
+                text={state === 'play' ? 'mdi-pause' : state !== 'pause' && showReplay ? 'mdi-replay' : 'mdi-play'}
                 variant="text"
-                visibility={currentStages.length ? 'visible' : 'hidden'}
+                visibility={story || currentStages?.length ? 'visible' : 'hidden'}
                 on:tap={togglePlayState} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-check" variant="text" visibility={!!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-check" variant="text" visibility={controlSettings && !!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
             <mdbutton class="whiteSmallActionBarButton" text="mdi-close" variant="text" on:tap={stopPlayback} />
         </stacklayout>
 

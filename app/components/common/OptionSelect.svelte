@@ -253,6 +253,7 @@
                     {iconFontSize}
                     leftIcon={item.icon}
                     mainCol={1}
+                    rightValue={item.rightValue}
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
                     title={item.name}

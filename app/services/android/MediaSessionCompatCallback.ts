@@ -12,12 +12,12 @@ export class MediaSessionCompatCallback extends android.support.v4.media.session
 
     onPlay() {
         DEV_LOG && console.log('MediaSessionCompatCallback', 'onPlay');
-        getBGServiceInstance().storyHandler.resumeStory();
+        getBGServiceInstance().storyHandler.resumePlayback();
         super.onPlay();
     }
     onPause() {
         DEV_LOG && console.log('MediaSessionCompatCallback', 'onPause');
-        getBGServiceInstance().storyHandler.pauseStory();
+        getBGServiceInstance().storyHandler.pausePlayback();
         super.onPause();
     }
 

@@ -24,6 +24,7 @@ import { createSharedDocumentsService, documentsService } from './services/docum
 import { showError } from './utils/showError';
 import { navigate } from './utils/svelte/ui';
 import { importService } from './services/importservice';
+import { time } from '@nativescript/core/profiling';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
