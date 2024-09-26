@@ -9,13 +9,13 @@ import { throttle, wrapNativeException } from '@nativescript/core/utils';
 import dayjs from 'dayjs';
 import { filesize } from 'filesize';
 import { RemoteContent } from '~/models/Pack';
-import * as ProgressNotifications from '~/services/ProgressNotifications';
 import { hashCode, unzip } from '~/utils';
 import { ANDROID_CONTENT } from '~/utils/constants';
 import { HTTPError, NoNetworkError, TimeoutError } from '~/utils/error';
 import { showError } from '~/utils/showError';
-import { showSnackMessage } from '~/utils/ui';
+import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import { documentsService } from './documents';
+import * as ProgressNotifications from '~/services/ProgressNotifications';
 
 export type HTTPSOptions = https.HttpsRequestOptions;
 export type { Headers } from '@nativescript-community/https';
@@ -270,7 +270,9 @@ export async function downloadStories(story: RemoteContent) {
     let destinationFilePath;
     try {
         // showSnack({ message: lc('preparing_download') });
-        const size = parseInt((await getHEAD(story.download))['content-length'], 10);
+        const headResult = await getHEAD(story.download);
+        const size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
+        DEV_LOG && console.log('downloadStories', size);
         // const toDownload = await Promise.all(
         //     stories.map(async (s) => {
         //         const pageContent = await (await https.request<string>({ method: 'GET', url: stories[0].download })).content.toStringAsync();
@@ -304,6 +306,7 @@ export async function downloadStories(story: RemoteContent) {
         // if (!confirmed) {
         //     return;
         // }
+
         progressNotificationId = 52346 + hashCode(story.download);
         // const headers = await Promise.all(stories.map(getHEAD));
 
@@ -317,7 +320,7 @@ export async function downloadStories(story: RemoteContent) {
 
         const progressNotification = ProgressNotifications.show({
             id: progressNotificationId, //required
-            icon: 'mdi-glasses',
+            icon: 'mdi-download',
             smallIcon: 'mdi-download',
             title: lc('downloading_story') + '...',
             message: filesize(size, { output: 'string' }),
@@ -336,7 +339,9 @@ export async function downloadStories(story: RemoteContent) {
             ]
         });
         function updateProgress(progress) {
-            showSnackMessage({ text: l('downloading_story_progress', progress), progress });
+            if (__IOS__) {
+                showSnackMessage({ text: l('downloading_story_progress', progress), progress });
+            }
         }
         updateProgress(0);
         DEV_LOG && console.log('progressNotification', progressNotification);
@@ -373,6 +378,9 @@ export async function downloadStories(story: RemoteContent) {
             },
             downloadFilePath
         );
+        if (__IOS__) {
+            hideSnackMessage();
+        }
 
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {

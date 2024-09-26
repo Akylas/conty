@@ -143,6 +143,7 @@
     }
 
     function onPackStart(event) {
+        story = null;
         pack = event.pack;
     }
     function onPackStop(event) {
@@ -156,10 +157,13 @@
     }
 
     function onStoryStart(event) {
+        DEV_LOG && console.log('onStoryStart');
+        pack = null;
         story = event.story;
         story.pack.getThumbnail().then((r) => (currentImage = r));
     }
     function onStoryStop(event) {
+        DEV_LOG && console.log('onStoryStop');
         story = null;
         currentImage = null;
     }
@@ -184,7 +188,6 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            DEV_LOG && console.log('onStageChanged');
             storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
             showError(error);
@@ -232,7 +235,7 @@
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
-        <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
+        <stacklayout col={1} horizontalAlignment="right" orientation="horizontal" verticalAlignment="center">
             <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
             <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />

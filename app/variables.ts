@@ -3,7 +3,7 @@ import { Application, Color, Screen, Utils } from '@nativescript/core';
 import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale';
 import { get, writable } from 'svelte/store';
 import { getRealTheme, theme } from './helpers/theme';
-import { SDK_VERSION } from '@nativescript/core/utils';
+import { SDK_VERSION, layout } from '@nativescript/core/utils';
 
 export const colors = writable({
     colorPrimary: '',
@@ -128,6 +128,15 @@ const onInitRootView = function () {
         const rootView = Application.getRootView();
         const rootViewStyle = rootView?.style;
         fonts.set({ mdi: rootViewStyle.getCssVariable('--mdiFontFamily') });
+        // const safeAreaInsets = UIApplication.sharedApplication.keyWindow.safeAreaInsets;
+        // const inset = {
+        //     left : layout.round(layout.toDevicePixels(safeAreaInsets.left)),
+        // 	top : layout.round(layout.toDevicePixels(safeAreaInsets.top)),
+        // 	right : layout.round(layout.toDevicePixels(safeAreaInsets.right)),
+        // 	bottom: layout.round(layout.toDevicePixels(safeAreaInsets.bottom))
+        // }
+        // DEV_LOG && console.log('rootView.getSafeAreaInsets()', inset);
+        // windowInset.set(inset);
 
         const currentColors = get(colors);
         Object.keys(currentColors).forEach((c) => {
@@ -153,108 +162,120 @@ Application.on('activity_started', () => {
 });
 
 export function updateThemeColors(theme: string) {
-    DEV_LOG && console.log('updateThemeColors', theme);
-    const currentColors = get(colors);
-    let rootView = Application.getRootView();
-    if (rootView?.parent) {
-        rootView = rootView.parent as any;
-    }
-    const rootViewStyle = rootView?.style;
-    if (!rootViewStyle) {
-        return;
-    }
-    // rootViewStyle?.setUnscopedCssVariable('--fontScale', fontScale + '');
-    if (__ANDROID__) {
-        const nUtils = com.akylas.conty.Utils.Companion;
-        const activity = Application.android.startActivity;
-        // we also update system font scale so that our UI updates correcly
-        fontScale.set(Utils.android.getApplicationContext().getResources().getConfiguration().fontScale);
-        Object.keys(currentColors).forEach((c) => {
-            if (c.endsWith('Disabled')) {
-                return;
-            }
-            if (c === 'colorBackground') {
-                currentColors.colorBackground = new Color(nUtils.getColorFromInt(activity, 16842801)).hex;
-            } else if (c === 'popupMenuBackground') {
-                currentColors.popupMenuBackground = new Color(nUtils.getColorFromInt(activity, 16843126)).hex;
-            } else {
-                currentColors[c] = new Color(nUtils.getColorFromName(activity, c)).hex;
-            }
-        });
-    } else {
-        // TODO: define all color themes for iOS
-        if (theme === 'dark' || theme === 'black') {
-            currentColors.colorPrimary = '#7DDB82';
-            currentColors.colorOnPrimary = '#00390F';
-            currentColors.colorPrimaryContainer = '#00531A';
-            currentColors.colorOnPrimaryContainer = '#98F89C';
-            currentColors.colorSecondary = '#B9CCB4';
-            currentColors.colorOnSecondary = '#243424';
-            currentColors.colorSecondaryContainer = '#3A4B39';
-            currentColors.colorOnSecondaryContainer = '#D5E8D0';
-            currentColors.colorBackground = '#1A1C19';
-            currentColors.colorOnBackground = '#E2E3DD';
-            currentColors.colorSurface = '#121411';
-            currentColors.colorOnSurface = '#C6C7C1';
-            currentColors.colorSurfaceInverse = '#F9FAF4';
-            currentColors.colorOnSurfaceInverse = '#121411';
-            currentColors.colorOutline = '#8C9388';
-            currentColors.colorSurfaceVariant = '#424940';
-            currentColors.colorOnSurfaceVariant = '#C2C9BD';
-            currentColors.colorSurfaceContainer = '#121411';
-            currentColors.colorError = '#FFB4AB';
-            currentColors.colorOnError = '#690005';
+    try {
+        DEV_LOG && console.log('updateThemeColors', theme);
+        const currentColors = get(colors);
+        let rootView = Application.getRootView();
+        if (rootView?.parent) {
+            rootView = rootView.parent as any;
+        }
+        const rootViewStyle = rootView?.style;
+        if (!rootViewStyle) {
+            return;
+        }
+        // rootViewStyle?.setUnscopedCssVariable('--fontScale', fontScale + '');
+        if (__ANDROID__) {
+            const nUtils = com.akylas.conty.Utils.Companion;
+            const activity = Application.android.startActivity;
+            // we also update system font scale so that our UI updates correcly
+            fontScale.set(Utils.android.getApplicationContext().getResources().getConfiguration().fontScale);
+            Object.keys(currentColors).forEach((c) => {
+                if (c.endsWith('Disabled')) {
+                    return;
+                }
+                if (c === 'colorBackground') {
+                    currentColors.colorBackground = new Color(nUtils.getColorFromInt(activity, 16842801)).hex;
+                } else if (c === 'popupMenuBackground') {
+                    currentColors.popupMenuBackground = new Color(nUtils.getColorFromInt(activity, 16843126)).hex;
+                } else {
+                    currentColors[c] = new Color(nUtils.getColorFromName(activity, c)).hex;
+                }
+            });
         } else {
-            currentColors.colorPrimary = '#006E25';
-            currentColors.colorOnPrimary = '#FFFFFF';
-            currentColors.colorPrimaryContainer = '#98F89C';
-            currentColors.colorOnPrimaryContainer = '#002106';
-            currentColors.colorSecondary = '#526350';
-            currentColors.colorOnSecondary = '#FFFFFF';
-            currentColors.colorSecondaryContainer = '#D5E8D0';
-            currentColors.colorOnSecondaryContainer = '#101F10';
-            currentColors.colorBackground = '#FCFDF7';
-            currentColors.colorOnBackground = '#1A1C19';
-            currentColors.colorSurface = '#F9FAF4';
-            currentColors.colorOnSurface = '#1A1C19';
-            currentColors.colorSurfaceInverse = '#121411';
-            currentColors.colorOnSurfaceInverse = '#C6C7C1';
-            currentColors.colorOutline = '#72796F';
-            currentColors.colorSurfaceVariant = '#DEE5D9';
-            currentColors.colorOnSurfaceVariant = '#424940';
-            currentColors.colorSurfaceContainer = '#DEE5D9';
-            currentColors.colorError = '#BA1A1A';
-            currentColors.colorOnError = '#FFFFFF';
+            // TODO: define all color themes for iOS
+            if (theme === 'dark' || theme === 'black') {
+                currentColors.colorPrimary = '#7DDB82';
+                currentColors.colorOnPrimary = '#00390F';
+                currentColors.colorPrimaryContainer = '#00531A';
+                currentColors.colorOnPrimaryContainer = '#98F89C';
+                currentColors.colorSecondary = '#B9CCB4';
+                currentColors.colorOnSecondary = '#243424';
+                currentColors.colorSecondaryContainer = '#3A4B39';
+                currentColors.colorOnSecondaryContainer = '#D5E8D0';
+                currentColors.colorTertiary = '#FFE6D5';
+                currentColors.colorOnTertiary = '#3F2C1E';
+                currentColors.colorTertiaryContainer = '#D8BBA6';
+                currentColors.colorOnTertiaryContainer = '#412E1F';
+                currentColors.colorBackground = '#1A1C19';
+                currentColors.colorOnBackground = '#E2E3DD';
+                currentColors.colorSurface = '#121411';
+                currentColors.colorOnSurface = '#C6C7C1';
+                currentColors.colorSurfaceInverse = '#F9FAF4';
+                currentColors.colorOnSurfaceInverse = '#121411';
+                currentColors.colorOutline = '#8C9388';
+                currentColors.colorSurfaceVariant = '#424940';
+                currentColors.colorOnSurfaceVariant = '#C2C9BD';
+                currentColors.colorSurfaceContainer = '#121411';
+                currentColors.colorError = '#FFB4AB';
+                currentColors.colorOnError = '#690005';
+            } else {
+                currentColors.colorPrimary = '#006E25';
+                currentColors.colorOnPrimary = '#FFFFFF';
+                currentColors.colorPrimaryContainer = '#98F89C';
+                currentColors.colorOnPrimaryContainer = '#002106';
+                currentColors.colorSecondary = '#526350';
+                currentColors.colorOnSecondary = '#FFFFFF';
+                currentColors.colorSecondaryContainer = '#D5E8D0';
+                currentColors.colorOnSecondaryContainer = '#101F10';
+                currentColors.colorTertiary = '#715A49';
+                currentColors.colorOnTertiary = '#FFFFFF';
+                currentColors.colorTertiaryContainer = '#E6C7B2';
+                currentColors.colorOnTertiaryContainer = '#4A3627';
+                currentColors.colorBackground = '#FCFDF7';
+                currentColors.colorOnBackground = '#1A1C19';
+                currentColors.colorSurface = '#F9FAF4';
+                currentColors.colorOnSurface = '#1A1C19';
+                currentColors.colorSurfaceInverse = '#121411';
+                currentColors.colorOnSurfaceInverse = '#C6C7C1';
+                currentColors.colorOutline = '#72796F';
+                currentColors.colorSurfaceVariant = '#DEE5D9';
+                currentColors.colorOnSurfaceVariant = '#424940';
+                currentColors.colorSurfaceContainer = '#DEE5D9';
+                currentColors.colorError = '#BA1A1A';
+                currentColors.colorOnError = '#FFFFFF';
+            }
+
+            themer.setPrimaryColor(currentColors.colorPrimary);
+            themer.setOnPrimaryColor(currentColors.colorOnPrimary);
+            themer.setAccentColor(currentColors.colorPrimary);
+            themer.setSecondaryColor(currentColors.colorSecondary);
+            themer.setSurfaceColor(currentColors.colorSurface);
+            themer.setOnSurfaceColor(currentColors.colorOnSurface);
+        }
+        if (theme === 'black') {
+            currentColors.colorBackground = '#000000';
         }
 
-        themer.setPrimaryColor(currentColors.colorPrimary);
-        themer.setOnPrimaryColor(currentColors.colorOnPrimary);
-        themer.setAccentColor(currentColors.colorPrimary);
-        themer.setSecondaryColor(currentColors.colorSecondary);
-        themer.setSurfaceColor(currentColors.colorSurface);
-        themer.setOnSurfaceColor(currentColors.colorOnSurface);
+        if (theme === 'dark') {
+            currentColors.colorSurfaceContainerHigh = new Color(currentColors.colorSurfaceContainer).lighten(10).hex;
+            currentColors.colorSurfaceContainerHighest = new Color(currentColors.colorSurfaceContainer).lighten(20).hex;
+        } else {
+            currentColors.colorSurfaceContainerHigh = new Color(currentColors.colorSurfaceContainer).darken(10).hex;
+            currentColors.colorSurfaceContainerHighest = new Color(currentColors.colorSurfaceContainer).darken(20).hex;
+        }
+        currentColors.colorOnSurfaceVariant2 = new Color(currentColors.colorOnSurfaceVariant).setAlpha(170).hex;
+        currentColors.colorOnSurfaceDisabled = new Color(currentColors.colorOnSurface).setAlpha(50).hex;
+        Object.keys(currentColors).forEach((c) => {
+            // DEV_LOG && console.log(c, currentColors[c]);
+            rootViewStyle?.setUnscopedCssVariable('--' + c, currentColors[c]);
+        });
+        colors.set(currentColors);
+        Application.notify({ eventName: 'colorsChange', colors: currentColors });
+        DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
+        rootView?._onCssStateChange();
+        const rootModalViews = rootView?._getRootModalViews();
+        rootModalViews.forEach((rootModalView) => rootModalView._onCssStateChange());
+    } catch (error) {
+        console.error(error, error.stack);
     }
-    if (theme === 'black') {
-        currentColors.colorBackground = '#000000';
-    }
-
-    if (theme === 'dark') {
-        currentColors.colorSurfaceContainerHigh = new Color(currentColors.colorSurfaceContainer).lighten(10).hex;
-        currentColors.colorSurfaceContainerHighest = new Color(currentColors.colorSurfaceContainer).lighten(20).hex;
-    } else {
-        currentColors.colorSurfaceContainerHigh = new Color(currentColors.colorSurfaceContainer).darken(10).hex;
-        currentColors.colorSurfaceContainerHighest = new Color(currentColors.colorSurfaceContainer).darken(20).hex;
-    }
-    currentColors.colorOnSurfaceVariant2 = new Color(currentColors.colorOnSurfaceVariant).setAlpha(170).hex;
-    currentColors.colorOnSurfaceDisabled = new Color(currentColors.colorOnSurface).setAlpha(50).hex;
-    Object.keys(currentColors).forEach((c) => {
-        // DEV_LOG && console.log(c, currentColors[c]);
-        rootViewStyle?.setUnscopedCssVariable('--' + c, currentColors[c]);
-    });
-    colors.set(currentColors);
-    Application.notify({ eventName: 'colorsChange', colors: currentColors });
-    DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
-    rootView?._onCssStateChange();
-    const rootModalViews = rootView?._getRootModalViews();
-    rootModalViews.forEach((rootModalView) => rootModalView._onCssStateChange());
 }

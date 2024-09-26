@@ -5,7 +5,8 @@
 import Foundation
 
 
-public extension FileManager {
+@objc(FileManager)
+extension FileManager {
 
     /// Calculate the allocated size of a directory and all its contents on the volume.
     ///
@@ -16,8 +17,8 @@ public extension FileManager {
     ///
     /// - note: There are a couple of oddities that are not taken into account (like symbolic links, meta data of
     /// directories, hard links, ...).
-
-    public func allocatedSizeOfDirectory(at directoryURL: URL) throws -> UInt64 {
+    @objc
+    func allocatedSizeOfDirectory(_ directoryURL: URL) -> UInt64 {
 
         // The error handler simply stores the error and stops traversal
         var enumeratorError: Error? = nil
@@ -43,11 +44,15 @@ public extension FileManager {
 
             // Add up individual file sizes.
             let contentItemURL = item as! URL
+          do {
             accumulatedSize += try contentItemURL.regularFileAllocatedSize()
+          } catch {
+            
+          }
         }
 
         // Rethrow errors from errorHandler.
-        if let error = enumeratorError { throw error }
+//        if let error = enumeratorError { throw error }
 
         return accumulatedSize
     }

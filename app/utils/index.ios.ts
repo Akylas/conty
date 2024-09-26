@@ -97,8 +97,7 @@ export function unzip(srcPath, dstPath) {
 
 export function getFileOrFolderSize(filePath: string) {
     if (Folder.exists(filePath)) {
-        //@ts-ignore
-        return NSFileManager.defaultManager.allocatedSizeOfDirectoryAt(NSURL.URLWithString(filePath));
+        return NSFileManager.defaultManager.allocatedSizeOfDirectory(NSURL.URLWithString(filePath));
     } else {
         return File.fromPath(filePath).size;
     }

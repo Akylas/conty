@@ -10,7 +10,7 @@ import { install as installBottomSheets } from '@nativescript-community/ui-mater
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
 import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
-import { Application } from '@nativescript/core';
+import { Application, Trace } from '@nativescript/core';
 import { Frame, NavigatedData, Page } from '@nativescript/core/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
 import { start as startThemeHelper } from '~/helpers/theme';
@@ -83,7 +83,7 @@ try {
 
     // Trace.addCategories(Trace.categories.NativeLifecycle);
     // Trace.addCategories(Trace.categories.Transition);
-    // Trace.addCategories(Trace.categories.Animation);
+    // Trace.addCategories(Trace.categories.Layout);
     // Trace.addCategories(ChartTraceCategory);
     // Trace.enable();
 

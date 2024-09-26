@@ -36,7 +36,6 @@ export default class ImportWorker extends Observable {
         super();
 
         this.queue.on('done', () => {
-            DEV_LOG && console.log('queue empty!');
             this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
             (global as any).postMessage({
                 type: 'terminate'
@@ -203,17 +202,13 @@ export default class ImportWorker extends Observable {
             const supportsCompressedData = documentsService.supportsCompressedData;
             DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
             const entities = await this.dataFolder.getEntities();
-            DEV_LOG &&
-                console.log(
-                    'updateContentFromDataFolder',
-                    supportsCompressedData,
-                    entities.map((e) => e.name)
-                );
-            // entities.forEach(e=>{
-            //     if (typeof e['getFolder'] === 'function') {
+            // DEV_LOG &&
+            //     console.log(
+            //         'updateContentFromDataFolder',
+            //         supportsCompressedData,
+            //         entities.map((e) => e.name)
+            //     );
 
-            //     }
-            // })
             // we remove duplicates
             const existToTest = [...new Set(entities.map((e) => '"' + (e._extension ? e.name.slice(0, -e._extension.length) : e.name) + '"'))];
             DEV_LOG && console.log('existToTest', existToTest);

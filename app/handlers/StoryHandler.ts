@@ -6,7 +6,7 @@ import { Action, Pack, Stage, Story, cleanupStageName, stageIsStory } from '~/mo
 import { showError } from '~/utils/showError';
 import { Handler } from './Handler';
 import { lc } from '@nativescript-community/l';
-import { getAudioDuration } from '~/utils';
+import { getAudioDuration, timeout } from '~/utils';
 
 function shuffleArray(arr) {
     return arr.sort(() => Math.random() - 0.5);
@@ -46,47 +46,51 @@ function mapOfStagesForOption(stages: Stage[], optionIndex: number = -1): Stage[
     }
 }
 
+function findStoryImage(actionNodes: Action[], stageNodes: Stage[], s: Stage) {
+    if (s.image) {
+        return s.image;
+    }
+    const action = actionNodes.find((a) => a.options.indexOf(s.uuid) !== -1);
+    const beforeStage = stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
+    // DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
+    if (!stageIsStory(beforeStage) && beforeStage?.image) {
+        return beforeStage.image;
+    } else {
+        return findStoryImage(actionNodes, stageNodes, beforeStage);
+    }
+}
+
 function findStoriesFromStage(actionNodes: Action[], stageNodes: Stage[], stage: Stage, storyPath: Stage[]): Stage[][] {
     const nextStages = nextStageFrom(actionNodes, stageNodes, stage) || [];
 
     const stages = mapOfStagesForOption(nextStages);
-    DEV_LOG && console.log('findStoriesFromStage', stages.length, storyPath);
-    // if (stages.length > 1) {
-    // separated stories
+    DEV_LOG &&
+        console.log(
+            'findStoriesFromStage',
+            stage.uuid,
+            stages.length,
+            storyPath.length,
+            storyPath.map((s) => s.uuid)
+        );
     return stages.reduce((acc, s) => {
-        const newStoryPath = storyPath.slice();
         const newUuid = s.uuid;
-        // if (newStoryPath.indexOf(newUuid) === -1) {
-        if (newStoryPath.findIndex((s2) => s2.uuid === newUuid) === -1) {
-            // if (stageIsStory(s)) {
+        if (storyPath.findIndex((s2) => s2.uuid === newUuid) === -1) {
+            DEV_LOG &&
+                console.log(
+                    'findStoriesFromStage creating new story',
+                    s.uuid,
+                    storyPath.map((s) => s.uuid)
+                );
+            const newStoryPath = [...storyPath];
             newStoryPath.push(s);
-            // newStoryPath.push(newUuid);
-            // }
             acc.push(...findStoriesFromStage(actionNodes, stageNodes, s, newStoryPath));
             // not done lets continue
         } else {
             // story path done
-            acc.push(newStoryPath);
+            acc.push(storyPath);
         }
         return acc;
     }, []);
-    // } else {
-    //     // continuing on the same story
-    //     const newStage = stages[0];
-    //     const newUuid = newStage.uuid;
-    //     // if (storyPath.findIndex((s2) => (s2.uuid = newUuid)) === -1) {
-    //     if (storyPath.indexOf(newUuid) === -1) {
-    //         // if (stageIsStory(newStage)) {
-    //         storyPath.push(newUuid);
-    //         // storyPath.push(newStage);
-    //         // }
-    //         return findStoriesFromStage(actionNodes, stageNodes, newStage, storyPath);
-    //         // not done lets continue
-    //     } else {
-    //         return [storyPath];
-    //         // story path done
-    //     }
-    // }
 }
 
 function getRandomFromArray(array) {
@@ -214,8 +218,10 @@ export class StoryHandler extends Handler {
     clearPlayer() {
         const oldPlayer = this.mPlayer;
         oldPlayer?.stop();
-        this.mPlayer = new TNSPlayer();
-        oldPlayer?.dispose();
+        // if (__ANDROID__) {
+            this.mPlayer = new TNSPlayer();
+            oldPlayer?.dispose();
+        // }
     }
 
     async playAudio({
@@ -231,14 +237,10 @@ export class StoryHandler extends Handler {
         throwErrorUp?: boolean;
         updatePlayingInfo?: boolean;
     }) {
-        DEV_LOG && console.log('playAudio', fileName);
-        // if (!File.exists(fileName)) {
-        //     throw new Error(lc('file_not_found', fileName));
-        // }
+        DEV_LOG && console.log('playAudio', fileName, dataSource);
         return new Promise<void>(async (resolve, reject) => {
             try {
                 let resolved = false;
-                DEV_LOG && console.log('playAudio', dataSource);
                 await this.mPlayer.playFromFile({
                     autoPlay: true,
                     audioFile: fileName,
@@ -373,7 +375,6 @@ export class StoryHandler extends Handler {
         }
     }
     async getCurrentStageImage() {
-        DEV_LOG && console.log('getCurrentStageImage', this.currentStageImage);
         if (this.playingPack && this.currentStageImage) {
             return (await this.playingPack.getImage(this.currentStageImage)) || this.playingPack.getThumbnail();
         }
@@ -401,17 +402,7 @@ export class StoryHandler extends Handler {
     }
 
     findStoryImage(s: Stage) {
-        if (s.image) {
-            return s.image;
-        }
-        const action = this.actionNodes.find((a) => a.options.indexOf(s.uuid) !== -1);
-        const beforeStage = this.stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
-        // DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
-        if (!stageIsStory(beforeStage) && beforeStage?.image) {
-            return beforeStage.image;
-        } else {
-            return this.findStoryImage(beforeStage);
-        }
+        return findStoryImage(this.actionNodes, this.stageNodes, s);
     }
     getAllPlayingStoriesFromPack() {
         return this.stageNodes.filter(stageIsStory).sort((a, b) => a.name?.localeCompare(b.name));
@@ -419,20 +410,20 @@ export class StoryHandler extends Handler {
     setSelectedStage(index: number) {
         if (this.selectedStageIndex !== index) {
             this.selectedStageIndex = index;
-            this.notifyStageChange();
+            this.notifyStageChange(false);
             this.runStage();
         }
     }
     stageChangeEventData() {
         return { pack: this.playingPack, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex, currentStage: this.currentStageSelected() };
     }
-    async notifyStageChange() {
+    async notifyStageChange(currentStatesChanged = true) {
         try {
             const stage = this.currentStageSelected();
             this.currentStageImage = stageIsStory(stage) ? undefined : stage?.image;
             this.currentPlayingInfo = this.playingInfo();
             DEV_LOG && console.info('notifyStageChange', stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage, JSON.stringify(this.currentPlayingInfo));
-            this.notify({ eventName: StagesChangeEvent, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as StageEventData);
+            this.notify({ eventName: StagesChangeEvent, playingInfo: this.currentPlayingInfo, currentStatesChanged, ...this.stageChangeEventData() } as StageEventData);
         } catch (error) {
             showError(error);
         }
@@ -647,8 +638,6 @@ export class StoryHandler extends Handler {
     }
     async findAllStories(pack: Pack) {
         const data = await pack.getData();
-        this.actionNodes = data.actionNodes;
-        this.stageNodes = data.stageNodes;
         const currentStage = data.stageNodes.find((s) => s.squareOne === true);
         const storiesStages = findStoriesFromStage(data.actionNodes, data.stageNodes, currentStage, []);
         const result = await Promise.all(
@@ -657,8 +646,8 @@ export class StoryHandler extends Handler {
                 const audioFiles = [];
                 const stages = s.reduce((acc, stage) => {
                     if (stageIsStory(stage)) {
-                        audioFiles.push(this.playingPack.getAudio(stage.audio));
-                        images.push(this.findStoryImage(stage));
+                        audioFiles.push(pack.getAudio(stage.audio));
+                        images.push(findStoryImage(data.actionNodes, data.stageNodes, stage));
                         acc.push(stage);
                     }
                     return acc;
