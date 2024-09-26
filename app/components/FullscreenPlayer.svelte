@@ -353,13 +353,19 @@
                         <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                             <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                             <gridlayout borderRadius={20} elevation={IMAGE_ELEVATION} horizontalAlignment="center" verticalAlignment="center">
-                                <image id={`image_${index}`}  borderRadius={20} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
+                                <image id={`image_${index}`} borderRadius={20} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
                             </gridlayout>
                         </gridlayout>
                     </Template>
                 </pager>
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
-                <gridlayout borderRadius={20} elevation={IMAGE_ELEVATION} horizontalAlignment="center" margin={PAGER_PEAKING + PAGER_PAGE_PADDING - 10} verticalAlignment="center">
+                <gridlayout
+                    borderRadius={20}
+                    elevation={IMAGE_ELEVATION}
+                    horizontalAlignment="center"
+                    margin={PAGER_PEAKING + PAGER_PAGE_PADDING - 10}
+                    verticalAlignment="center"
+                    visibility={pack ? 'hidden' : 'visible'}>
                     <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
                 </gridlayout>
             </gridlayout>
