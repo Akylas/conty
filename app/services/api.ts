@@ -16,6 +16,7 @@ import { showError } from '~/utils/showError';
 import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import { documentsService } from './documents';
 import * as ProgressNotifications from '~/services/ProgressNotifications';
+import { importService } from './importservice';
 
 export type HTTPSOptions = https.HttpsRequestOptions;
 export type { Headers } from '@nativescript-community/https';
@@ -384,33 +385,45 @@ export async function downloadStories(story: RemoteContent) {
 
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
-            destinationFilePath = downloadFilePath;
-            if (__ANDROID__ && compressed && androidUseContent) {
-                //we need to copy the file
-                const context = Utils.android.getApplicationContext();
-                destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, '*/*', true);
-            }
-            if (!compressed) {
-                destinationFilePath = documentsService.dataFolder.getFolder(name).path;
-                await Folder.fromPath(destinationFilePath).remove();
-                // ProgressNotification.update(progressNotification, {
-                //     title: $tc('uncompress_glasses_data', storyId),
-                //     rightIcon: '0%',
-                //     progress: 0
-                // });
-                await unzip(file.path, destinationFilePath);
-
-                DEV_LOG && console.log('unzipped ', destinationFilePath);
-            }
-
-            await documentsService.importStory(name, destinationFilePath, compressed, {
-                createdDate: dayjs(story.created_at).valueOf(),
-                modifiedDate: dayjs(story.updated_at).valueOf(),
-                size,
-                age: story.age,
-                title: story.title,
-                description: story.description
+            // do it on a background thread
+            importService.importContentFromFile({
+                filePath: file.path,
+                id: name,
+                extraData: {
+                    age: story.age,
+                    title: story.title,
+                    description: story.description,
+                    createdDate: dayjs(story.created_at).valueOf(),
+                    modifiedDate: dayjs(story.updated_at).valueOf()
+                }
             });
+            // destinationFilePath = downloadFilePath;
+            // if (__ANDROID__ && compressed && androidUseContent) {
+            //     //we need to copy the file
+            //     const context = Utils.android.getApplicationContext();
+            //     destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, '*/*', true);
+            // }
+            // if (!compressed) {
+            //     destinationFilePath = documentsService.dataFolder.getFolder(name).path;
+            //     await Folder.fromPath(destinationFilePath).remove();
+            //     // ProgressNotification.update(progressNotification, {
+            //     //     title: $tc('uncompress_glasses_data', storyId),
+            //     //     rightIcon: '0%',
+            //     //     progress: 0
+            //     // });
+            //     await unzip(file.path, destinationFilePath);
+
+            //     DEV_LOG && console.log('unzipped ', destinationFilePath);
+            // }
+
+            // await documentsService.importStory(name, destinationFilePath, compressed, {
+            //     createdDate: dayjs(story.created_at).valueOf(),
+            //     modifiedDate: dayjs(story.updated_at).valueOf(),
+            //     size,
+            //     age: story.age,
+            //     title: story.title,
+            //     description: story.description
+            // });
         }
         // })
         // );

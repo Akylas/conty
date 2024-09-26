@@ -52,6 +52,8 @@ export interface PackMetadata {
     uri: string;
     thumbnail: string;
     age: number;
+    keywords?: string;
+    subtitle?: string;
 }
 
 export interface ControlSettings {
