@@ -117,7 +117,7 @@
 
     onMount(() => {
         DEV_LOG && console.log('RemoteList', 'onMount');
-        refresh();
+        // refresh();
     });
     onDestroy(() => {
         DEV_LOG && console.log('RemoteList', 'onDestroy');
@@ -149,7 +149,8 @@
             if (actualUrl) {
                 item.pack.download = actualUrl;
                 //wait a bit because closeModal would not work because of the precedent closeBottomSheet
-                await timeout(500);
+                // await timeout(1500);
+                DEV_LOG && console.log('closing RemoteList', actualUrl);
                 closeModal(item.pack);
             }
         } catch (error) {
@@ -200,7 +201,7 @@
                 }
             ]
         });
-        const staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx, 100);
+        const staticLayout = new StaticLayout(topText, textPaint, w - dx - 10, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx - 10, h - 20);
         canvas.translate(dx, (condensed ? 0 : 0) + 10);
         staticLayout.draw(canvas);
     }

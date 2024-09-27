@@ -14,7 +14,13 @@ mdbutton {
     ios-a11y-adjusts-font-size: true;
 }
 
+mdswitch {
+    background-color: var(--colorPrimary);
+}
 
+// mdbutton[variant=flat],mdbutton[variant=contained] {
+//     color: var(--colorOnPrimary);
+// }
 mdcardview {
     // material3 basic design
     shape: medium;

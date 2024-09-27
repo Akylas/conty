@@ -7,8 +7,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { getBGServiceInstance } from '~/services/BgService';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, File, Folder, NavigatedData, ObservableArray, Page, StackLayout, Utils, path } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, StackLayout, Utils } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { SDK_VERSION, throttle } from '@nativescript/core/utils';
     import { filesize } from 'filesize';
@@ -21,7 +20,7 @@
     import { onThemeChanged } from '~/helpers/theme';
     import { Pack, RemoteContent } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
-    import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService, getFileTextContentFromPackFile } from '~/services/documents';
+    import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
     import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { fade, showModal } from '~/utils/svelte/ui';
@@ -37,31 +36,19 @@
 
 <script lang="ts">
     import { request } from '@nativescript-community/perms';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
-    import { PackStartEvent, PackStopEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { getFileOrFolderSize, unzip } from '~/utils';
+    import { importService } from '~/services/importservice';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
-    import { importService } from '~/services/importservice';
+    import { MessageItem } from './common/MessageView.svelte';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
-    let { colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorOnBackground } = $colors;
-    $: ({
-        colorBackground,
-        colorTertiaryContainer,
-        colorOnTertiaryContainer,
-        colorSurfaceContainerHigh,
-        colorOnBackground,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorSurface,
-        colorPrimaryContainer,
-        colorOnPrimaryContainer,
-        colorError
-    } = $colors);
+    let { colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorSurfaceContainerHigh, colorOnBackground, colorOnSurfaceVariant, colorSurface, colorPrimaryContainer, colorError } =
+        $colors;
+    $: ({ colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorSurfaceContainerHigh, colorOnBackground, colorOnSurfaceVariant, colorSurface, colorPrimaryContainer, colorError } =
+        $colors);
     iconPaint.fontFamily = mdi;
 
     interface Item {
@@ -108,6 +95,7 @@
                       }
                     : {})
             });
+            DEV_LOG && console.log('r', r);
             DEV_LOG && console.log('refresh done', filter, r.length);
             packs = new ObservableArray(
                 r.map((pack) => ({
@@ -223,7 +211,6 @@
         documentsService.on(EVENT_PACK_ADDED, onPackAdded);
         documentsService.on(EVENT_PACK_UPDATED, onPackUpdated);
         documentsService.on(EVENT_PACK_DELETED, onPacksDeleted);
-        // refresh();
 
         const permResult = await request('notification');
         DEV_LOG && console.log('permResult', permResult);
@@ -574,8 +561,9 @@
         canvas.restore();
         // textPaint.textSize = 14 * $fontScale;
 
-        canvas.drawText(filesize(item.pack.size, { output: 'string', round: 0 }), dx, h - 13, textPaint);
-
+        if (item.pack.size && !isNaN(item.pack.size)) {
+            canvas.drawText(filesize(item.pack.size, { output: 'string', round: 0 }), dx, h - 13, textPaint);
+        }
         if (item.pack.age) {
             textPaint.color = colorOnTertiaryContainer;
             staticLayout = new StaticLayout(' ' + item.pack.age + '+ ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
@@ -620,6 +608,7 @@
         storyHandler.on(PackStartEvent, showPlayer);
         storyHandler.on(PackStopEvent, hidePlayer);
         storyHandler.on(StoryStopEvent, hidePlayer);
+
         if (storyHandler.playingPack) {
             showPlayer();
         } else {
@@ -668,7 +657,7 @@
                             src={item.pack.getThumbnail()}
                             stretch="aspectFill"
                             width={getItemImageWidth(viewStyle)} />
-                        <label class="cardLabel" text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" />
+                        <label class="cardLabel" text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
                     </canvasview>
                 </Template>
@@ -704,7 +693,6 @@
 
         <CActionBar title={l('packs')}>
             <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
-
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
             <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
@@ -715,6 +703,9 @@
                 <!-- <mdbutton class="actionBarButton" text="mdi-share-variant" variant="text" visibility={nbSelected ? 'visible' : 'collapse'} on:tap={showImageExportPopover} /> -->
                 <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showSelectedOptions} />
             </CActionBar>
+        {/if}
+        {#if __IOS__}
+            <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
         {/if}
     </gridlayout>
 </page>

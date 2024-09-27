@@ -233,7 +233,7 @@ export function start() {
     }
     started = true;
     colorTheme = getString('color_theme', 'default') as ColorThemes;
-    setCustomCssRootClass(colorTheme);
+    DEV_LOG && console.log('theme', 'start');
 
     useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
     if (__IOS__ && SDK_VERSION < 13) {
@@ -325,6 +325,8 @@ export function start() {
     });
 
     function onReady() {
+        setCustomCssRootClass(colorTheme);
+
         applyTheme(theme);
         const realTheme = getRealTheme(theme);
         currentTheme.set(realTheme);

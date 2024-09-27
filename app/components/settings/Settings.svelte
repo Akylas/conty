@@ -100,7 +100,7 @@
                     name: 'Raconte moi une histoire',
                     url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
                     attribution:
-                        'La communauté <a href="https://monurl.ca/lunii.creations">Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
+                        'La communauté <a>Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
                     image: 'https://cdn.discordapp.com/icons/911349645752541244/2300753397affc590b981bcb582f2a65.png'
                 } as RemoteContentProvider;
                 const hasDefaultSource =
@@ -126,7 +126,7 @@
                                       buttonText: lc('add'),
                                       onLinkTap: (e) => openLink(e.link),
                                       showBottomLine: true,
-                                      titlProps: { verticalTextAlignment: 'top', padding: 10, fontSize: 18 },
+                                      titleProps: { verticalTextAlignment: 'top', padding: 10, fontSize: 18 },
                                       onButtonTap: () => {
                                           addRemoteSource(defaultSource);
                                       }
@@ -148,12 +148,12 @@
                                   showBottomLine: true,
                                   image: () => s.image,
                                   onLinkTap: (e) => openLink(e.link),
-                                  titlProps: s.attribution ? { verticalTextAlignment: 'top', padding: 10, fontSize: 18 } : undefined
+                                  titleProps: s.attribution ? { linkColor: colorPrimary, verticalTextAlignment: 'top', paddingTop: 10, paddingBottom: 10, fontSize: 18 } : undefined
                               }))
                             : [
                                   {
                                       description: () => lc('no_remote_source'),
-                                      titlProps: { textAlignment: 'center' }
+                                      titleProps: { textAlignment: 'center' }
                                   }
                               ]
                     );
@@ -780,9 +780,9 @@
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
-                    <switch id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} ios:backgroundColor={colorPrimary} />
+                    <switch id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="checkbox" let:item>
@@ -794,7 +794,7 @@
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <checkbox id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
@@ -806,14 +806,14 @@
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <IconButton col={1} text={item.rightBtnIcon} on:tap={(event) => onRightIconTap(item, event)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="button" let:item>
                 <ListItemAutoSize
-                    columns="auto,*,auto"
+                    columns="50,*,auto"
                     fontSize={20}
                     html={item.html}
                     mainCol={1}
@@ -822,9 +822,9 @@
                     subtitle={getDescription(item)}
                     text={item.text}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
-                    <image height={45} marginRight={4} marginTop={20} src={item.image()} verticalAlignment="top" width={45} />
+                    <image height={45} marginRight={4} marginTop={15} src={item.image()} verticalAlignment="top" width={45} />
                     <mdbutton col={2} marginTop={20} text={item.buttonText} verticalAlignment="top" on:tap={(event) => onButtonTap(item, event)} />
                 </ListItemAutoSize>
             </Template>
@@ -840,23 +840,23 @@
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <label col={0} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
                 </ListItemAutoSize>
             </Template>
             <Template key="imageLeft" let:item>
                 <ListItemAutoSize
-                    columns="auto,*,auto"
+                    columns="50,*,auto"
                     html={item.html}
                     mainCol={1}
                     onLinkTap={item.onLinkTap}
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
-                    <image height={45} marginRight={4} src={item.image()} visibility={!!item.image ? 'visible' : 'hidden'} />
+                    <image height={45} marginRight={10} marginTop={15} src={item.image()} verticalAlignment="top" visibility={!!item.image ? 'visible' : 'hidden'} />
                 </ListItemAutoSize>
             </Template>
             <Template key="image" let:item>
@@ -873,7 +873,7 @@
                     showBottomLine={item.showBottomLine}
                     subtitle={getDescription(item)}
                     title={item.title}
-                    titleProps={item.titlProps}
+                    titleProps={item.titleProps}
                     on:tap={(event) => onTap(item, event)}>
                 </ListItemAutoSize>
             </Template>

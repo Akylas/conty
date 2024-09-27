@@ -103,7 +103,6 @@
         fontSize={fontSize * $fontScale}
         {fontWeight}
         {html}
-        lineBreak="end"
         paddingBottom={addedPadding}
         paddingTop={addedPadding}
         {text}

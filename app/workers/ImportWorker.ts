@@ -1,9 +1,9 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { time } from '@akylas/nativescript/profiling';
-import { ApplicationSettings, type EventData, File, Folder, Observable, Utils, path } from '@nativescript/core';
+import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
-import { setDocumentsService } from '~/models/Pack';
+import { StoryJSON, setDocumentsService } from '~/models/Pack';
 import { DocumentsService, getFileTextContentFromPackFile } from '~/services/documents';
 import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE } from '~/utils/constants';
@@ -36,7 +36,6 @@ export default class ImportWorker extends Observable {
         super();
 
         this.queue.on('done', () => {
-            DEV_LOG && console.log('queue empty!');
             this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
             (global as any).postMessage({
                 type: 'terminate'
@@ -180,6 +179,10 @@ export default class ImportWorker extends Observable {
                         await worker.handleStart(event);
                         this.importFromFilesQueue(event.data.messageData);
                         break;
+                    case 'import_from_file':
+                        await worker.handleStart(event);
+                        this.importFromFileQueue(event.data.messageData);
+                        break;
                     case 'stop':
                         worker.stop(data.messageData?.error, data.id);
                         break;
@@ -198,22 +201,21 @@ export default class ImportWorker extends Observable {
     async importFromFilesQueue(files: string[]) {
         return this.queue.add(() => this.importFromFilesInternal(files));
     }
+    async importFromFileQueue(data) {
+        return this.queue.add(() => this.importFromFileInternal(data));
+    }
     async importFromCurrentDataFolderInternal() {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
             const entities = await this.dataFolder.getEntities();
-            DEV_LOG &&
-                console.log(
-                    'updateContentFromDataFolder',
-                    supportsCompressedData,
-                    entities.map((e) => e.name)
-                );
-            // entities.forEach(e=>{
-            //     if (typeof e['getFolder'] === 'function') {
+            // DEV_LOG &&
+            //     console.log(
+            //         'updateContentFromDataFolder',
+            //         supportsCompressedData,
+            //         entities.map((e) => e.name)
+            //     );
 
-            //     }
-            // })
             // we remove duplicates
             const existToTest = [...new Set(entities.map((e) => '"' + (e._extension ? e.name.slice(0, -e._extension.length) : e.name) + '"'))];
             DEV_LOG && console.log('existToTest', existToTest);
@@ -263,17 +265,7 @@ export default class ImportWorker extends Observable {
                             continue;
                         }
                     }
-                    const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData && compressed));
-                    await documentsService.importStory(id, destinationFolderPath, supportsCompressedData && compressed, {
-                        size: getFileOrFolderSize(destinationFolderPath),
-                        title: storyJSON.title,
-                        description: storyJSON.description,
-                        format: storyJSON.format,
-                        age: storyJSON.age,
-                        version: storyJSON.version,
-                        subtitle: storyJSON.subtitle,
-                        keywords: storyJSON.keywords
-                    });
+                    await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed);
                 } else if (compressed && !supportsCompressedData) {
                     // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
                     const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
@@ -297,6 +289,61 @@ export default class ImportWorker extends Observable {
         }
     }
 
+    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?) {
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData)) as StoryJSON;
+
+        if (__IOS__) {
+            // no compressed on iOS!
+            let needsSaving = false;
+            // we need to rewrite all images to jpg
+            for (let index = 0; index < storyJSON.stageNodes.length; index++) {
+                const action = storyJSON.stageNodes[index];
+                if (action.image && action.image.endsWith('.bmp')) {
+                    const newName = action.image.replace('.bmp', '.jpg');
+                    const existingFilePath = path.join(destinationFolderPath, 'assets', action.image);
+                    DEV_LOG && console.log('converting bmp', existingFilePath);
+                    new ImageSource(ImageUtils.loadPossible4Bitmap(existingFilePath)).saveToFile(path.join(destinationFolderPath, 'assets', newName), 'jpg');
+                    needsSaving = true;
+                    action.image = newName;
+                }
+            }
+            if (needsSaving) {
+                File.fromPath(path.join(destinationFolderPath, 'story.json')).writeTextSync(JSON.stringify(storyJSON));
+            }
+        }
+        await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
+            size: getFileOrFolderSize(destinationFolderPath),
+            title: storyJSON.title,
+            description: storyJSON.description,
+            format: storyJSON.format,
+            age: storyJSON.age,
+            version: storyJSON.version,
+            subtitle: storyJSON.subtitle,
+            keywords: storyJSON.keywords,
+            ...(extraData ?? {})
+        });
+    }
+
+    async importFromFileInternal(data: { filePath: string; id: string; extraData }) {
+        try {
+            const supportsCompressedData = documentsService.supportsCompressedData;
+            const inputFilePath = data.filePath;
+            let destinationFolderPath = inputFilePath;
+            const id = data.id || Date.now() + '';
+            destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
+            if (!supportsCompressedData) {
+                destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                // if (!Folder.exists(destinationFolderPath)) {
+                await unzip(inputFilePath, destinationFolderPath);
+                // }
+            } else {
+                await File.fromPath(inputFilePath).copy(destinationFolderPath);
+            }
+            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, data.extraData);
+        } catch (error) {
+            this.sendError(error);
+        }
+    }
     async importFromFilesInternal(files: string[]) {
         DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
         try {
@@ -314,17 +361,8 @@ export default class ImportWorker extends Observable {
                 } else {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
-                const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData));
-                await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
-                    size: getFileOrFolderSize(destinationFolderPath),
-                    title: storyJSON.title,
-                    description: storyJSON.description,
-                    format: storyJSON.format,
-                    age: storyJSON.age,
-                    version: storyJSON.version,
-                    subtitle: storyJSON.subtitle,
-                    keywords: storyJSON.keywords
-                });
+
+                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData);
             }
         } catch (error) {
             this.sendError(error);

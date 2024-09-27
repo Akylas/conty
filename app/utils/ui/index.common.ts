@@ -251,7 +251,7 @@ export async function showPopoverMenu<T = any>({
         vertPos: vertPos ?? VerticalPosition.CENTER,
         props: {
             borderRadius: 10,
-            elevation: 3,
+            elevation: __ANDROID__ ? 3 : 0,
             margin: 4,
             fontWeight: 500,
             backgroundColor: colorSurfaceContainer,
@@ -370,13 +370,12 @@ export interface ShowSnackMessageOptions {
 let snackMessage: ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
 function getSnackMessage(props?) {
     if (!snackMessage) {
-        snackMessage = resolveComponentElement(BottomSnack, props || {}) as ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
         try {
+            snackMessage = resolveComponentElement(BottomSnack, props || {}) as ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
             (Application.getRootView() as GridLayout).addChild(snackMessage.element.nativeView);
         } catch (error) {
             console.error(error, error.stack);
         }
-        DEV_LOG && console.log('snackMessage', snackMessage);
     }
     return snackMessage;
 }
