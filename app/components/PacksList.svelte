@@ -381,7 +381,6 @@
     }
     let ignoreTap = false;
     function onItemLongPress(item: Item, event?) {
-
         // if (event && event.ios && event.ios.state !== 1) {
         //     return;
         // }
@@ -638,7 +637,7 @@
 </script>
 
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
-    <gridlayout rows="auto,*">
+    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*">
         <!-- {/if} -->
         <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
             <collectionView

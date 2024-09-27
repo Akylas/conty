@@ -276,7 +276,7 @@
 </script>
 
 <page bind:this={page} actionBarHidden={true} backgroundColor={colorSecondaryContainer} navigationBarColor={colorSecondaryContainer} {statusBarStyle} on:navigatedFrom={onNavigatedFrom}>
-    <gridlayout paddingBottom={$windowInset.bottom} rows="auto,*,auto, auto, auto,auto,auto">
+    <gridlayout paddingBottom={$windowInset.bottom} paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto, auto, auto,auto,auto">
         <label
             color={colorOnSecondaryContainer}
             fontSize={18}

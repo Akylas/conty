@@ -239,7 +239,7 @@
 
 <frame>
     <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
-        <gridlayout rows="auto,auto,*,auto">
+        <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
             <textfield
                 editable={false}
                 hint={lc('source')}
