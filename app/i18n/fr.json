@@ -11,6 +11,7 @@
     "auto_black": "Utiliser le vrai noir pour le thème sombre",
     "backup_restore": "sauvegarde / restauration",
     "cancel": "annuler",
+    "card": "carte",
     "color_theme": {
         "default": "défaut",
         "dynamic": "couleurs dynamiques",
@@ -20,6 +21,7 @@
     },
     "comments": "commentaires",
     "condensed": "condensé",
+    "confirm_copy_file_import": "les fichiers zip importés seront copiés dans le dossier de données de l'application",
     "confirm_delete_packs": "êtes-vous sûr de vouloir supprimer ces %1$s paquets?",
     "data_location": "emplacement des données",
     "delete": "supprimer",
@@ -38,6 +40,7 @@
     "feedback_sent": "commentaires envoyés",
     "first_presentation": "Conty peut lire des histoires que vous ajoutez manuellement à votre téléphone. \nVous pouvez également télécharger des histoires à distance. \nÀ l'heure actuelle, aucune source distante n'est configurée. \nVoulez-vous en ajouter une ?",
     "general": "général",
+    "import_files": "importer des fichiers",
     "import_settings": "importer les paramètres",
     "import_settings_desc": "importer tous les paramètres d'une sauvegarde précédente",
     "ios": {
