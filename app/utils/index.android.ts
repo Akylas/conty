@@ -216,13 +216,13 @@ function androidFunctionCallbackPromise<T>(onCallback: (calback: com.akylas.cont
 
 export async function unzip(srcPath: string, dstPath: string) {
     DEV_LOG && console.log('unzip', srcPath, dstPath);
-    if (srcPath.startsWith('content:/')) {
+    if (srcPath.startsWith('content:/') && dstPath.startsWith('content:/')) {
         return androidFunctionCallbackPromise<any[]>((callback) => {
             com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
         });
     }
     return Zip.unzip({
-        archive: srcPath,
+        archive:  srcPath,
         directory: dstPath,
         overwrite: true
         // onProgress: (percent) => {

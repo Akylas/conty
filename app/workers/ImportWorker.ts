@@ -160,7 +160,7 @@ export default class ImportWorker extends Observable {
             setDocumentsService(documentsService);
             await documentsService.start(event.data.nativeData.db);
             this.dataFolder = Folder.fromPath(ApplicationSettings.getString('data_folder', path.join(documentsService.rootDataFolder, 'data')));
-            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, event.data.nativeData.db);
+            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, event.data.nativeData.db, this.dataFolder.path);
         }
     }
 
@@ -327,14 +327,23 @@ export default class ImportWorker extends Observable {
     async importFromFileInternal(data: { filePath: string; id: string; extraData }) {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
-            const inputFilePath = data.filePath;
+            let inputFilePath = data.filePath;
             let destinationFolderPath = inputFilePath;
             const id = data.id || Date.now() + '';
             destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
             if (!supportsCompressedData) {
                 destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                let tempPath;
+                if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
+                    tempPath = this.dataFolder.getFile(`${id}.zip`).path;
+                    File.fromPath(inputFilePath).copySync(tempPath);
+                    inputFilePath = tempPath;
+                }
                 // if (!Folder.exists(destinationFolderPath)) {
                 await unzip(inputFilePath, destinationFolderPath);
+                if (tempPath) {
+                    File.fromPath(tempPath).removeSync();
+                }
                 // }
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
@@ -349,12 +358,18 @@ export default class ImportWorker extends Observable {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             for (let index = 0; index < files.length; index++) {
-                const inputFilePath = files[index];
+                let inputFilePath = files[index];
                 let destinationFolderPath = inputFilePath;
                 const id = Date.now() + '';
                 destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
                     destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                    let tempPath;
+                    if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
+                        tempPath = this.dataFolder.getFile(`${id}.zip`).path;
+                        File.fromPath(inputFilePath).copySync(tempPath);
+                        inputFilePath = tempPath;
+                    }
                     // if (!Folder.exists(destinationFolderPath)) {
                     await unzip(inputFilePath, destinationFolderPath);
                     // }
