@@ -1,0 +1,3 @@
+### Bug fixes
+- import file fix on android >= 12
+- bunch of story fixes
