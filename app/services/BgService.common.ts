@@ -44,7 +44,6 @@ export function onSetup(callback: (storyHandler: StoryHandler) => void) {
     }
     onSetupListeners.push(callback);
     onDestroy(() => {
-        callback(mSharedInstance.storyHandler);
         clean();
     });
 }

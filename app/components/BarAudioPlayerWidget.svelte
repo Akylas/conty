@@ -227,9 +227,18 @@
 <gridlayout {...$$restProps} on:tap={() => {}}>
     <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*">
         <image sharedTransitionTag="cover" src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
-        <label col={1} colSpan={2} color="white" fontSize={15} lineBreak="end" margin="0 3 0 3" maxLines={2} row={1} verticalTextAlignment="top">
-            <span fontFamily={$fonts.mdi} text="mdi-music  " verticalAlignment="bottom" />
-            <span text={playingInfo?.name || ''} />
+        <label
+            col={1}
+            colSpan={2}
+            color="white"
+            fontSize={15}
+            lineBreak="end"
+            margin="3 3 0 10"
+            maxLines={2}
+            row={1}
+            sharedTransitionTag="title"
+            text={playingInfo?.name || ''}
+            verticalTextAlignment="top">
         </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />

@@ -1,13 +1,15 @@
 <script context="module" lang="ts">
+    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Color, Page, Screen } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
     import { NativeViewElementNode } from 'svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StagesChangeEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, Playlist, StagesChangeEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
+    import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { ALERT_OPTION_MAX_HEIGHT, IMAGE_COLORMATRIX } from '~/utils/constants';
     import { showError } from '~/utils/showError';
@@ -18,7 +20,7 @@
     const PAGER_PEAKING = 30;
     const PAGER_PAGE_PADDING = 16;
 
-    const IMAGE_ELEVATION = __ANDROID__ ? 4 : 0;
+    const IMAGE_ELEVATION = __ANDROID__ ? 0 : 0;
 </script>
 
 <script lang="ts">
@@ -81,9 +83,10 @@
         storyHandler?.off(StoryStopEvent, onStoryStop);
         state = 'stopped';
     });
-
+    let playlist: Playlist;
     onSetup(async (handler) => {
         storyHandler = handler;
+        playlist = getBGServiceInstance().storyHandler.playlist;
         handler.on(PlaybackEvent, onPlayerState);
         handler.on('selectedStageChange', onSelectedStageChanged);
         handler.on(StagesChangeEvent, onStageChanged);
@@ -92,9 +95,9 @@
         handler.on(StoryStartEvent, onStoryStart);
         handler.on(StoryStopEvent, onStoryStop);
 
-        DEV_LOG && console.log('onSetup', handler.selectedStageIndex, JSON.stringify(handler.currentStages), JSON.stringify(handler.currentPlayingInfo));
         pack = handler.playingPack;
         story = handler.playingStory;
+        DEV_LOG && console.log('onSetup', handler.selectedStageIndex, JSON.stringify(handler.currentStages), JSON.stringify(handler.currentPlayingInfo), !!pack, !!story);
         if (pack) {
             onStageChanged({
                 eventName: StagesChangeEvent,
@@ -176,15 +179,18 @@
         items = [];
         selectedStageIndex = 0;
         showReplay = false;
-        DEV_LOG && console.log('onPackStop close', event.closeFullscreenPlayer);
+        DEV_LOG && console.log('onPackStop', !!event.closeFullscreenPlayer);
         if (!!event.closeFullscreenPlayer) {
             close();
         }
     }
     function onStoryStop(event) {
+        DEV_LOG && console.log('onStoryStop', event.closeFullscreenPlayer);
         currentImage = null;
         story = null;
-        close();
+        if (!!event.closeFullscreenPlayer) {
+            close();
+        }
     }
     function onPlayerState(event: PlaybackEventData) {
         playingInfo = event.playingInfo;
@@ -263,10 +269,11 @@
         }
     }
     async function onOkButton() {
-        if (!controlSettings?.ok) {
-            return;
+        if (story && playlist.length > 1) {
+            storyHandler.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
+        } else if (controlSettings?.ok) {
+            storyHandler?.onStageOk();
         }
-        storyHandler?.onStageOk();
     }
     async function onOkButtonIfOption() {
         if (!controlSettings?.ok || items.length <= 1) {
@@ -300,9 +307,10 @@
             const thePack = pack || story?.pack;
             const stories = await storyHandler.findAllStories(thePack);
             const thumbnail = await thePack.getThumbnail();
+            const rowHeight = 60;
             const data: any = await showBottomsheetOptionSelect({
-                height: Math.min(stories.length * 56, ALERT_OPTION_MAX_HEIGHT),
-                rowHeight: 56,
+                height: Math.min(stories.length * rowHeight, Screen.mainScreen.heightDIPs * 0.7),
+                rowHeight,
                 options: stories.map((story) => ({
                     type: 'image',
                     image: thumbnail,
@@ -312,7 +320,9 @@
                 }))
             });
             if (data?.story) {
-                storyHandler.playStory(data?.story as Story);
+                const index = stories.findIndex((s) => s.id === data.story.id);
+                storyHandler.playStory(data?.story as Story, false);
+                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
             }
         } catch (error) {
             showError(error);
@@ -320,6 +330,19 @@
     }
     function onLinkTap(e) {
         openLink(e.link);
+    }
+    async function showPlaylist() {
+        try {
+            const component = (await import('~/components/PlaylistView.svelte')).default;
+            const result = await showBottomSheet({
+                view: component as any,
+                props: {
+                    trackingScrollView: 'collectionView'
+                }
+            });
+        } catch (error) {
+            showError(error);
+        }
     }
 </script>
 
@@ -348,42 +371,84 @@
             <!-- <GridLayout row="2" verticalAlignment="center"> -->
 
             <gridlayout flexGrow={1} flexShrink={0} height={0.8 * screenWidth * 0.86} row={2}>
-                <pager {items} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} visibility={pack ? 'visible' : 'hidden'} on:selectedIndexChange={onPagerChanged}>
-                    <Template let:index let:item>
-                        <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
-                            <!-- we need another gridlayout because elevation does not work on Image on iOS -->
-                            <gridlayout borderRadius={20} elevation={IMAGE_ELEVATION} horizontalAlignment="center" verticalAlignment="center">
-                                <image id={`image_${index}`} borderRadius={20} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
+                {#if __IOS__ || pack}
+                    <pager {items} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} visibility={pack ? 'visible' : 'hidden'} on:selectedIndexChange={onPagerChanged}>
+                        <Template let:index let:item>
+                            <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
+                                <!-- we need another gridlayout because elevation does not work on Image on iOS -->
+                                <gridlayout borderRadius={20} elevation={IMAGE_ELEVATION} horizontalAlignment="center" verticalAlignment="center">
+                                    <image id={`image_${index}`} borderRadius={20} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
+                                </gridlayout>
                             </gridlayout>
-                        </gridlayout>
-                    </Template>
-                </pager>
+                        </Template>
+                    </pager>
+                {/if}
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
-                <gridlayout
-                    borderRadius={20}
-                    elevation={IMAGE_ELEVATION}
-                    horizontalAlignment="center"
-                    margin={PAGER_PEAKING + PAGER_PAGE_PADDING - 10}
-                    verticalAlignment="center"
-                    visibility={pack ? 'hidden' : 'visible'}>
-                    <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
-                </gridlayout>
+                {#if __IOS__ || story}
+                    <gridlayout
+                        borderRadius={20}
+                        elevation={IMAGE_ELEVATION}
+                        horizontalAlignment="center"
+                        android:margin={PAGER_PAGE_PADDING - 10}
+                        ios:margin={PAGER_PEAKING + PAGER_PAGE_PADDING - 10}
+                        verticalAlignment="center"
+                        visibility={pack ? 'hidden' : 'visible'}>
+                        <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
+                    </gridlayout>
+                    <stacklayout
+                        f
+                        height={50}
+                        horizontalAlignment="center"
+                        marginBottom={15}
+                        orientation="horizontal"
+                        verticalAlignment="bottom"
+                        visibility={story?.images?.length ? 'visible' : 'hidden'}>
+                        {#each story.images as image}
+                            <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
+                                <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
+                            </gridlayout>
+                        {/each}
+                    </stacklayout>
+                    <!-- <collectionview
+                        backgroundColor="red"
+                        colWidth={60}
+                        height={60}
+                        items={story.images}
+                        orientation="horizontal"
+                        verticalAlignment="top"
+                        visibility={story?.images?.length ? 'visible' : 'hidden'}>
+                        <Template let:item>
+                            <gridlayout borderRadius={10} horizontalAlignment="center" verticalAlignment="center">
+                                <image borderRadius={10} sharedTransitionTag="cover" src={story.pack.getImage(item)} />
+                            </gridlayout>
+                        </Template>
+                    </collectionview> -->
+                {/if}
             </gridlayout>
         </flexlayout>
 
         <!-- </GridLayout> -->
-        <label color={colorOnSecondaryContainer} fontSize={20} fontWeight="bold" height={50} margin="0 10 0 10" maxLines={2} row={2} text={getStageName(currentStage)} textAlignment="center" />
+        <label
+            color={colorOnSecondaryContainer}
+            fontSize={20}
+            fontWeight="bold"
+            height={50}
+            margin="0 10 0 10"
+            maxLines={2}
+            row={2}
+            text={pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')}
+            textAlignment="center" />
 
         <slider maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
         <canvaslabel color={colorOnSecondaryContainer} fontSize="14" height="18" margin="0 20 0 20" row={4}>
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
-        <stacklayout horizontalAlignment="center" orientation="horizontal" row={5} visibility={pack ? 'visible' : 'hidden'}>
+        <stacklayout horizontalAlignment="center" orientation="horizontal" row={5}>
             <mdbutton
                 class="playerButton"
                 horizontalAlignment="right"
-                text="mdi-home"
+                text={pack ? 'mdi-home' : 'mdi-skip-previous'}
                 verticalAlignment="center"
                 visibility={stageCanGoHome(currentStage) ? 'visible' : 'hidden'}
                 on:tap={onHomeButton} />
@@ -397,9 +462,9 @@
                 id="ok"
                 class="playerButton"
                 horizontalAlignment="right"
-                text="mdi-check"
+                text={pack ? 'mdi-check' : 'mdi-skip-next'}
                 verticalAlignment="center"
-                visibility={!!controlSettings?.ok ? 'visible' : 'hidden'}
+                visibility={(story && playlist.length > 1) || !!controlSettings?.ok ? 'visible' : 'hidden'}
                 on:tap={onOkButton} />
         </stacklayout>
         <CActionBar
@@ -411,8 +476,9 @@
             showMenuIcon={true}
             textAlignment="center"
             title={pack?.title || story?.name}
-            titleProps={{ fontWeight: 'bold' }}>
-            <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-format-list-bulleted" variant="text" on:tap={showAllPlayableStories} />
+            titleProps={{ fontWeight: 'bold', autoFontSize: true, sharedTransitionTag: 'title' }}>
+            <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-playlist-music-outline" variant="text" on:tap={showPlaylist} />
+            <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-folder-music-outline" variant="text" on:tap={showAllPlayableStories} />
         </CActionBar>
     </gridlayout>
 </page>

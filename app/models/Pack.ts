@@ -119,10 +119,12 @@ export function stageCanGoHome(s: Stage) {
 }
 
 export interface Story {
+    id: string;
     pack: Pack;
     name: string;
     audioFiles: any[];
     images: any[];
+    names: string[];
     durations: number[];
     duration: number;
 }

@@ -36,19 +36,39 @@
 
 <script lang="ts">
     import { request } from '@nativescript-community/perms';
-    import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
-    import { MessageItem } from './common/MessageView.svelte';
+    import { getBGServiceInstance } from '~/services/BgService';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
-    let { colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorSurfaceContainerHigh, colorOnBackground, colorOnSurfaceVariant, colorSurface, colorPrimaryContainer, colorError } =
-        $colors;
-    $: ({ colorBackground, colorTertiaryContainer, colorOnTertiaryContainer, colorSurfaceContainerHigh, colorOnBackground, colorOnSurfaceVariant, colorSurface, colorPrimaryContainer, colorError } =
-        $colors);
+    let {
+        colorOutlineVariant,
+        colorBackground,
+        colorTertiaryContainer,
+        colorOnTertiaryContainer,
+        colorSurfaceContainerHigh,
+        colorOnBackground,
+        colorOnSurfaceVariant,
+        colorSurface,
+        colorPrimaryContainer,
+        colorError
+    } = $colors;
+    $: ({
+        colorOutlineVariant,
+        colorBackground,
+        colorTertiaryContainer,
+        colorOnTertiaryContainer,
+        colorSurfaceContainerHigh,
+        colorOnBackground,
+        colorOnSurfaceVariant,
+        colorSurface,
+        colorPrimaryContainer,
+        colorError
+    } = $colors);
     iconPaint.fontFamily = mdi;
 
     interface Item {
@@ -406,7 +426,7 @@
         });
 
     function getSelectedPacks() {
-        const selected = [];
+        const selected: Pack[] = [];
         packs.forEach((d, index) => {
             if (d.selected) {
                 selected.push(d.pack);
@@ -425,7 +445,13 @@
                     cancelButtonText: lc('cancel')
                 });
                 if (result) {
-                    await documentsService.deletePacks(getSelectedPacks());
+                    const storyHandler = getBGServiceInstance().storyHandler;
+                    const currentPack = storyHandler?.getPlayingPack();
+                    const selectedPacks = getSelectedPacks();
+                    if (currentPack && selectedPacks.findIndex((d) => d.id === currentPack.id)) {
+                        storyHandler?.stopPlaying();
+                    }
+                    await documentsService.deletePacks(selectedPacks);
                 }
             } catch (error) {
                 showError(error);
@@ -641,7 +667,9 @@
                 <Template let:item>
                     <canvasview
                         backgroundColor={colorSurfaceContainerHigh}
+                        borderColor={colorOutlineVariant}
                         borderRadius={12}
+                        borderWidth={viewStyle === 'card' ? 1 : 0}
                         fontSize={14 * $fontScale}
                         margin={8}
                         on:tap={() => onItemTap(item)}
@@ -657,7 +685,7 @@
                             src={item.pack.getThumbnail()}
                             stretch="aspectFill"
                             width={getItemImageWidth(viewStyle)} />
-                        <label class="cardLabel" text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
+                        <label class="cardLabel" row={1} text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
                     </canvasview>
                 </Template>

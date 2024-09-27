@@ -193,25 +193,10 @@ export async function showAlertOptionSelect<T>(props?: ComponentProps<OptionSele
 
 export async function showBottomsheetOptionSelect<T>(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<AlertOptions & MDCAlertControlerOptions>) {
     const component = (await import('~/components/common/OptionSelect.svelte')).default;
-    // let componentInstanceInfo: ComponentInstanceInfo<GridLayout, OptionSelect__SvelteComponent_>;
     try {
-        // componentInstanceInfo = resolveComponentElement(component, {
-        //     onClose: (result) => {
-        //         view.bindingContext.closeCallback(result);
-        //     },
-        //     onCheckBox(item, value, e) {
-        //         view.bindingContext.closeCallback(item);
-        //     },
-        //     trackingScrollView: 'collectionView',
-        //     ...props
-        // }) as ComponentInstanceInfo<GridLayout, OptionSelect__SvelteComponent_>;
-        // const view: View = componentInstanceInfo.element.nativeView;
         const result = await showBottomSheet({
             view: component as any,
             props: {
-                // onClose(result) {
-                //     this.bindingContext.closeCallback(result);
-                // },
                 onCheckBox(item, value, e) {
                     closeBottomSheet(item);
                 },
@@ -223,10 +208,6 @@ export async function showBottomsheetOptionSelect<T>(props?: ComponentProps<Opti
         return result;
     } catch (err) {
         throw err;
-    } finally {
-        // componentInstanceInfo.element.nativeElement._tearDownUI();
-        // componentInstanceInfo.viewInstance.$destroy();
-        // componentInstanceInfo = null;
     }
 }
 
