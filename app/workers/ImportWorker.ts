@@ -218,12 +218,12 @@ export default class ImportWorker extends Observable {
 
             // we remove duplicates
             const existToTest = [...new Set(entities.map((e) => '"' + (e._extension ? e.name.slice(0, -e._extension.length) : e.name) + '"'))];
-            DEV_LOG && console.log('existToTest', existToTest);
+            // DEV_LOG && console.log('existToTest', existToTest);
             const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id,compressed FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
                 id: string;
                 compressed: 1 | 0;
             }[];
-            DEV_LOG && console.log('updateContentFromDataFolder1 in db', r);
+            // DEV_LOG && console.log('updateContentFromDataFolder1 in db', r);
             for (let index = 0; index < entities.length; index++) {
                 const entity = entities[index];
                 let id = entity._extension ? entity.name.slice(0, -entity._extension?.length) : entity.name;

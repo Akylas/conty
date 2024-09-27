@@ -46,12 +46,17 @@ function mapOfStagesForOption(stages: Stage[], optionIndex: number = -1): Stage[
     }
 }
 
+const ignoreStageNameRegex = new RegExp('\\s*(story|stage)[\\s-_]*(node|title)\\s*', 'i');
+
 function getStoryName(actionNodes: Action[], stageNodes: Stage[], stage: Stage) {
     // DEV_LOG && console.log('getStoryName', stage.uuid, stage.name);
-    if (!stage.name || /\s*(story|stage)[\s-_]*node\s*/.test(stage.name.toLowerCase())) {
+    if (stage && (!stage.name || ignoreStageNameRegex.test(stage.name))) {
         const action = actionNodes.find((a) => a.options.indexOf(stage.uuid) !== -1);
         const beforeStage = stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
         // DEV_LOG && console.log('getStoryName beforeStage', beforeStage.uuid, beforeStage.name);
+        if (beforeStage && ignoreStageNameRegex.test(beforeStage.name)) {
+            return null;
+        }
         return cleanupStageName(beforeStage);
     }
     return cleanupStageName(stage);
@@ -75,6 +80,10 @@ function findStoriesFromStage(actionNodes: Action[], stageNodes: Stage[], stage:
     const nextStages = nextStageFrom(actionNodes, stageNodes, stage) || [];
 
     const stages = mapOfStagesForOption(nextStages);
+    if (stages.some((s) => storyPath.findIndex((s2) => s2.uuid === s.uuid) !== -1)) {
+        // this is the start of a loop lets stop
+        return [storyPath];
+    }
     // DEV_LOG &&
     //     console.log(
     //         'findStoriesFromStage',
@@ -542,6 +551,8 @@ export class StoryHandler extends Handler {
             const data = await pack.getData();
             this.actionNodes = data.actionNodes;
             this.stageNodes = data.stageNodes;
+            DEV_LOG && console.log('this.actionNodes', JSON.stringify(this.actionNodes));
+            DEV_LOG && console.log('this.stageNodes', JSON.stringify(this.stageNodes));
             DEV_LOG && console.log('playPack data', this.actionNodes.length, this.stageNodes.length);
             this.selectedStageIndex = 0;
             this.currentStages = [this.stageNodes.find((s) => s.squareOne === true)];
@@ -698,7 +709,13 @@ export class StoryHandler extends Handler {
                 const images = [];
                 const names = [];
                 const audioFiles = [];
+                DEV_LOG &&
+                    console.log(
+                        'storiesStages',
+                        s.map((s2) => s2.uuid)
+                    );
                 const stages = s.reduce((acc, stage) => {
+                    DEV_LOG && console.log('test', stage.uuid, stageIsStory(stage));
                     if (stageIsStory(stage)) {
                         audioFiles.push(pack.getAudio(stage.audio));
                         images.push(findStoryImage(data.actionNodes, data.stageNodes, stage));
@@ -707,15 +724,22 @@ export class StoryHandler extends Handler {
                     }
                     return acc;
                 }, [] as Stage[]);
+                if (stages.length === 0) {
+                    return;
+                }
                 const durations = await Promise.all(audioFiles.map((s) => getAudioDuration(s)));
                 const duration = durations.reduce((acc, v) => acc + v, 0);
                 const hasMultipleChoices = names.length > 1;
                 const lastStage = stages[stages.length - 1];
+                DEV_LOG && console.log('adding story', lastStage.name, ignoreStageNameRegex.test(lastStage.name), hasMultipleChoices);
                 return {
                     id: pack.id + '_' + index,
                     pack,
                     stages,
-                    name: lastStage.name || (hasMultipleChoices ? undefined : getStoryName(data.actionNodes, data.stageNodes, lastStage)) || lc('story') + ' ' + (index + 1),
+                    name:
+                        (!ignoreStageNameRegex.test(lastStage.name) && cleanupStageName(lastStage)) ||
+                        (hasMultipleChoices ? undefined : getStoryName(data.actionNodes, data.stageNodes, lastStage)) ||
+                        lc('story') + ' ' + (index + 1),
                     audioFiles,
                     images,
                     names,
@@ -725,6 +749,6 @@ export class StoryHandler extends Handler {
             })
         );
         // DEV_LOG && console.log('findAllStories', storiesStages.length, JSON.stringify(result.map((s) => ({ images: s.images, audioFiles: s.audioFiles, name: s.name }))));
-        return result;
+        return result.filter((s) => !!s);
     }
 }

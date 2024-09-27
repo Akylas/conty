@@ -109,10 +109,13 @@ export function getDocumentsService() {
 }
 
 export function cleanupStageName(s: Stage) {
-    return s?.name?.replace(/\.mp3\s*item$/, '');
+    return s?.name?.replace(/\.mp3.*(item|node)$/, '')?.replace(/^\d{10,}\s*[-_]\s*/, '');
 }
 export function stageIsStory(s: Stage) {
-    return s.type === 'story' || (s.audio && s.controlSettings.pause === true && s.controlSettings.home === true);
+    // for now we only check for story || pause
+    // we could add a test for home. But sometimes stories are missing this.
+    // the ultimate test would be to test for duration but also takes time to compute
+    return s.type === 'story' || (s.audio && s.controlSettings.pause === true);
 }
 export function stageCanGoHome(s: Stage) {
     return s && !!s.controlSettings?.home && s.homeTransition;

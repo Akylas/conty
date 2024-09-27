@@ -385,30 +385,30 @@
                 {/if}
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                 {#if __IOS__ || story}
-                    <gridlayout
-                        borderRadius={20}
-                        elevation={IMAGE_ELEVATION}
-                        horizontalAlignment="center"
-                        android:margin={PAGER_PAGE_PADDING - 10}
-                        ios:margin={PAGER_PEAKING + PAGER_PAGE_PADDING - 10}
-                        verticalAlignment="center"
-                        visibility={pack ? 'hidden' : 'visible'}>
-                        <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
+                    <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} on:tap={onOkButtonIfOption}>
+                        <gridlayout
+                            borderRadius={20}
+                            elevation={IMAGE_ELEVATION}
+                            horizontalAlignment="center"
+                            margin={PAGER_PAGE_PADDING - 10}
+                            verticalAlignment="center"
+                            visibility={pack ? 'hidden' : 'visible'}>
+                            <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
+                            <stacklayout
+                                height={50}
+                                horizontalAlignment="center"
+                                marginBottom={5}
+                                orientation="horizontal"
+                                verticalAlignment="bottom"
+                                visibility={story?.images?.length ? 'visible' : 'hidden'}>
+                                {#each story.images as image}
+                                    <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
+                                        <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
+                                    </gridlayout>
+                                {/each}
+                            </stacklayout>
+                        </gridlayout>
                     </gridlayout>
-                    <stacklayout
-                        f
-                        height={50}
-                        horizontalAlignment="center"
-                        marginBottom={15}
-                        orientation="horizontal"
-                        verticalAlignment="bottom"
-                        visibility={story?.images?.length ? 'visible' : 'hidden'}>
-                        {#each story.images as image}
-                            <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
-                                <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
-                            </gridlayout>
-                        {/each}
-                    </stacklayout>
                     <!-- <collectionview
                         backgroundColor="red"
                         colWidth={60}
@@ -436,7 +436,7 @@
             margin="0 10 0 10"
             maxLines={2}
             row={2}
-            text={pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')}
+            text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || ' '}
             textAlignment="center" />
 
         <slider maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
