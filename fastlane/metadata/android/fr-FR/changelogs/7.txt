@@ -1,0 +1,6 @@
+### Features
+- you can now play "stories"(full stories based on choices, without having to make the choices)
+- basic feature support
+
+### Bug fixes
+- landscape inset
