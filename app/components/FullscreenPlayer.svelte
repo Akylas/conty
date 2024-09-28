@@ -151,11 +151,17 @@
     function onPackStart(event) {
         // state = 'play';
         pack = event.pack;
+        progress = 0;
+        currentTime = 0;
+        showReplay = false;
         DEV_LOG && console.log('onPackStart', JSON.stringify(playingInfo));
     }
     function onStoryStart(event) {
         // state = 'play';
         story = event.story;
+        progress = 0;
+        currentTime = 0;
+        showReplay = false;
         story.pack.getThumbnail().then((r) => (currentImage = r));
         DEV_LOG && console.log('onStoryStart', JSON.stringify(playingInfo));
     }
