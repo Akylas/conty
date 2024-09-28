@@ -709,6 +709,7 @@ export class StoryHandler extends Handler {
                 const images = [];
                 const names = [];
                 const audioFiles = [];
+                let durations = [];
                 DEV_LOG &&
                     console.log(
                         'storiesStages',
@@ -720,6 +721,7 @@ export class StoryHandler extends Handler {
                         audioFiles.push(pack.getAudio(stage.audio));
                         images.push(findStoryImage(data.actionNodes, data.stageNodes, stage));
                         names.push(getStoryName(data.actionNodes, data.stageNodes, stage));
+                        durations.push(stage.duration)
                         acc.push(stage);
                     }
                     return acc;
@@ -727,7 +729,7 @@ export class StoryHandler extends Handler {
                 if (stages.length === 0) {
                     return;
                 }
-                const durations = await Promise.all(audioFiles.map((s) => getAudioDuration(s)));
+                durations = await Promise.all(audioFiles.map((s, index) => durations[index] || getAudioDuration(s)));
                 const duration = durations.reduce((acc, v) => acc + v, 0);
                 const hasMultipleChoices = names.length > 1;
                 const lastStage = stages[stages.length - 1];

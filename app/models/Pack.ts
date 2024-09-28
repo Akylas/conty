@@ -78,6 +78,7 @@ export interface Stage {
     homeTransition?: Transition;
     controlSettings?: ControlSettings;
     squareOne: boolean;
+    duration?: number;
 }
 
 export interface IPack {
@@ -114,8 +115,8 @@ export function cleanupStageName(s: Stage) {
 export function stageIsStory(s: Stage) {
     // for now we only check for story || pause
     // we could add a test for home. But sometimes stories are missing this.
-    // the ultimate test would be to test for duration but also takes time to compute
-    return s.type === 'story' || (s.audio && s.controlSettings.pause === true);
+    // we also test for duration but will only work if stage duration is set
+    return s.type === 'story' || s.duration > 30000 || (s.audio && s.controlSettings.pause === true);
 }
 export function stageCanGoHome(s: Stage) {
     return s && !!s.controlSettings?.home && s.homeTransition;
