@@ -3,10 +3,12 @@ import { TNSPlayer } from '@nativescript-community/audio';
 import { lc } from '@nativescript-community/l';
 import { Application, EventData, ImageSource, Observable, ObservableArray } from '@nativescript/core';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
-import { Action, Pack, Stage, Story, cleanupStageName, stageIsStory } from '~/models/Pack';
+import { Action, Pack, Stage, Story, cleanupStageName, stageIsOptionStage, stageIsStory } from '~/models/Pack';
 import { getAudioDuration } from '~/utils';
 import { showError } from '~/utils/showError';
 import { Handler } from './Handler';
+
+export type PlayingState = 'stopped' | 'playing' | 'paused';
 
 function shuffleArray(arr) {
     return arr.sort(() => Math.random() - 0.5);
@@ -137,7 +139,7 @@ export interface StageEventData extends PackStartEventData {
     currentStage?: Stage;
 }
 export interface PlaybackEventData extends StageEventData {
-    state?: 'pause' | 'play' | 'stopped';
+    state?: PlayingState;
     playingInfo?: PlayingInfo;
 }
 
@@ -179,13 +181,8 @@ export class StoryHandler extends Handler {
     get playerCurrentTime() {
         return this.mPlayer?.currentTime || 0;
     }
+    playerState: PlayingState = 'stopped';
 
-    get playerState() {
-        if (this.isPlaying) {
-            return this.isPlayingPaused ? 'pause' : 'play';
-        }
-        return 'stopped';
-    }
     currentPlayingInfo: PlayingInfo = null;
     currentStageImage: string = null;
     playingInfo(): PlayingInfo {
@@ -253,6 +250,11 @@ export class StoryHandler extends Handler {
         oldPlayer?.dispose();
     }
     playingAudioPromise: Promise<any> = null;
+
+    _setPlaybackState(state: PlayingState) {
+        this.playerState = state;
+        this.notify({ eventName: PlaybackEvent, state, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+    }
     async playAudio({
         fileName,
         dataSource,
@@ -285,16 +287,16 @@ export class StoryHandler extends Handler {
                             : {}),
                         completeCallback: async () => {
                             DEV_LOG && console.log('completeCallback', fileName, loop, resolved);
-                            this.clearPlayer();
+                            // this.clearPlayer();
                             if (!loop && !resolved) {
                                 resolved = true;
                                 resolve();
                             }
-                            this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+                            this._setPlaybackState('stopped');
                         },
                         errorCallback: async (e) => {
                             DEV_LOG && console.log('errorCallback', fileName, e.error);
-                            this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+                            this._setPlaybackState('stopped');
                             if (!resolved) {
                                 resolved = true;
                                 if (throwErrorUp) {
@@ -310,7 +312,7 @@ export class StoryHandler extends Handler {
                         this.currentPlayingInfo = this.playingInfo();
                     }
                     DEV_LOG && console.log('playAudio', 'updated playing info', this.currentPlayingInfo.name);
-                    this.notify({ eventName: PlaybackEvent, state: 'play', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+                    this._setPlaybackState('playing');
                 } catch (error) {
                     console.error('playAudio ', error, error.stack);
                     reject(error);
@@ -343,16 +345,16 @@ export class StoryHandler extends Handler {
             this.isPlayingPaused = true;
             this.pausedStoryPlayTime = this.mPlayer.currentTime;
             DEV_LOG && console.log(TAG, 'pausePlayback', this.pausedStoryPlayTime);
-            this.notify({ eventName: PlaybackEvent, state: 'pause', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+            this._setPlaybackState('paused');
         }
     }
     async togglePlayState() {
-        DEV_LOG && console.log('togglePlayState', this.isPlaying, this.isPlayingPaused);
+        DEV_LOG && console.log('togglePlayState', this.isPlaying, this.isPlayingPaused, this.playerState);
         if (this.isPlaying) {
-            if (this.isPlayingPaused) {
-                this.resumePlayback();
-            } else {
+            if (this.playerState === 'playing') {
                 this.pausePlayback();
+            } else {
+                this.resumePlayback();
             }
         }
     }
@@ -363,7 +365,7 @@ export class StoryHandler extends Handler {
             this.isPlayingPaused = false;
             DEV_LOG && console.log(TAG, 'resumeStory', this.pausedStoryPlayTime);
             this.pausedStoryPlayTime = 0;
-            this.notify({ eventName: PlaybackEvent, state: 'play', playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
+            this._setPlaybackState('playing');
         }
     }
     async setPlayerTimestamp(playTime: number) {
@@ -751,19 +753,23 @@ export class StoryHandler extends Handler {
                 const names = [];
                 const audioFiles = [];
                 let durations = [];
-                DEV_LOG &&
-                    console.log(
-                        'storiesStages',
-                        s.map((s2) => s2.uuid)
-                    );
+                // DEV_LOG &&
+                //     console.log(
+                //         'storiesStages',
+                //         s.map((s2) => s2.uuid)
+                //     );
                 const stages = s.reduce((acc, stage) => {
                     if (stageIsStory(stage)) {
                         audioFiles.push(pack.getAudio(stage.audio));
                         durations.push(stage.duration);
                         acc.push(stage);
-                    } else if (stage.image) {
-                        images.push(stage.image);
-                        names.push(stage.name);
+                    } else if (stageIsOptionStage(data.actionNodes, data.stageNodes, stage)) {
+                        if (stage.image) {
+                            images.push(stage.image);
+                        }
+                        if (stage.name) {
+                            names.push(cleanupStageName(stage));
+                        }
                     }
                     return acc;
                 }, [] as Stage[]);
@@ -775,10 +781,8 @@ export class StoryHandler extends Handler {
                 const hasMultipleChoices = names.length > 1;
                 const lastStage = stages[stages.length - 1];
                 const name =
-                    (!ignoreStageNameRegex.test(lastStage.name) && cleanupStageName(lastStage)) ||
-                    (hasMultipleChoices ? undefined : getStoryName(data.actionNodes, data.stageNodes, lastStage)) ||
-                    lc('story') + ' ' + (index + 1);
-                DEV_LOG && console.log('adding story', name, audioFiles, images, names, durations, duration);
+                    (lastStage.name && !ignoreStageNameRegex.test(lastStage.name) && cleanupStageName(lastStage)) || (hasMultipleChoices ? undefined : names[0]) || lc('story') + ' ' + (index + 1);
+                // DEV_LOG && console.log('adding story', name, audioFiles, images, names, durations, duration);
                 return {
                     id: pack.id + '_' + index,
                     pack,

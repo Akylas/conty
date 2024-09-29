@@ -222,7 +222,7 @@ export async function unzip(srcPath: string, dstPath: string) {
         });
     }
     return Zip.unzip({
-        archive:  srcPath,
+        archive: srcPath,
         directory: dstPath,
         overwrite: true
         // onProgress: (percent) => {

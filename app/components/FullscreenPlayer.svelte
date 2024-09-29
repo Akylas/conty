@@ -6,7 +6,19 @@
     import { Template } from 'svelte-native/components';
     import { NativeViewElementNode } from 'svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
-    import { PackStartEvent, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, Playlist, StagesChangeEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import {
+        PackStartEvent,
+        PackStopEvent,
+        PlaybackEvent,
+        PlaybackEventData,
+        PlayingInfo,
+        PlayingState,
+        Playlist,
+        StagesChangeEvent,
+        StoryHandler,
+        StoryStartEvent,
+        StoryStopEvent
+    } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
@@ -34,7 +46,7 @@
     const screenWidth = Screen.mainScreen.widthDIPs;
     const screenHeight = Screen.mainScreen.heightDIPs;
 
-    let state: 'play' | 'pause' | 'stopped' = 'stopped';
+    let state: PlayingState = 'stopped';
     let items: { stage: Stage; image: string }[] = [];
     let selectedStageIndex = 0;
     let currentTime = 0;
@@ -185,7 +197,7 @@
         playingInfo = event.playingInfo;
         state = event.state;
         // DEV_LOG && console.warn('onPlayerState', state, playingInfo.duration);
-        if (state === 'play') {
+        if (state === 'playing') {
             startPlayerInterval();
         } else {
             stopPlayerInterval();
@@ -443,7 +455,7 @@
             <mdbutton
                 class="playerButton"
                 horizontalAlignment="right"
-                text={state === 'play' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}
+                text={state === 'playing' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}
                 verticalAlignment="center"
                 on:tap={togglePlayState} />
             <mdbutton

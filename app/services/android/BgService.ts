@@ -9,6 +9,7 @@ import {
     PlaybackEvent,
     PlaybackEventData,
     PlayingInfo,
+    PlayingState,
     StageEventData,
     StoryHandler,
     StoryStartEvent,
@@ -68,7 +69,7 @@ export class BgService extends android.app.Service {
     mNotificationBuilder: androidx.core.app.NotificationCompat.Builder;
     mNotification: globalAndroid.app.Notification;
     playingInfo: PlayingInfo = null;
-    playingState: 'pause' | 'play' | 'stopped' = 'stopped';
+    playingState: PlayingState = 'stopped';
     onStartCommand(intent: android.content.Intent, flags: number, startId: number) {
         super.onStartCommand(intent, flags, startId);
         console.log('onStartCommand', intent);
@@ -264,7 +265,7 @@ export class BgService extends android.app.Service {
         }
     }
 
-    async updatePlayerNotification(currentStage: Stage, currentStages: Stage[], playingState: string) {
+    async updatePlayerNotification(currentStage: Stage, currentStages: Stage[], playingState: PlayingState) {
         try {
             await this.updateMediaSessionMetadata();
             const playbackstateBuilder = new PlaybackStateCompat.Builder();
@@ -293,12 +294,12 @@ export class BgService extends android.app.Service {
             if (!controlSettings || controlSettings?.pause) {
                 currentTime = this.storyHandler.playerCurrentTime;
                 // playbackState = PlaybackStateCompat.STATE_STOPPED;
-                if (playingState === 'play') {
+                if (playingState === 'playing') {
                     playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PAUSE);
                     playbackState = PlaybackStateCompat.STATE_PLAYING;
                     actionsInCompactView.push(actionIndex++);
                     this.addAction(context, 'pause', lc('pause'), ic_pause_id, notifBuilder);
-                } else if (playingState === 'pause') {
+                } else if (playingState === 'paused') {
                     playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY);
                     playbackState = PlaybackStateCompat.STATE_PAUSED;
                     actionsInCompactView.push(actionIndex++);

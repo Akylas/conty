@@ -6,6 +6,7 @@ import {
     PlaybackEvent,
     PlaybackEventData,
     PlayingInfo,
+    PlayingState,
     StageEventData,
     StoryHandler,
     StoryStartEvent,
@@ -20,7 +21,7 @@ export { BgServiceLoadedEvent };
 export class BgService extends BgServiceCommon {
     readonly storyHandler: StoryHandler;
     playingInfo: PlayingInfo = null;
-    playingState: 'pause' | 'play' | 'stopped' = 'stopped';
+    playingState: PlayingState = 'stopped';
     constructor() {
         super();
         this.storyHandler = new StoryHandler(this);
@@ -86,7 +87,7 @@ export class BgService extends BgServiceCommon {
                 MPNowPlayingInfoPropertyPlaybackRate,
                 MPNowPlayingInfoPropertyElapsedPlaybackTime
             ];
-            const objects = [playingInfo.name, playingInfo.description, playingInfo.duration / 1000, this.playingState === 'play' ? 1 : 0, this.storyHandler.playerCurrentTime / 1000];
+            const objects = [playingInfo.name, playingInfo.description, playingInfo.duration / 1000, this.playingState === 'playing' ? 1 : 0, this.storyHandler.playerCurrentTime / 1000];
             DEV_LOG && console.log('updatePlayerNotification', this.playingState);
             if (playingInfo.cover) {
                 const cover = await playingInfo.cover();
@@ -105,7 +106,7 @@ export class BgService extends BgServiceCommon {
             this._enableDisableCommand('home', sharedCommandCenter.bookmarkCommand, !!currentStage && stageCanGoHome(currentStage));
             this._enableDisableCommand('stop', sharedCommandCenter.stopCommand, true);
             MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = NSDictionary.dictionaryWithObjectsForKeys(objects, keys);
-            MPNowPlayingInfoCenter.defaultCenter().playbackState = this.playingState === 'play' ? MPNowPlayingPlaybackState.Playing : MPNowPlayingPlaybackState.Paused;
+            MPNowPlayingInfoCenter.defaultCenter().playbackState = this.playingState === 'playing' ? MPNowPlayingPlaybackState.Playing : MPNowPlayingPlaybackState.Paused;
         } catch (error) {
             showError(error);
         }

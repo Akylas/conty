@@ -8,6 +8,7 @@
         PlaybackEvent,
         PlaybackEventData,
         PlayingInfo,
+        PlayingState,
         StageEventData,
         StagesChangeEvent,
         StoryHandler,
@@ -25,7 +26,7 @@
 </script>
 
 <script lang="ts">
-    let state: 'play' | 'pause' | 'stopped' = 'stopped';
+    let state: PlayingState = 'stopped';
     let currentStages: Stage[] = [];
     let selectedStageIndex = 0;
     let currentStage: Stage;
@@ -171,7 +172,7 @@
         playingInfo = event.playingInfo;
         if (event.state !== state) {
             state = event.state;
-            if (state === 'play') {
+            if (state === 'playing') {
                 startPlayerInterval();
             } else {
                 stopPlayerInterval();
@@ -241,7 +242,7 @@
             <mdbutton
                 class="whiteSmallActionBarButton"
                 col={3}
-                text={state === 'play' ? 'mdi-pause' : state !== 'pause' && showReplay ? 'mdi-replay' : 'mdi-play'}
+                text={state === 'playing' ? 'mdi-pause' : state !== 'paused' && showReplay ? 'mdi-replay' : 'mdi-play'}
                 variant="text"
                 visibility={story || currentStages?.length ? 'visible' : 'hidden'}
                 on:tap={togglePlayState} />
