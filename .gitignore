@@ -45,12 +45,6 @@ yarn.lock
 tmp/
 
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/i18n-ally-custom-framework.yml
 /.sentryclirc
 *.zip
 dist
@@ -58,7 +52,6 @@ dist
 .gradle
 .history
 /app/assets/peakfinder/webapp.js
-/.vscode/settings.json
 app/assets/peakfinder/webapp.js.LICENSE.txt
 API_KEYS.js
 app/assets/**/*.css
