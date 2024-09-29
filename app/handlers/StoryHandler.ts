@@ -167,7 +167,7 @@ export class StoryHandler extends Handler {
     currentStages: Stage[] = [];
     stageNodes: Stage[];
     actionNodes: Action[];
-    mPlayer = new TNSPlayer();
+    mPlayer: TNSPlayer;
 
     isPlaying = false;
     isPlayingPaused = false;
@@ -245,16 +245,12 @@ export class StoryHandler extends Handler {
     }
 
     clearPlayer() {
+        // ensure current player is stopped
         DEV_LOG && console.info('clearPlayer');
         const oldPlayer = this.mPlayer;
         oldPlayer?.stop();
-        // if (this.playingAudioPromise) {
-        //     this.playingAudioPromise.reject();
-        // }
-        // if (__ANDROID__) {
         this.mPlayer = new TNSPlayer();
         oldPlayer?.dispose();
-        // }
     }
     playingAudioPromise: Promise<any> = null;
     async playAudio({
@@ -275,6 +271,7 @@ export class StoryHandler extends Handler {
             await new Promise<void>(async (resolve, reject) => {
                 try {
                     let resolved = false;
+                    this.clearPlayer();
                     await this.mPlayer.playFromFile({
                         autoPlay: true,
                         audioFile: fileName,
@@ -517,7 +514,6 @@ export class StoryHandler extends Handler {
                 }
             }
         }
-        this.clearPlayer();
         await this.notifyStageChange();
         this.runStage();
     }
@@ -542,7 +538,6 @@ export class StoryHandler extends Handler {
         this.selectedStageIndex = 0;
         // this.selectedStageIndex = optionIndex;
         this.notifyStageChange();
-        this.clearPlayer();
         this.runStage();
     }
     async runStage() {
