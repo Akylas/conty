@@ -393,7 +393,22 @@ module.exports = (env, params = {}) => {
                   }
                 : undefined
         }
-    ];
+    ].concat(
+        isIOS
+            ? [
+                  {
+                      context,
+                      from: 'themes/**/*',
+                      globOptions,
+                      transform: !!production
+                          ? {
+                                transformer: (content, path) => Promise.resolve(Buffer.from(JSON.stringify(JSON.parse(content.toString())), 'utf8'))
+                            }
+                          : undefined
+                  }
+              ]
+            : []
+    );
     config.plugins.unshift(new CopyPlugin({ patterns: copyPatterns }));
 
     config.plugins.unshift(
