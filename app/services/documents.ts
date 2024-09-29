@@ -10,7 +10,6 @@ import { getAndroidRealPath } from '~/utils';
 const sql = SqlQuery.createFromTemplateString;
 
 export async function getFileTextContentFromPackFile(folderPath, asset, compressed: boolean) {
-    DEV_LOG && console.log('getFileTextContentFromPackFile', folderPath, asset, File.fromPath(folderPath).size);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {

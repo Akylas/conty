@@ -432,7 +432,7 @@ export async function showFullscreenPlayer() {
         }
     };
     const component = (await import('~/components/FullscreenPlayer.svelte')).default;
-    DEV_LOG && console.log('showFullscreenPlayer', config);
+    DEV_LOG && console.log('showFullscreenPlayer');
     if (__IOS__) {
         showModal({
             page: component,

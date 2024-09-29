@@ -11,43 +11,34 @@ export class MediaSessionCompatCallback extends android.support.v4.media.session
     }
 
     onPlay() {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onPlay');
         getBGServiceInstance().storyHandler.resumePlayback();
         super.onPlay();
     }
     onPause() {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onPause');
         getBGServiceInstance().storyHandler.pausePlayback();
         super.onPause();
     }
 
     onSkipToNext() {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onSkipToNext');
         super.onSkipToNext();
     }
 
     onSkipToPrevious() {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onSkipToPrevious');
         super.onSkipToPrevious();
     }
     onPlayFromMediaId(mediaId, extras) {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onPlayFromMediaId');
         super.onPlayFromMediaId(mediaId, extras);
     }
     onCommand(command, extras, cb) {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onCommand');
         super.onCommand(command, extras, cb);
     }
     onSeekTo(pos) {
-        DEV_LOG && console.log('MediaSessionCompatCallback', 'onSeekTo');
         super.onSeekTo(pos);
     }
     onMediaButtonEvent(mediaButtonIntent) {
-        const action = mediaButtonIntent.getAction();
-        DEV_LOG && console.log('MediaSession', 'Intent Action' + action);
+        // const action = mediaButtonIntent.getAction();
         if (android.content.Intent.ACTION_MEDIA_BUTTON === mediaButtonIntent.getAction()) {
-            const event = mediaButtonIntent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT);
-            DEV_LOG && console.log('MediaSession', 'KeyCode' + event.getKeyCode());
+            // const event = mediaButtonIntent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT);
             return true;
         }
         return super.onMediaButtonEvent(mediaButtonIntent);

@@ -7,7 +7,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, StackLayout, Utils } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { SDK_VERSION, throttle } from '@nativescript/core/utils';
     import { filesize } from 'filesize';
@@ -70,6 +70,7 @@
         colorError
     } = $colors);
     iconPaint.fontFamily = mdi;
+    const screenWidth = Screen.mainScreen.widthDIPs;
 
     interface Item {
         pack: Pack;
@@ -514,7 +515,7 @@
             case 'condensed':
                 return 100;
             case 'card':
-                return 200;
+                return screenWidth / 2;
             default:
                 return 150;
         }
@@ -714,7 +715,7 @@
                 verticalAlignment="center"
                 width="80%"
                 transition:fade={{ duration: 200 }}>
-                <image flexShrink={2} src="res://icon_star" />
+                <nimage flexShrink={2} src="res://icon_star" />
                 <label color={colorOnSurfaceVariant} flexShrink={0} fontSize={19} text={lc('no_pack_yet')} textAlignment="center" textWrap={true} />
             </flexlayout>
         {/if}

@@ -25,29 +25,12 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorSecondary, colorSecondaryContainer, colorOnSecondaryContainer, colorPrimaryContainer, colorOnBackground } = $colors;
-    $: ({
-        colorSecondary,
-        colorSecondaryContainer,
-        colorOnSecondaryContainer,
-        colorSurfaceContainerHigh,
-        colorOnBackground,
-        colorSurfaceContainerLow,
-        colorOnSecondary,
-        colorSurfaceContainer,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorSurface,
-        colorPrimaryContainer,
-        colorOnPrimaryContainer,
-        colorError
-    } = $colors);
+    let { colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors;
+    $: ({ colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors);
     let page: NativeViewElementNode<Page>;
     const colorMatrix = IMAGE_COLORMATRIX;
 
-    const statusBarStyle = new Color(colorSecondaryContainer).isDark() ? 'dark' : 'light';
-
+    const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
     const screenWidth = Screen.mainScreen.widthDIPs;
     const screenHeight = Screen.mainScreen.heightDIPs;
 
@@ -221,7 +204,7 @@
     }
     async function onStageChanged(event) {
         try {
-            DEV_LOG && console.warn('FullScreen', 'onStageChanged', event.currentStatesChanged, event.stages.length, event.selectedStageIndex, JSON.stringify(event.stages));
+            // DEV_LOG && console.warn('FullScreen', 'onStageChanged', event.currentStatesChanged, event.stages.length, event.selectedStageIndex, JSON.stringify(event.stages));
             if (event.currentStatesChanged) {
                 items = await Promise.all(
                     event.stages.map(async (stage) => ({
@@ -234,12 +217,12 @@
                 //     image: getImage(stage)
                 // }));
             }
-            DEV_LOG &&
-                console.warn(
-                    'FullScreen',
-                    'onStageChanged1',
-                    items.map((i) => i.image)
-                );
+            // DEV_LOG &&
+            //     console.warn(
+            //         'FullScreen',
+            //         'onStageChanged1',
+            //         items.map((i) => i.image)
+            //     );
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
             storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
@@ -369,6 +352,7 @@
                 fontSize={18}
                 html={pack?.description || pack?.subtitle || story?.pack?.description || ' '}
                 lineBreak="end"
+                linkColor={colorPrimary}
                 margin={10}
                 maxLines={5}
                 selectable={true}
@@ -391,7 +375,7 @@
                 {/if}
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                 {#if __IOS__ || story}
-                    <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} on:tap={onOkButtonIfOption}>
+                    <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} visibility={pack ? 'hidden' : 'visible'} on:tap={onOkButtonIfOption}>
                         <gridlayout
                             borderRadius={20}
                             elevation={IMAGE_ELEVATION}
@@ -407,11 +391,13 @@
                                 orientation="horizontal"
                                 verticalAlignment="bottom"
                                 visibility={story?.images?.length ? 'visible' : 'hidden'}>
-                                {#each story.images as image}
-                                    <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
-                                        <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
-                                    </gridlayout>
-                                {/each}
+                                {#if story}
+                                    {#each story.images as image}
+                                        <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
+                                            <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
+                                        </gridlayout>
+                                    {/each}
+                                {/if}
                             </stacklayout>
                         </gridlayout>
                     </gridlayout>
@@ -445,7 +431,7 @@
             text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || ' '}
             textAlignment="center" />
 
-        <slider maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
+        <slider margin="0 10 0 10" maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
         <canvaslabel color={colorOnSecondaryContainer} fontSize="14" height="18" margin="0 20 0 20" row={4}>
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />

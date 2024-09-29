@@ -96,6 +96,7 @@
         switch (id) {
             case SETTINGS_REMOTE_SOURCES:
                 const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+                DEV_LOG && console.log('sources', sources);
                 const defaultSource = {
                     name: 'Raconte moi une histoire',
                     url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
@@ -126,7 +127,7 @@
                                       buttonText: lc('add'),
                                       onLinkTap: (e) => openLink(e.link),
                                       showBottomLine: true,
-                                      titleProps: { verticalTextAlignment: 'top', padding: 10, fontSize: 18 },
+                                      titleProps: defaultSource.attribution ? { linkColor: colorPrimary, verticalTextAlignment: 'top', paddingTop: 10, paddingBottom: 10, fontSize: 18 } : undefined,
                                       onButtonTap: () => {
                                           addRemoteSource(defaultSource);
                                       }
@@ -736,19 +737,19 @@
         <collectionview bind:this={collectionView} accessibilityValue="settingsCV" itemTemplateSelector={selectTemplate} {items} {reorderEnabled} row={1} android:paddingBottom={windowInsetBottom}>
             <Template key="header" let:item>
                 <gridlayout rows="auto,auto">
-                    <gridlayout columns="*,auto,auto" margin="10 16 0 16">
-                        <stacklayout
-                            backgroundColor="#ea4bae"
-                            borderRadius={10}
-                            orientation="horizontal"
-                            padding={10}
-                            rippleColor="white"
-                            verticalAlignment="center"
-                            on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
-                            <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
-                            <label color="white" fontSize={12} text={item.title} textWrap={true} verticalAlignment="center" />
-                        </stacklayout>
-                        {#if __ANDROID__}
+                    {#if __ANDROID__}
+                        <gridlayout columns="*,auto,auto" margin="10 16 0 16">
+                            <stacklayout
+                                backgroundColor="#ea4bae"
+                                borderRadius={10}
+                                orientation="horizontal"
+                                padding={10}
+                                rippleColor="white"
+                                verticalAlignment="center"
+                                on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
+                                <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
+                                <label color="white" fontSize={12} text={item.title} textWrap={true} verticalAlignment="center" />
+                            </stacklayout>
                             <image
                                 borderRadius={6}
                                 col={1}
@@ -759,11 +760,11 @@
                                 verticalAlignment="center"
                                 on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
                             <image borderRadius={6} col={2} height={40} rippleColor="#f96754" src="~/assets/images/patreon.png" on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
-                        {/if}
-                    </gridlayout>
+                        </gridlayout>
+                    {/if}
 
                     <stacklayout horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
-                        <!-- <absolutelayout backgroundColor={iconColor} borderRadius="50%" height={50} horizontalAlignment="center" width={50} /> -->
+                        <image borderRadius="25" height={50} horizontalAlignment="center" src="res://icon" width={50} />
                         <label fontSize={13} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', event)} />
                     </stacklayout>
                 </gridlayout>

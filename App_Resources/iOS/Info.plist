@@ -47,6 +47,8 @@
     <true/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>
