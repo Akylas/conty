@@ -251,27 +251,23 @@
     }, 500);
 
     function togglePlayState() {
-        if (state === 'play') {
-            storyHandler.pausePlayback();
-        } else {
-            storyHandler.resumePlayback();
-        }
+        storyHandler?.handleAction('play');
     }
     async function onOkButton() {
         if (story && playlist.length > 1) {
             storyHandler.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
         } else if (controlSettings?.ok) {
-            storyHandler?.onStageOk();
+            storyHandler?.handleAction('ok');
         }
     }
     async function onOkButtonIfOption() {
         if (!controlSettings?.ok || items.length <= 1) {
             return;
         }
-        storyHandler?.onStageOk();
+        storyHandler?.handleAction('ok');
     }
     async function onHomeButton() {
-        storyHandler?.onStageHome();
+        storyHandler?.handleAction('home');
     }
     async function onPagerChanged(e) {
         DEV_LOG && console.log('onPagerChanged', e.value);

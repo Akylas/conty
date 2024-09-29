@@ -1,5 +1,16 @@
 import { BgServiceCommon, BgServiceLoadedEvent } from '~/services/BgService.common';
-import { PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StoryHandler } from '~/handlers/StoryHandler';
+import {
+    PackStartEvent,
+    PackStartEventData,
+    PackStopEvent,
+    PlaybackEvent,
+    PlaybackEventData,
+    PlayingInfo,
+    StageEventData,
+    StoryHandler,
+    StoryStartEvent,
+    StoryStopEvent
+} from '~/handlers/StoryHandler';
 import { Stage, stageCanGoHome } from '~/models/Pack';
 import { showError } from '~/utils/showError';
 import { Application, ImageSource } from '@nativescript/core';
@@ -14,13 +25,12 @@ export class BgService extends BgServiceCommon {
         super();
         this.storyHandler = new StoryHandler(this);
         this.storyHandler.on(PlaybackEvent, this.onPlayerState, this);
+        this.storyHandler.on(PackStopEvent, this.onPackStop, this);
+        this.storyHandler.on(StoryStopEvent, this.onPackStop, this);
+        this.storyHandler.off(PackStartEvent, this.onPackStart, this);
+        this.storyHandler.off(StoryStartEvent, this.onPackStart, this);
         // this.storyHandler.on('stateChange', this.onStateChange, this);
         this._handlerLoaded();
-        if (UIApplication.sharedApplication) {
-            this.onReady();
-        } else {
-            Application.once(Application.launchEvent, this.onReady);
-        }
     }
     nextTrackCommandHandler;
     previousTrackCommandHandler;
@@ -28,63 +38,21 @@ export class BgService extends BgServiceCommon {
     likeCommandHandler;
     bookmarkCommandCommandHandler;
     stopCommandCommandHandler;
-    handleButtonAction(action: string) {
-        switch (action) {
-            case 'play':
-            case 'pause':
-                this.storyHandler?.togglePlayState();
-                break;
-            case 'ok':
-                this.storyHandler?.onStageOk();
-                break;
-            case 'stop':
-                this.storyHandler?.stopPlaying({ fade: true });
-                break;
-            case 'home':
-                this.storyHandler?.onStageHome();
-                break;
-            case 'previous':
-                this.storyHandler?.selectPreviousStage();
-                break;
-            case 'next':
-                this.storyHandler?.selectNextStage();
-                break;
-        }
+
+    commandHandlers: { [k: string]: any } = {};
+
+    async onPackStop(event) {
+        this.playingInfo = null;
+        UIApplication.sharedApplication.endReceivingRemoteControlEvents();
     }
-    onReady() {
+    async onPackStart(event: PackStartEventData) {
         UIApplication.sharedApplication.beginReceivingRemoteControlEvents();
-        const sharedCommandCenter = MPRemoteCommandCenter.sharedCommandCenter();
-        sharedCommandCenter.nextTrackCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.selectNextStage();
-            return MPRemoteCommandHandlerStatus.Success;
-        });
-        sharedCommandCenter.previousTrackCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.selectPreviousStage();
-            return MPRemoteCommandHandlerStatus.Success;
-        });
-        sharedCommandCenter.togglePlayPauseCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.togglePlayState();
-            return MPRemoteCommandHandlerStatus.Success;
-        });
-        sharedCommandCenter.likeCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.onStageOk();
-            return MPRemoteCommandHandlerStatus.Success;
-        });
-        sharedCommandCenter.bookmarkCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.onStageHome();
-            return MPRemoteCommandHandlerStatus.Success;
-        });
-        sharedCommandCenter.stopCommand.addTargetWithHandler((event) => {
-            this.storyHandler?.stopPlaying({ fade: true });
-            return MPRemoteCommandHandlerStatus.Success;
-        });
     }
-    commandHandlers: { [k: string]: any } ={};
     _enableDisableCommand(id: string, command: MPRemoteCommand, enabled: boolean) {
         if (enabled) {
             if (!this.commandHandlers[id]) {
                 this.commandHandlers[id] = command.addTargetWithHandler(() => {
-                    this.handleButtonAction(id);
+                    this.storyHandler?.handleAction(id);
                     return MPRemoteCommandHandlerStatus.Success;
                 });
             }
@@ -130,7 +98,6 @@ export class BgService extends BgServiceCommon {
                 }
             }
             const sharedCommandCenter = MPRemoteCommandCenter.sharedCommandCenter();
-
             this._enableDisableCommand('next', sharedCommandCenter.nextTrackCommand, currentStages?.length > 1);
             this._enableDisableCommand('previous', sharedCommandCenter.previousTrackCommand, currentStages?.length > 1);
             this._enableDisableCommand('pause', sharedCommandCenter.togglePlayPauseCommand, !controlSettings || controlSettings?.pause);

@@ -453,6 +453,29 @@ export class StoryHandler extends Handler {
     selectNextStage() {
         this.setSelectedStage((this.selectedStageIndex + 1) % this.currentStages.length);
     }
+    handleAction(action: string) {
+        switch (action) {
+            case 'play':
+            case 'pause':
+                this.togglePlayState();
+                break;
+            case 'ok':
+                this.onStageOk();
+                break;
+            case 'stop':
+                this.stopPlaying({ fade: true });
+                break;
+            case 'home':
+                this.onStageHome();
+                break;
+            case 'previous':
+                this.selectPreviousStage();
+                break;
+            case 'next':
+                this.selectNextStage();
+                break;
+        }
+    }
     stageChangeEventData() {
         return { pack: this.playingPack, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex, currentStage: this.currentStageSelected() };
     }

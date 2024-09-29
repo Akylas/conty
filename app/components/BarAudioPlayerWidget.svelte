@@ -199,28 +199,24 @@
     }
 
     function stopPlayback() {
-        storyHandler.stopPlaying({ fade: true });
+        storyHandler?.handleAction('stop');
     }
 
     function togglePlayState() {
-        if (state === 'play') {
-            storyHandler.pausePlayback();
-        } else {
-            storyHandler.resumePlayback();
-        }
+        storyHandler?.handleAction('play');
     }
     async function onOkButton() {
-        storyHandler?.onStageOk();
+        storyHandler?.handleAction('ok');
     }
     async function onHomeButton() {
-        storyHandler?.onStageHome();
+        storyHandler?.handleAction('home');
     }
 
     function selectPreviousAction() {
-        storyHandler?.setSelectedStage(Math.max(selectedStageIndex - 1, 0));
+        storyHandler?.handleAction('previous');
     }
     function selectNextAction() {
-        storyHandler?.setSelectedStage(Math.min(selectedStageIndex + 1, currentStages.length - 1));
+        storyHandler?.handleAction('next');
     }
 </script>
 
