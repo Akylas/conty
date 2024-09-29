@@ -118,6 +118,10 @@ export function stageIsStory(s: Stage) {
     // we also test for duration but will only work if stage duration is set
     return s.type === 'story' || s.duration > 30000 || (s.audio && s.controlSettings.pause === true);
 }
+export function stageIsOptionStage(actionNodes: Action[], stageNodes: Stage[], s: Stage) {
+    // we need to see if this stage is part of a multile options action
+    return actionNodes.some((a) => a.options.indexOf(s.uuid) !== -1 && a.options.length > 1);
+}
 export function stageCanGoHome(s: Stage) {
     return s && !!s.controlSettings?.home && !!s.homeTransition;
 }
