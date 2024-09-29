@@ -6,6 +6,8 @@ export const ANDROID_CONTENT = 'content://';
 
 export const SETTINGS_LANGUAGE = 'language';
 export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
+export const SETTINGS_COLOR_THEME = 'color_theme';
+export const DEFAULT_COLOR_THEME = 'default';
 
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';

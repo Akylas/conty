@@ -96,7 +96,7 @@
 
         pack = handler.playingPack;
         story = handler.playingStory;
-        DEV_LOG && console.log('onSetup', selectedStageIndex, JSON.stringify(currentStages));
+        DEV_LOG && console.log('onSetup', selectedStageIndex);
         if (pack) {
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
             onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
@@ -199,64 +199,55 @@
     }
 
     function stopPlayback() {
-        storyHandler.stopPlaying({ fade: true });
+        storyHandler?.handleAction('stop');
     }
 
     function togglePlayState() {
-        if (state === 'play') {
-            storyHandler.pausePlayback();
-        } else {
-            storyHandler.resumePlayback();
-        }
+        storyHandler?.handleAction('play');
     }
     async function onOkButton() {
-        storyHandler?.onStageOk();
+        storyHandler?.handleAction('ok');
     }
     async function onHomeButton() {
-        storyHandler?.onStageHome();
+        storyHandler?.handleAction('home');
     }
 
     function selectPreviousAction() {
-        storyHandler?.setSelectedStage(Math.max(selectedStageIndex - 1, 0));
+        storyHandler?.handleAction('previous');
     }
     function selectNextAction() {
-        storyHandler?.setSelectedStage(Math.min(selectedStageIndex + 1, currentStages.length - 1));
+        storyHandler?.handleAction('next');
     }
 </script>
 
 <gridlayout {...$$restProps} on:tap={() => {}}>
-    <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*">
+    <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*" rows="*">
         <image sharedTransitionTag="cover" src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
-        <label
-            col={1}
-            colSpan={2}
-            color="white"
-            fontSize={15}
-            lineBreak="end"
-            margin="3 3 0 10"
-            maxLines={2}
-            row={1}
-            sharedTransitionTag="title"
-            text={playingInfo?.name || ''}
-            verticalTextAlignment="top">
-        </label>
+        <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
-        <stacklayout col={1} horizontalAlignment="right" orientation="horizontal" verticalAlignment="center">
+        <gridlayout col={1} columns="auto,auto,auto,auto,auto,auto" horizontalAlignment="right" orientation="horizontal" verticalAlignment="center">
             <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-left-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectPreviousAction} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
             <mdbutton
                 class="whiteSmallActionBarButton"
+                col={1}
+                text="mdi-arrow-left-bold"
+                variant="text"
+                visibility={currentStages.length > 1 ? 'visible' : 'collapsed'}
+                on:tap={selectPreviousAction} />
+            <mdbutton class="whiteSmallActionBarButton" col={2} text="mdi-arrow-right-bold" variant="text" visibility={currentStages.length > 1 ? 'visible' : 'collapsed'} on:tap={selectNextAction} />
+            <mdbutton
+                class="whiteSmallActionBarButton"
+                col={3}
                 text={state === 'play' ? 'mdi-pause' : state !== 'pause' && showReplay ? 'mdi-replay' : 'mdi-play'}
                 variant="text"
                 visibility={story || currentStages?.length ? 'visible' : 'hidden'}
                 on:tap={togglePlayState} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-check" variant="text" visibility={controlSettings && !!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-close" variant="text" on:tap={stopPlayback} />
-        </stacklayout>
+            <mdbutton class="whiteSmallActionBarButton" col={4} text="mdi-check" variant="text" visibility={controlSettings && !!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
+            <mdbutton class="whiteSmallActionBarButton" col={5} text="mdi-close" variant="text" on:tap={stopPlayback} />
+        </gridlayout>
 
         <mdprogress colSpan={4} color="white" margin={0} maxValue=" 100" padding={0} value={progress} verticalAlignment="bottom" />
     </gridlayout>

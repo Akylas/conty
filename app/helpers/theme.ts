@@ -10,7 +10,7 @@ import { writable } from 'svelte/store';
 import { SDK_VERSION } from '@nativescript/core/utils';
 import { showAlertOptionSelect } from '~/utils/ui';
 import { closePopover } from '@nativescript-community/ui-popover/svelte';
-import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
+import { ALERT_OPTION_MAX_HEIGHT, DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from '~/utils/constants';
 import { confirm } from '@nativescript-community/ui-material-dialogs';
 import { restartApp, setCustomCssRootClass } from '~/utils';
 
@@ -47,7 +47,7 @@ Application.on(Application.systemAppearanceChangedEvent, (event: SystemAppearanc
                 }
             }
             Theme.setMode(Theme.Auto, undefined, realTheme, false);
-            updateThemeColors(realTheme);
+            updateThemeColors(realTheme, colorTheme);
             //close any popover as they are not updating with theme yet
             closePopover();
             currentRealTheme.set(realTheme);
@@ -224,7 +224,7 @@ export function isDarkTheme(th: string = getRealTheme(theme)) {
 
 export function getRealThemeAndUpdateColors() {
     const realTheme = getRealTheme(theme);
-    updateThemeColors(realTheme);
+    updateThemeColors(realTheme, colorTheme);
 }
 
 export function start() {
@@ -232,7 +232,7 @@ export function start() {
         return;
     }
     started = true;
-    colorTheme = getString('color_theme', 'default') as ColorThemes;
+    colorTheme = getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes;
     DEV_LOG && console.log('theme', 'start');
 
     useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
@@ -251,19 +251,19 @@ export function start() {
         if (theme === 'auto') {
             const realTheme = getRealTheme(theme);
             currentTheme.set(realTheme);
-            updateThemeColors(realTheme);
+            updateThemeColors(realTheme, colorTheme);
             globalObservable.notify({ eventName: 'theme', data: realTheme });
         }
     });
 
-    prefs.on('key:color_theme', async () => {
-        const newColorTheme = getString('color_theme') as ColorThemes;
+    prefs.on(`key:${SETTINGS_COLOR_THEME}`, async () => {
+        const newColorTheme = getString(SETTINGS_COLOR_THEME) as ColorThemes;
         const oldColorTheme = colorTheme;
         colorTheme = newColorTheme;
         useDynamicColors = colorTheme === 'dynamic';
         currentColorTheme.set(colorTheme);
         if (__ANDROID__) {
-            if (colorTheme !== 'default') {
+            if (colorTheme !== DEFAULT_COLOR_THEME) {
                 const context = Utils.android.getApplicationContext();
                 let nativeTheme = 'AppTheme';
                 switch (colorTheme) {
@@ -275,7 +275,7 @@ export function start() {
                         break;
                 }
                 const themeId = context.getResources().getIdentifier(nativeTheme, 'style', context.getPackageName());
-                DEV_LOG && console.log('color_theme', nativeTheme, themeId);
+                DEV_LOG && console.log(SETTINGS_COLOR_THEME, nativeTheme, themeId);
                 ApplicationSettings.setNumber('SET_THEME_ON_LAUNCH', themeId);
             } else {
                 ApplicationSettings.remove('SET_THEME_ON_LAUNCH');
@@ -291,7 +291,7 @@ export function start() {
         } else {
             setCustomCssRootClass(colorTheme, oldColorTheme);
         }
-        updateThemeColors(getRealTheme(theme));
+        updateThemeColors(getRealTheme(theme), colorTheme);
         globalObservable.notify({ eventName: 'color_theme', data: colorTheme });
     });
     prefs.on('key:theme', () => {
@@ -311,7 +311,7 @@ export function start() {
         currentTheme.set(realTheme);
 
         applyTheme(newTheme);
-        updateThemeColors(realTheme);
+        updateThemeColors(realTheme, colorTheme);
         if (__ANDROID__) {
             const activity = Application.android.startActivity;
             if (activity) {
@@ -332,7 +332,7 @@ export function start() {
         currentTheme.set(realTheme);
         currentRealTheme.set(realTheme);
         if (__IOS__) {
-            updateThemeColors(realTheme);
+            updateThemeColors(realTheme, colorTheme);
         }
     }
     if (__ANDROID__) {

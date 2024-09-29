@@ -131,7 +131,6 @@ try {
     }
     Application.on(Application.launchEvent, async () => {
         DEV_LOG && console.log('launch');
-        startThemeHelper();
         launched = true;
         start();
     });

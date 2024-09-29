@@ -1,9 +1,11 @@
 import { themer } from '@nativescript-community/ui-material-core';
-import { Application, Color, Screen, Utils } from '@nativescript/core';
+import { Application, ApplicationSettings, Color, Screen, Utils } from '@nativescript/core';
 import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale';
 import { get, writable } from 'svelte/store';
-import { getRealTheme, theme } from './helpers/theme';
+import { ColorThemes, getRealTheme, theme } from './helpers/theme';
 import { SDK_VERSION, layout } from '@nativescript/core/utils';
+import { DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from './utils/constants';
+import { start as startThemeHelper } from '~/helpers/theme';
 
 export const colors = writable({
     colorPrimary: '',
@@ -148,7 +150,8 @@ const onInitRootView = function () {
         actionBarHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarHeight')));
         actionBarButtonHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarButtonHeight')));
     }
-    updateThemeColors(getRealTheme(theme));
+    startThemeHelper();
+    // updateThemeColors(getRealTheme(theme));
     // DEV_LOG && console.log('initRootView', get(navigationBarHeight), get(statusBarHeight), get(actionBarHeight), get(actionBarButtonHeight), get(fonts));
     Application.off(Application.initRootViewEvent, onInitRootView);
     // getRealThemeAndUpdateColors();
@@ -161,7 +164,7 @@ Application.on('activity_started', () => {
     }
 });
 
-export function updateThemeColors(theme: string) {
+export function updateThemeColors(theme: string, colorTheme: ColorThemes = ApplicationSettings.getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes) {
     try {
         DEV_LOG && console.log('updateThemeColors', theme);
         const currentColors = get(colors);
@@ -192,58 +195,14 @@ export function updateThemeColors(theme: string) {
                 }
             });
         } else {
+            const themeColors = require(`~/themes/${colorTheme}.json`)
             // TODO: define all color themes for iOS
             if (theme === 'dark' || theme === 'black') {
-                currentColors.colorPrimary = '#7DDB82';
-                currentColors.colorOnPrimary = '#00390F';
-                currentColors.colorPrimaryContainer = '#00531A';
-                currentColors.colorOnPrimaryContainer = '#98F89C';
-                currentColors.colorSecondary = '#B9CCB4';
-                currentColors.colorOnSecondary = '#243424';
-                currentColors.colorSecondaryContainer = '#3A4B39';
-                currentColors.colorOnSecondaryContainer = '#D5E8D0';
-                currentColors.colorTertiary = '#FFE6D5';
-                currentColors.colorOnTertiary = '#3F2C1E';
-                currentColors.colorTertiaryContainer = '#D8BBA6';
-                currentColors.colorOnTertiaryContainer = '#412E1F';
-                currentColors.colorBackground = '#1A1C19';
-                currentColors.colorOnBackground = '#E2E3DD';
-                currentColors.colorSurface = '#121411';
-                currentColors.colorOnSurface = '#C6C7C1';
-                currentColors.colorSurfaceInverse = '#F9FAF4';
-                currentColors.colorOnSurfaceInverse = '#121411';
-                currentColors.colorOutline = '#8C9388';
-                currentColors.colorSurfaceVariant = '#424940';
-                currentColors.colorOnSurfaceVariant = '#C2C9BD';
-                currentColors.colorSurfaceContainer = '#121411';
-                currentColors.colorError = '#FFB4AB';
-                currentColors.colorOnError = '#690005';
+                Object.assign(currentColors, themeColors.dark);
             } else {
-                currentColors.colorPrimary = '#006E25';
-                currentColors.colorOnPrimary = '#FFFFFF';
-                currentColors.colorPrimaryContainer = '#98F89C';
-                currentColors.colorOnPrimaryContainer = '#002106';
-                currentColors.colorSecondary = '#526350';
-                currentColors.colorOnSecondary = '#FFFFFF';
-                currentColors.colorSecondaryContainer = '#D5E8D0';
-                currentColors.colorOnSecondaryContainer = '#101F10';
-                currentColors.colorTertiary = '#715A49';
-                currentColors.colorOnTertiary = '#FFFFFF';
-                currentColors.colorTertiaryContainer = '#E6C7B2';
-                currentColors.colorOnTertiaryContainer = '#4A3627';
-                currentColors.colorBackground = '#FCFDF7';
-                currentColors.colorOnBackground = '#1A1C19';
-                currentColors.colorSurface = '#F9FAF4';
-                currentColors.colorOnSurface = '#1A1C19';
-                currentColors.colorSurfaceInverse = '#121411';
-                currentColors.colorOnSurfaceInverse = '#C6C7C1';
-                currentColors.colorOutline = '#72796F';
-                currentColors.colorSurfaceVariant = '#DEE5D9';
-                currentColors.colorOnSurfaceVariant = '#424940';
-                currentColors.colorSurfaceContainer = '#DEE5D9';
-                currentColors.colorError = '#BA1A1A';
-                currentColors.colorOnError = '#FFFFFF';
+                Object.assign(currentColors, themeColors.light);
             }
+            DEV_LOG && console.log('updateThemeColors', theme, colorTheme, JSON.stringify(currentColors));
 
             themer.setPrimaryColor(currentColors.colorPrimary);
             themer.setOnPrimaryColor(currentColors.colorOnPrimary);

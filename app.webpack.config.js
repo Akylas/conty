@@ -143,6 +143,8 @@ module.exports = (env, params = {}) => {
     const projectRoot = params.projectRoot || __dirname;
     const dist = nsWebpack.Utils.platform.getDistPath();
     const appResourcesFullPath = resolve(projectRoot, appResourcesPath);
+    const isIOS = platform === 'ios';
+    const isAndroid = platform === 'android';
 
     config.resolve.conditionNames = config.resolve.conditionNames || [];
     config.resolve.conditionNames.push('svelte');
@@ -166,6 +168,9 @@ module.exports = (env, params = {}) => {
     const supportedLocales = readdirSync(join(projectRoot, appPath, 'i18n'))
         .filter((s) => s.endsWith('.json'))
         .map((s) => s.replace('.json', ''));
+    const supportedColorThemes = readdirSync(join(projectRoot, appPath, 'themes'))
+        .filter((s) => s.endsWith('.json'))
+        .map((s) => s.replace('.json', ''));
     config.externals.push('~/licenses.json');
     config.externals.push(function ({ context, request }, cb) {
         if (/i18n$/i.test(context)) {
@@ -173,9 +178,11 @@ module.exports = (env, params = {}) => {
         }
         cb();
     });
-    supportedLocales.forEach((l) => {
-        config.externals.push(`~/i18n/${l}.json`);
-    });
+    if (isIOS) {
+        supportedColorThemes.forEach((l) => {
+            config.externals.push(`~/themes/${l}.json`);
+        });
+    }
 
     // disable resolve of symlinks so that stack dont use real path but node_modules ones
     config.resolve.symlinks = false;
@@ -205,10 +212,7 @@ module.exports = (env, params = {}) => {
     }
 
     const package = require('./package.json');
-    const isIOS = platform === 'ios';
-    const isAndroid = platform === 'android';
     const APP_STORE_ID = process.env.IOS_APP_ID;
-    const CUSTOM_URL_SCHEME = 'alpimaps';
     const defines = {
         PRODUCTION: !!production,
         process: 'global.process',
@@ -389,7 +393,22 @@ module.exports = (env, params = {}) => {
                   }
                 : undefined
         }
-    ];
+    ].concat(
+        isIOS
+            ? [
+                  {
+                      context,
+                      from: 'themes/**/*',
+                      globOptions,
+                      transform: !!production
+                          ? {
+                                transformer: (content, path) => Promise.resolve(Buffer.from(JSON.stringify(JSON.parse(content.toString())), 'utf8'))
+                            }
+                          : undefined
+                  }
+              ]
+            : []
+    );
     config.plugins.unshift(new CopyPlugin({ patterns: copyPatterns }));
 
     config.plugins.unshift(

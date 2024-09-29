@@ -119,7 +119,7 @@ export function stageIsStory(s: Stage) {
     return s.type === 'story' || s.duration > 30000 || (s.audio && s.controlSettings.pause === true);
 }
 export function stageCanGoHome(s: Stage) {
-    return s && !!s.controlSettings?.home && s.homeTransition;
+    return s && !!s.controlSettings?.home && !!s.homeTransition;
 }
 
 export interface Story {

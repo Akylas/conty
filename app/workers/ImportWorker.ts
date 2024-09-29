@@ -303,6 +303,7 @@ export default class ImportWorker extends Observable {
                     const existingFilePath = path.join(destinationFolderPath, 'assets', action.image);
                     DEV_LOG && console.log('converting bmp', existingFilePath);
                     new ImageSource(ImageUtils.loadPossible4Bitmap(existingFilePath)).saveToFile(path.join(destinationFolderPath, 'assets', newName), 'jpg');
+                    File.fromPath(existingFilePath).removeSync();
                     needsSaving = true;
                     action.image = newName;
                 }

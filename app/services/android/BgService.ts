@@ -2,7 +2,18 @@ import { SDK_VERSION } from '@nativescript/core/utils';
 import { Canvas, Paint } from '@nativescript-community/ui-canvas';
 import { ImageSource, Utils } from '@nativescript/core';
 import { get } from 'svelte/store';
-import { PackStartEvent, PackStartEventData, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, StageEventData, StoryHandler } from '~/handlers/StoryHandler';
+import {
+    PackStartEvent,
+    PackStartEventData,
+    PackStopEvent,
+    PlaybackEvent,
+    PlaybackEventData,
+    PlayingInfo,
+    StageEventData,
+    StoryHandler,
+    StoryStartEvent,
+    StoryStopEvent
+} from '~/handlers/StoryHandler';
 import { lc } from '~/helpers/locale';
 import { BgServiceBinder } from '~/services/android/BgServiceBinder';
 import { createColorMatrix } from '~/utils';
@@ -101,9 +112,11 @@ export class BgService extends android.app.Service {
         this.bounded = false;
         const storyHandler = this.storyHandler;
         storyHandler.off(PlaybackEvent, this.onPlayerState, this);
-        storyHandler.off('stateChange', this.onStateChange, this);
+        // storyHandler.off('stateChange', this.onStateChange, this);
         storyHandler.off(PackStartEvent, this.onPackStart, this);
+        storyHandler.off(StoryStartEvent, this.onPackStart, this);
         storyHandler.off(PackStopEvent, this.onPackStop, this);
+        storyHandler.off(StoryStopEvent, this.onPackStop, this);
         return true;
     }
     onRebind(intent: android.content.Intent) {
@@ -115,9 +128,11 @@ export class BgService extends android.app.Service {
             DEV_LOG && console.log(TAG, 'onBounded');
             this.storyHandler = new StoryHandler(commonService);
             this.storyHandler.on(PlaybackEvent, this.onPlayerState, this);
-            this.storyHandler.on('stateChange', this.onStateChange, this);
+            // this.storyHandler.on('stateChange', this.onStateChange, this);
             this.storyHandler.on(PackStartEvent, this.onPackStart, this);
+            this.storyHandler.on(StoryStartEvent, this.onPackStart, this);
             this.storyHandler.on(PackStopEvent, this.onPackStop, this);
+            this.storyHandler.on(StoryStopEvent, this.onPackStop, this);
         } catch (error) {
             console.error('onBounded', error, error.stack);
         }
@@ -324,10 +339,10 @@ export class BgService extends android.app.Service {
             console.error('onPackStart', error, error.stack);
         }
     }
-    onStateChange(event: StageEventData) {
-        this.playingInfo = event.playingInfo;
-        this.updatePlayerNotification(event.currentStage, event.stages, this.playingState);
-    }
+    // onStateChange(event: StageEventData) {
+    //     this.playingInfo = event.playingInfo;
+    //     this.updatePlayerNotification(event.currentStage, event.stages, this.playingState);
+    // }
     onPlayerState(event: PlaybackEventData) {
         this.playingInfo = event.playingInfo;
         this.playingState = event.state;
@@ -340,27 +355,7 @@ export class BgService extends android.app.Service {
         // }
     }
     handleButtonAction(action: string) {
-        switch (action) {
-            case 'play':
-            case 'pause':
-                this.storyHandler.togglePlayState();
-                break;
-            case 'ok':
-                this.storyHandler.onStageOk();
-                break;
-            case 'stop':
-                this.storyHandler.stopPlaying({ fade: true });
-                break;
-            case 'home':
-                this.storyHandler.onStageHome();
-                break;
-            case 'previous':
-                this.storyHandler?.setSelectedStage((this.storyHandler.selectedStageIndex - 1 + this.storyHandler.currentStages.length) % this.storyHandler.currentStages.length);
-                break;
-            case 'next':
-                this.storyHandler?.setSelectedStage((this.storyHandler.selectedStageIndex + 1) % this.storyHandler.currentStages.length);
-                break;
-        }
+        this.storyHandler?.handleAction(action);
     }
     handleMediaIntent(intent: android.content.Intent) {
         const event = intent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT) as android.view.KeyEvent;
