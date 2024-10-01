@@ -371,7 +371,7 @@
                             secure: false
                         }
                     });
-                    if (result.password && result.userName) {
+                    if (result?.password && result?.userName) {
                         addRemoteSource({
                             name: result.userName,
                             url: result.password
