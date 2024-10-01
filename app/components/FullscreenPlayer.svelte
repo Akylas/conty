@@ -63,6 +63,7 @@
     $: controlSettings = currentStage?.controlSettings;
     // $: storyHandler?.getStageImage(pack, currentStage).then((r) => (currentImage = r));
     // $: DEV_LOG && console.warn('currentStage', currentStage);
+    $: DEV_LOG && console.warn('selectedStageIndex', selectedStageIndex);
 
     function getTimeFromProgress(progress: number) {
         return playingInfo ? (playingInfo.duration || 1) * progress : 0;
@@ -268,7 +269,7 @@
     async function onOkButton() {
         if (story && playlist.length > 1) {
             storyHandler.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
-        } else if (controlSettings?.ok) {
+        } else {
             storyHandler?.handleAction('ok');
         }
     }
@@ -464,7 +465,7 @@
                 horizontalAlignment="right"
                 text={pack ? 'mdi-check' : 'mdi-skip-next'}
                 verticalAlignment="center"
-                visibility={(story && playlist.length > 1) || !!controlSettings?.ok ? 'visible' : 'hidden'}
+                visibility={!PRODUCTION || (story && playlist.length > 1) || !!controlSettings?.ok ? 'visible' : 'hidden'}
                 on:tap={onOkButton} />
         </stacklayout>
         <CActionBar
