@@ -91,7 +91,7 @@
                     method: 'GET',
                     url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json'
                 });
-                DEV_LOG && console.log('got remote packs', JSON.stringify(r));
+                DEV_LOG && console.log('got remote packs', r.data.length);
                 packs = new ObservableArray(
                     r.data.map((pack) => ({
                         pack,
