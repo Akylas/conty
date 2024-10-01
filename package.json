@@ -33,7 +33,7 @@
         "@akylas/nativescript-inappbrowser": "3.1.8",
         "@akylas/non-playstore": "portal:plugin_non_playstore",
         "@mdi/font": "7.4.47",
-        "@nativescript-community/additween": "4.0.8",
+        "@nativescript-community/additween": "4.0.9",
         "@nativescript-community/arraybuffers": "1.1.5",
         "@nativescript-community/audio": "6.4.7",
         "@nativescript-community/css-theme": "1.2.14",
@@ -123,7 +123,6 @@
         "postcss-loader": "^8.1.1",
         "prettier": "^3.3.3",
         "prettier-plugin-svelte": "^3.2.7",
-        "readdirp": "^4.0.1",
         "sass": "^1.79.4",
         "sass-loader": "16.0.2",
         "scss-symbols-parser": "^2.0.1",
@@ -141,9 +140,7 @@
         "ts-patch": "^3.2.1",
         "typescript": "5.6.2",
         "typescript-eslint": "^8.7.0",
-        "unicodechar-string": "^1.0.0",
-        "webpack-bundle-analyzer": "^4.10.2",
-        "webpack-shell-plugin-next": "^2.3.2"
+        "webpack-bundle-analyzer": "^4.10.2"
     },
     "resolutions": {
         "@akylas/nativescript": "portal:../NativeScript/dist/packages/core"
