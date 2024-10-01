@@ -354,6 +354,7 @@ function getSnackMessage(props?) {
         try {
             snackMessage = resolveComponentElement(BottomSnack, props || {}) as ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
             (Application.getRootView() as GridLayout).addChild(snackMessage.element.nativeView);
+            DEV_LOG && console.log('getSnackMessage', JSON.stringify(props));
         } catch (error) {
             console.error(error, error.stack);
         }
@@ -373,6 +374,7 @@ export function updateSnackMessage(msg: Partial<ShowSnackMessageOptions>) {
     }
 }
 export async function showSnackMessage(props: ShowSnackMessageOptions) {
+    DEV_LOG && console.log('showSnackMessage', JSON.stringify(props));
     if (snackMessage) {
         updateSnackMessage(props);
     } else {
@@ -386,7 +388,7 @@ export async function showSnackMessage(props: ShowSnackMessageOptions) {
         ];
         Application.notify({ eventName: 'snackMessageAnimation', animationArgs });
         await new Animation(animationArgs).play();
-        updateSnackMessage({ translateY: 0 });
+        updateSnackMessage({ translateY: 0, ...props });
     }
 }
 export async function hideSnackMessage() {

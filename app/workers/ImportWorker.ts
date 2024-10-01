@@ -13,6 +13,7 @@ const context: Worker = self as any;
 
 export interface ImportStateEventData extends EventData {
     state: 'finished' | 'running';
+    type: 'file_import' | 'data_import';
 }
 export interface WorkerPostOptions {
     id?: number;
@@ -121,7 +122,7 @@ export default class ImportWorker extends Observable {
     }
 
     notify<T extends Optional<EventData & { error?: Error }, 'object'>>(data: T): void {
-        // DEV_LOG && console.log(TAG, 'notify', data.eventName);
+        DEV_LOG && console.log(TAG, 'notify', data.eventName);
         //we are a fake observable
         if (data.error) {
             // Error is not really serializable so we need custom handling
@@ -196,12 +197,21 @@ export default class ImportWorker extends Observable {
 
     queue = new Queue();
     async importFromCurrentDataFolderQueue() {
+        if (this.queue.size === 0) {
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'data_import' } as ImportStateEventData);
+        }
         return this.queue.add(() => this.importFromCurrentDataFolderInternal());
     }
     async importFromFilesQueue(files: string[]) {
+        if (this.queue.size === 0) {
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'file_import' } as ImportStateEventData);
+        }
         return this.queue.add(() => this.importFromFilesInternal(files));
     }
     async importFromFileQueue(data) {
+        if (this.queue.size === 0) {
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'file_import' } as ImportStateEventData);
+        }
         return this.queue.add(() => this.importFromFileInternal(data));
     }
     async importFromCurrentDataFolderInternal() {

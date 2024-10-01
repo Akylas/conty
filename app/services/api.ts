@@ -340,9 +340,9 @@ export async function downloadStories(story: RemoteContent) {
             ]
         });
         function updateProgress(progress) {
-            if (__IOS__) {
-                showSnackMessage({ text: l('downloading_story_progress', progress), progress });
-            }
+            // if (__IOS__) {
+            showSnackMessage({ text: l('downloading_story_progress', progress), progress });
+            // }
         }
         updateProgress(0);
         DEV_LOG && console.log('progressNotification', progressNotification);

@@ -212,7 +212,7 @@
             const snackAnimation = animationArgs[0];
             animationArgs.push({
                 target: fabHolder.nativeView,
-                translate: { x: 0, y: snackAnimation.translate.y === 0 ? -70 : 0 },
+                height: 50 - snackAnimation.translate.y,
                 duration: snackAnimation.duration
             });
         }
@@ -653,9 +653,9 @@
 </script>
 
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
-    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*">
+    <gridlayout paddingBottom={$windowInset.bottom} paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto">
         <!-- {/if} -->
-        <bottomsheet gestureEnabled={false} marginBottom={$windowInset.bottom} row={1} {stepIndex} steps={[0, 90, 168]}>
+        <bottomsheet gestureEnabled={false} row={1} {stepIndex} steps={[0, 90, 168]}>
             <collectionView
                 bind:this={collectionView}
                 {colWidth}
@@ -694,7 +694,7 @@
             <mdprogress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
 
             <gridlayout prop:bottomSheet rows="90,78" width="100%">
-                <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
+                <stacklayout horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
                     {#if canImportFile}
                         <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
                     {/if}
@@ -736,5 +736,6 @@
         {#if __IOS__}
             <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
         {/if}
+        <absolutelayout  bind:this={fabHolder} row={2}  />
     </gridlayout>
 </page>
