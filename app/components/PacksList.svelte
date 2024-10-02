@@ -708,10 +708,11 @@
             <flexlayout
                 flexDirection="column"
                 horizontalAlignment="center"
-                marginBottom="30%"
+                marginBottom="10%"
                 paddingLeft={16}
                 paddingRight={16}
                 row={1}
+                rowSpan={2}
                 verticalAlignment="center"
                 width="80%"
                 transition:fade={{ duration: 200 }}>
@@ -736,6 +737,6 @@
         {#if __IOS__}
             <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
         {/if}
-        <absolutelayout  bind:this={fabHolder} row={2}  />
+        <absolutelayout bind:this={fabHolder} row={2} />
     </gridlayout>
 </page>
