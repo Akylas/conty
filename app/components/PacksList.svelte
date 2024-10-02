@@ -708,10 +708,11 @@
             <flexlayout
                 flexDirection="column"
                 horizontalAlignment="center"
-                marginBottom="30%"
+                marginBottom="10%"
                 paddingLeft={16}
                 paddingRight={16}
                 row={1}
+                rowSpan={2}
                 verticalAlignment="center"
                 width="80%"
                 transition:fade={{ duration: 200 }}>
