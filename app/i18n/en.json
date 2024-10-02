@@ -44,6 +44,7 @@
     "import_files": "import files",
     "import_settings": "import settings",
     "import_settings_desc": "import all settings from a previous backup",
+    "importing": "importing",
     "ios": {
         "info": {
             "plist": {

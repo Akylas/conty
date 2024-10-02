@@ -121,6 +121,7 @@ try {
             DEV_LOG && console.log('servicesStarted');
             Application.notify({ eventName: 'servicesStarted' });
             try {
+                await importService.start();
                 await importService.updateContentFromDataFolder();
             } catch (error) {
                 console.error('start import from data error', error, error.stack);

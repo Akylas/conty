@@ -3,7 +3,7 @@ import { TNSPlayer } from '@nativescript-community/audio';
 import { lc } from '@nativescript-community/l';
 import { Application, EventData, ImageSource, Observable, ObservableArray } from '@nativescript/core';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
-import { Action, Pack, Stage, Story, cleanupStageName, stageIsOptionStage, stageIsStory } from '~/models/Pack';
+import { Action, Pack, Stage, Story, cleanupStageName, ignoreStageNameRegex, stageIsOptionStage, stageIsStory } from '~/models/Pack';
 import { getAudioDuration } from '~/utils';
 import { showError } from '~/utils/showError';
 import { Handler } from './Handler';
@@ -26,94 +26,6 @@ function shuffle(array) {
         // And swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
-}
-
-function nextStageFrom(actionNodes: Action[], stageNodes: Stage[], stage?: Stage): Stage[] {
-    // DEV_LOG && console.log('nextStageFrom', JSON.stringify(stage));
-    if (!stage?.okTransition) {
-        return [];
-    }
-    return actionNodes.find((a) => a.id === stage.okTransition.actionNode).options.map((n) => stageNodes.find((s) => s.uuid === n));
-}
-
-function mapOfStagesForOption(stages: Stage[], optionIndex: number = -1): Stage[] {
-    if (optionIndex === -1 || optionIndex >= stages.length) {
-        if (stages.length && stages[0].controlSettings.autoplay) {
-            // running it alone will ensure we play automatically
-            return [stages[0]];
-        }
-        return stages;
-    } else {
-        return [stages[optionIndex]];
-    }
-}
-
-const ignoreStageNameRegex = new RegExp('\\s*(story|stage)[\\s-_]*(node|title)\\s*', 'i');
-
-function getStoryName(actionNodes: Action[], stageNodes: Stage[], stage: Stage) {
-    // DEV_LOG && console.log('getStoryName', stage.uuid, stage.name);
-    if (stage && (!stage.name || ignoreStageNameRegex.test(stage.name))) {
-        const action = actionNodes.find((a) => a.options.indexOf(stage.uuid) !== -1);
-        const beforeStage = stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
-        // DEV_LOG && console.log('getStoryName beforeStage', beforeStage.uuid, beforeStage.name);
-        if (beforeStage && ignoreStageNameRegex.test(beforeStage.name)) {
-            return null;
-        }
-        return cleanupStageName(beforeStage);
-    }
-    return cleanupStageName(stage);
-}
-
-function findStoryImage(actionNodes: Action[], stageNodes: Stage[], s: Stage) {
-    if (s.image) {
-        return s.image;
-    }
-    const action = actionNodes.find((a) => a.options.indexOf(s.uuid) !== -1);
-    const beforeStage = stageNodes.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
-    // DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
-    if (!stageIsStory(beforeStage) && beforeStage?.image) {
-        return beforeStage.image;
-    } else {
-        return findStoryImage(actionNodes, stageNodes, beforeStage);
-    }
-}
-
-function findStoriesFromStage(actionNodes: Action[], stageNodes: Stage[], stage: Stage, storyPath: Stage[]): Stage[][] {
-    const nextStages = nextStageFrom(actionNodes, stageNodes, stage) || [];
-
-    const stages = mapOfStagesForOption(nextStages);
-    if (stages.some((s) => storyPath.findIndex((s2) => s2.uuid === s.uuid) !== -1)) {
-        // this is the start of a loop lets stop
-        return [storyPath];
-    }
-    // DEV_LOG &&
-    //     console.log(
-    //         'findStoriesFromStage',
-    //         stage.uuid,
-    //         stages.length,
-    //         storyPath.length,
-    //         storyPath.map((s) => s.uuid)
-    //     );
-    const isStory = stageIsStory(stage);
-    return stages.reduce((acc, s) => {
-        const newUuid = s.uuid;
-        if (storyPath.findIndex((s2) => s2.uuid === newUuid) === -1 && (!isStory || !stageIsStory(s))) {
-            // DEV_LOG &&
-            //     console.log(
-            //         'findStoriesFromStage creating new story',
-            //         s.uuid,
-            //         storyPath.map((s) => s.uuid)
-            //     );
-            const newStoryPath = [...storyPath];
-            newStoryPath.push(s);
-            acc.push(...findStoriesFromStage(actionNodes, stageNodes, s, newStoryPath));
-            // not done lets continue
-        } else {
-            // story path done
-            acc.push(storyPath);
-        }
-        return acc;
-    }, []);
 }
 
 function getRandomFromArray(array) {
@@ -180,6 +92,9 @@ export class StoryHandler extends Handler {
 
     get playerCurrentTime() {
         return this.mPlayer?.currentTime || 0;
+    }
+    get pack() {
+        return this.playingPack || this.playingStory?.pack;
     }
     playerState: PlayingState = 'stopped';
 
@@ -381,7 +296,7 @@ export class StoryHandler extends Handler {
     }
     nextStageFrom(stage?: Stage): Stage[] {
         // DEV_LOG && console.log('nextStageFrom', JSON.stringify(stage));
-        return nextStageFrom(this.actionNodes, this.stageNodes, stage);
+        return this.pack.nextStageFrom(this.actionNodes, this.stageNodes, stage);
     }
     homeStageFrom(stage?: Stage): Stage[] {
         const homeTransition = stage.homeTransition;
@@ -429,12 +344,12 @@ export class StoryHandler extends Handler {
     }
     getStoryName(pack: Pack, stage: Stage) {
         if (pack) {
-            return getStoryName(this.actionNodes, this.stageNodes, stage);
+            return this.pack.getStoryName(this.actionNodes, this.stageNodes, stage);
         }
     }
 
     findStoryImage(s: Stage) {
-        return findStoryImage(this.actionNodes, this.stageNodes, s);
+        return this.pack.findStoryImage(this.actionNodes, this.stageNodes, s);
     }
     getAllPlayingStoriesFromPack() {
         return this.stageNodes.filter(stageIsStory).sort((a, b) => a.name?.localeCompare(b.name));
@@ -499,11 +414,13 @@ export class StoryHandler extends Handler {
             return;
         }
         const nextStages = this.nextStageFrom(oldSelected) || [];
+        DEV_LOG && console.log('nextStages', nextStages);
 
         const optionIndex = this.currentStages[oldSelectedIndex].okTransition?.optionIndex;
+        DEV_LOG && console.log('optionIndex', optionIndex);
 
-        this.currentStages = mapOfStagesForOption(nextStages);
-        this.selectedStageIndex = optionIndex;
+        this.currentStages = this.pack.mapOfStagesForOption(nextStages);
+        this.selectedStageIndex = optionIndex >= 0 ? optionIndex : 0;
         const currentStageSelected = this.currentStageSelected();
         if (currentStageSelected.controlSettings.home && !currentStageSelected.homeTransition) {
             // the json is missing the homeTransition. Let s fake it
@@ -535,7 +452,7 @@ export class StoryHandler extends Handler {
 
         const optionIndex = homeTransition?.optionIndex;
 
-        this.currentStages = mapOfStagesForOption(nextStages);
+        this.currentStages = this.pack.mapOfStagesForOption(nextStages);
         // for now we always reset to 0 as many stories have the wrong index set
         this.selectedStageIndex = 0;
         // this.selectedStageIndex = optionIndex;
@@ -746,7 +663,7 @@ export class StoryHandler extends Handler {
     async findAllStories(pack: Pack) {
         const data = await pack.getData();
         const currentStage = data.stageNodes.find((s) => s.squareOne === true);
-        const storiesStages = findStoriesFromStage(data.actionNodes, data.stageNodes, currentStage, []);
+        const storiesStages = this.pack.findStoriesFromStage(data.actionNodes, data.stageNodes, currentStage, []);
         const result = await Promise.all(
             storiesStages.map(async (s, index) => {
                 const images = [];

@@ -1,0 +1,3 @@
+### Bug fixes
+- better stories name
+- show download/import progress

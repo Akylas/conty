@@ -49,7 +49,7 @@ $lang.subscribe((newLang: string) => {
     loadDayjsLang(lang);
     try {
         // const localeData = require(`~/i18n/${lang}.json`);
-        loadLocaleJSON(`~/i18n/${lang}.json`, '~/i18n/en.json');
+        loadLocaleJSON(`~/i18n/${lang}.json`, `~/i18n/${DEFAULT_LOCALE}.json`);
     } catch (err) {
         console.error(lang, `~/i18n/${lang}.json`, File.exists(`~/i18n/${lang}.json`), err, err.stack);
     }

@@ -40,9 +40,11 @@
     "feedback_sent": "commentaires envoyés",
     "first_presentation": "Conty peut lire des histoires que vous ajoutez manuellement à votre téléphone. \nVous pouvez également télécharger des histoires à distance. \nÀ l'heure actuelle, aucune source distante n'est configurée. \nVoulez-vous en ajouter une ?",
     "general": "général",
+    "home": "maison",
     "import_files": "importer des fichiers",
     "import_settings": "importer les paramètres",
     "import_settings_desc": "importer tous les paramètres d'une sauvegarde précédente",
+    "importing": "importer",
     "ios": {
         "info": {
             "plist": {
@@ -68,6 +70,8 @@
     "notification_download_desc": "notifications affichées lors du téléchargement des packs",
     "ok": "OK",
     "packs": "paquets",
+    "pause": "pause",
+    "play": "jouer",
     "please_refresh": "veuillez actualiser pour voir les packs",
     "please_restart_app": "veuillez redémarrer l'application pour voir le changement",
     "preparing_download": "préparation du téléchargement",
@@ -94,6 +98,7 @@
     "show_love": "Si vous aimez le projet, n'hésitez pas à le faire connaître ou à y contribuer",
     "source": "source",
     "startup_error": "une erreur s'est produite lors du démarrage de l'application. Veuillez redémarrer l'application pour réessayer. Si le problème persiste, veuillez le signaler",
+    "stop": "arrêt",
     "story": "histoire",
     "theme": {
         "auto": "Auto",

@@ -2,7 +2,7 @@ import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, U
 import dayjs from 'dayjs';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
-import { IPack, Pack, Tag } from '~/models/Pack';
+import { IPack, LuniiPack, Pack, Tag } from '~/models/Pack';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
 import NSQLDatabase from './NSQLDatabase';
 import { getAndroidRealPath } from '~/utils';
@@ -150,7 +150,9 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
 
     migrations = Object.assign({
         addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
-        addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`
+        addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`,
+        addType: sql`ALTER TABLE Pack ADD COLUMN type TEXT`,
+        addCategory: sql`ALTER TABLE Pack ADD COLUMN category TEXT`
     });
 
     async createPack(data: Partial<Pack>) {
@@ -236,9 +238,9 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
     }
 
     async createModelFromAttributes(attributes: Required<any> | Pack): Promise<Pack> {
-        const { id, thumbnail, compressed, ...others } = attributes;
+        const { id, type, thumbnail, compressed, ...others } = attributes;
         // DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, documentsService.dataFolder.path);
-        const pack = new Pack(id);
+        const pack = new LuniiPack(id);
         Object.assign(pack, {
             id,
             compressed,

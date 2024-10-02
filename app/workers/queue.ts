@@ -4,6 +4,9 @@ export default class Queue extends Observable {
     private workingOnPromise = false;
     private queue = [];
     private pendingPromise = false;
+    get size() {
+        return this.queue.length;
+    }
     add(promise) {
         return new Promise((resolve, reject) => {
             this.queue.push({

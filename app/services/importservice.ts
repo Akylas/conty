@@ -2,18 +2,20 @@ import { time } from '@akylas/nativescript/profiling';
 import { EventData } from '@nativescript-community/ui-image';
 import { Observable } from '@nativescript/core';
 import { Pack } from '~/models/Pack';
-import { EVENT_STATE } from '~/utils/constants';
+import { EVENT_IMPORT_STATE, EVENT_STATE } from '~/utils/constants';
 import { CustomError } from '~/utils/error';
 import { showError } from '~/utils/showError';
-import ImportWorker, { WorkerEventType } from '~/workers/ImportWorker';
+import ImportWorker, { ImportStateEventData, WorkerEventType } from '~/workers/ImportWorker';
 import { documentsService } from './documents';
+import { lc } from '@nativescript-community/l';
+import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 
 export interface ImportEnabledEventData extends EventData {
     enabled: boolean;
 }
 
 export class ImportService extends Observable {
-    enabled = true;
+    enabled = false;
     worker: ImportWorker;
     messagePromises: { [key: string]: { resolve: Function; reject: Function; timeoutTimer: number }[] } = {};
     async onWorkerMessage(event: {
@@ -61,7 +63,7 @@ export class ImportService extends Observable {
             const eventData = messageData as any;
             switch (data.type) {
                 case 'event':
-                    // DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData));
+                    DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData));
                     if (eventData.target === 'documentsService') {
                         if (eventData.pack) {
                             eventData.pack = Pack.fromJSON(eventData.pack);
@@ -169,20 +171,30 @@ export class ImportService extends Observable {
             worker.onmessage = this.onWorkerMessage.bind(this);
         }
     }
-
+    onImportState(event: ImportStateEventData) {
+        DEV_LOG && console.log('SyncService', 'onImportState', event.state);
+        if (event.state === 'running' && event.type === 'file_import') {
+            showSnackMessage({ text: lc('importing'), progress: -1 });
+        } else {
+            hideSnackMessage();
+        }
+    }
     async start() {
         if (this.enabled) {
             return;
         }
+        this.enabled = true;
         DEV_LOG && console.log('ImportService', 'start', /* this.services.length,  */ this.enabled);
         if (this.enabled) {
             this.notify({ eventName: EVENT_STATE, enabled: this.enabled } as ImportEnabledEventData);
             // prefs.on(`key:${SETTINGS_REMOTE_AUTO_SYNC}`, this.onAutoSyncPrefChanged);
             // this.onAutoSyncPrefChanged();
             DEV_LOG && console.log('SyncService', 'start');
+            this.on(EVENT_IMPORT_STATE, this.onImportState);
         }
     }
     async stop() {
+        this.off(EVENT_IMPORT_STATE, this.onImportState);
         // if (this.syncRunning) {
         //     // if sync is running wait for it to be finished
         //     await new Promise((resolve) => this.once(EVENT_SYNC_STATE, resolve));

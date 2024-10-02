@@ -11,11 +11,11 @@ export class MediaSessionCompatCallback extends android.support.v4.media.session
     }
 
     onPlay() {
-        getBGServiceInstance().storyHandler.resumePlayback();
+        getBGServiceInstance().storyHandler?.resumePlayback();
         super.onPlay();
     }
     onPause() {
-        getBGServiceInstance().storyHandler.pausePlayback();
+        getBGServiceInstance().storyHandler?.pausePlayback();
         super.onPause();
     }
 
