@@ -195,14 +195,14 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
                 }
             });
         } else {
-            const themeColors = require(`~/themes/${colorTheme}.json`)
+            const themeColors = require(`~/themes/${colorTheme}.json`);
             // TODO: define all color themes for iOS
             if (theme === 'dark' || theme === 'black') {
                 Object.assign(currentColors, themeColors.dark);
             } else {
                 Object.assign(currentColors, themeColors.light);
             }
-            DEV_LOG && console.log('updateThemeColors', theme, colorTheme, JSON.stringify(currentColors));
+            // DEV_LOG && console.log('updateThemeColors', theme, colorTheme, JSON.stringify(currentColors));
 
             themer.setPrimaryColor(currentColors.colorPrimary);
             themer.setOnPrimaryColor(currentColors.colorOnPrimary);
@@ -230,7 +230,7 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
         });
         colors.set(currentColors);
         Application.notify({ eventName: 'colorsChange', colors: currentColors });
-        DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
+        // DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
         rootView?._onCssStateChange();
         const rootModalViews = rootView?._getRootModalViews();
         rootModalViews.forEach((rootModalView) => rootModalView._onCssStateChange());
