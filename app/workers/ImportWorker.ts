@@ -8,6 +8,7 @@ import { DocumentsService, getFileTextContentFromPackFile } from '~/services/doc
 import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE } from '~/utils/constants';
 import Queue from './queue';
+import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 
 const context: Worker = self as any;
 
@@ -408,13 +409,8 @@ context.onmessage = (event) => {
     if (Array.isArray(event.data.nativeData)) {
         event.data.nativeData = (event.data.nativeData as string[]).reduce((acc, key) => {
             const actualKey = key.split('$$$')[1];
-            if (__ANDROID__) {
-                const native = (acc[actualKey] = com.akylas.conty.WorkersContext.Companion.getValue(key));
-                com.akylas.conty.WorkersContext.Companion.setValue(key, null);
-            } else {
-                acc[actualKey] = WorkerContext.getValue(key);
-                WorkerContext.setValue(key, null);
-            }
+            acc[actualKey] = getWorkerContextValue(key);
+            setWorkerContextValue(key, null);
             return acc;
         }, {});
     }
