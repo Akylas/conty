@@ -345,7 +345,7 @@ export async function downloadStories(story: RemoteContent) {
             // }
         }
         updateProgress(0);
-        DEV_LOG && console.log('progressNotification', progressNotification);
+        // DEV_LOG && console.log('progressNotification', progressNotification);
 
         // await Promise.all(
         // toDownload.map(async (s) => {
@@ -367,7 +367,6 @@ export async function downloadStories(story: RemoteContent) {
         //     throw new Error(`existing story ${story.title}`);
         // }
         const compressed = documentsService.supportsCompressedData;
-        // const compressed = __ANDROID__;
 
         const downloadFilePath = !compressed || androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
         const file = await getFile(
@@ -397,36 +396,7 @@ export async function downloadStories(story: RemoteContent) {
                     modifiedDate: dayjs(story.updated_at).valueOf()
                 }
             });
-            // destinationFilePath = downloadFilePath;
-            // if (__ANDROID__ && compressed && androidUseContent) {
-            //     //we need to copy the file
-            //     const context = Utils.android.getApplicationContext();
-            //     destinationFilePath = com.akylas.conty.FileUtils.Companion.copyFile(context, downloadFilePath, destinationFolderPath, destinationFileName, '*/*', true);
-            // }
-            // if (!compressed) {
-            //     destinationFilePath = documentsService.dataFolder.getFolder(name).path;
-            //     await Folder.fromPath(destinationFilePath).remove();
-            //     // ProgressNotification.update(progressNotification, {
-            //     //     title: $tc('uncompress_glasses_data', storyId),
-            //     //     rightIcon: '0%',
-            //     //     progress: 0
-            //     // });
-            //     await unzip(file.path, destinationFilePath);
-
-            //     DEV_LOG && console.log('unzipped ', destinationFilePath);
-            // }
-
-            // await documentsService.importStory(name, destinationFilePath, compressed, {
-            //     createdDate: dayjs(story.created_at).valueOf(),
-            //     modifiedDate: dayjs(story.updated_at).valueOf(),
-            //     size,
-            //     age: story.age,
-            //     title: story.title,
-            //     description: story.description
-            // });
         }
-        // })
-        // );
     } catch (error) {
         showError(error);
         if (destinationFilePath && File.exists(destinationFilePath)) {
