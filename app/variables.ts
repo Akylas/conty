@@ -1,11 +1,12 @@
 import { themer } from '@nativescript-community/ui-material-core';
-import { Application, ApplicationSettings, Color, Screen, Utils } from '@nativescript/core';
+import { Application, ApplicationSettings, Color, Frame, Page, Screen, Utils } from '@nativescript/core';
 import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale';
 import { get, writable } from 'svelte/store';
 import { ColorThemes, getRealTheme, theme } from './helpers/theme';
 import { SDK_VERSION, layout } from '@nativescript/core/utils';
 import { DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from './utils/constants';
 import { start as startThemeHelper } from '~/helpers/theme';
+import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 
 export const colors = writable({
     colorPrimary: '',
@@ -63,43 +64,37 @@ function updateSystemFontScale(value) {
     fontScale.set(value);
 }
 
+if (__ANDROID__) {
+    Application.android.on(Application.android.activityCreateEvent, (event) => {
+        AppUtilsAndroid.prepareActivity(event.activity);
+    });
+    Page.on('shownModally', function (event) {
+        AppUtilsAndroid.prepareWindow(event.object['_dialogFragment'].getDialog().getWindow());
+    });
+    Frame.on('shownModally', function (event) {
+        AppUtilsAndroid.prepareWindow(event.object['_dialogFragment'].getDialog().getWindow());
+    });
+}
 const onInitRootView = function () {
     // we need a timeout to read rootView css variable. not 100% sure why yet
     if (__ANDROID__) {
         // setTimeout(() => {
         const rootView = Application.getRootView();
         if (rootView) {
-            (rootView.nativeViewProtected as android.view.View).setOnApplyWindowInsetsListener(
-                new android.view.View.OnApplyWindowInsetsListener({
-                    onApplyWindowInsets(view, insets) {
-                        if (SDK_VERSION >= 29) {
-                            const inset = insets.getSystemWindowInsets();
-                            DEV_LOG && console.log('onApplyWindowInsets', inset.top, inset.bottom, inset.left, inset.right);
-                            windowInset.set({
-                                top: Utils.layout.toDeviceIndependentPixels(inset.top),
-                                bottom: Utils.layout.toDeviceIndependentPixels(inset.bottom),
-                                left: Utils.layout.toDeviceIndependentPixels(inset.left),
-                                right: Utils.layout.toDeviceIndependentPixels(inset.right)
-                            });
-                        } else {
-                            windowInset.set({
-                                top: Utils.layout.toDeviceIndependentPixels(insets.getSystemWindowInsetTop()),
-                                bottom: Utils.layout.toDeviceIndependentPixels(insets.getSystemWindowInsetBottom()),
-                                left: Utils.layout.toDeviceIndependentPixels(insets.getSystemWindowInsetLeft()),
-                                right: Utils.layout.toDeviceIndependentPixels(insets.getSystemWindowInsetRight())
-                            });
-                        }
-                        return insets;
-                    }
-                })
-            );
+            AppUtilsAndroid.listenForWindowInsets((inset) => {
+                windowInset.set({
+                    top: Utils.layout.toDeviceIndependentPixels(inset[0]),
+                    bottom: Utils.layout.toDeviceIndependentPixels(Math.max(inset[1], inset[4])),
+                    left: Utils.layout.toDeviceIndependentPixels(inset[2]),
+                    right: Utils.layout.toDeviceIndependentPixels(inset[3])
+                });
+            });
         }
         const rootViewStyle = rootView?.style;
         fonts.set({ mdi: rootViewStyle.getCssVariable('--mdiFontFamily') });
         actionBarHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarHeight')));
         actionBarButtonHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarButtonHeight')));
         const context = Utils.android.getApplicationContext();
-        const nUtils = com.akylas.conty.Utils.Companion;
 
         const resources = Utils.android.getApplicationContext().getResources();
         updateSystemFontScale(resources.getConfiguration().fontScale);
@@ -107,7 +102,7 @@ const onInitRootView = function () {
 
         // ActionBar
         // resourceId = resources.getIdentifier('status_bar_height', 'dimen', 'android');
-        let nActionBarHeight = Utils.layout.toDeviceIndependentPixels(nUtils.getDimensionFromInt(context, 16843499 /* actionBarSize */));
+        let nActionBarHeight = Utils.layout.toDeviceIndependentPixels(AppUtilsAndroid.getDimensionFromInt(context, 16843499 /* actionBarSize */));
         // let nActionBarHeight = 0;
         // if (resourceId > 0) {
         //     nActionBarHeight = Utils.layout.toDeviceIndependentPixels(resources.getDimensionPixelSize(resourceId));
@@ -157,12 +152,12 @@ const onInitRootView = function () {
     // getRealThemeAndUpdateColors();
 };
 Application.on(Application.initRootViewEvent, onInitRootView);
-Application.on('activity_started', () => {
-    if (__ANDROID__) {
+if (__ANDROID__) {
+    Application.android.on(Application.android.activityStartedEvent, () => {
         const resources = Utils.android.getApplicationContext().getResources();
         isRTL.set(resources.getConfiguration().getLayoutDirection() === 1);
-    }
-});
+    });
+}
 
 export function updateThemeColors(theme: string, colorTheme: ColorThemes = ApplicationSettings.getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes) {
     try {
@@ -178,7 +173,6 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
         }
         // rootViewStyle?.setUnscopedCssVariable('--fontScale', fontScale + '');
         if (__ANDROID__) {
-            const nUtils = com.akylas.conty.Utils.Companion;
             const activity = Application.android.startActivity;
             // we also update system font scale so that our UI updates correcly
             fontScale.set(Utils.android.getApplicationContext().getResources().getConfiguration().fontScale);
@@ -187,11 +181,11 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
                     return;
                 }
                 if (c === 'colorBackground') {
-                    currentColors.colorBackground = new Color(nUtils.getColorFromInt(activity, 16842801)).hex;
+                    currentColors.colorBackground = new Color(AppUtilsAndroid.getColorFromInt(activity, 16842801)).hex;
                 } else if (c === 'popupMenuBackground') {
-                    currentColors.popupMenuBackground = new Color(nUtils.getColorFromInt(activity, 16843126)).hex;
+                    currentColors.popupMenuBackground = new Color(AppUtilsAndroid.getColorFromInt(activity, 16843126)).hex;
                 } else {
-                    currentColors[c] = new Color(nUtils.getColorFromName(activity, c)).hex;
+                    currentColors[c] = new Color(AppUtilsAndroid.getColorFromName(activity, c)).hex;
                 }
             });
         } else {

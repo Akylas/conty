@@ -1,3 +1,4 @@
+import { getISO3Language } from '@akylas/nativescript-app-utils';
 import { capitalize, l, lc, loadLocaleJSON, lt, lu, overrideNativeLocale } from '@nativescript-community/l';
 import { Application, ApplicationSettings, Device, File, Utils } from '@nativescript/core';
 import { getString } from '@nativescript/core/application-settings';
@@ -192,12 +193,7 @@ export function getLocaleDisplayName(locale?, canReturnEmpty = false) {
     }
 }
 export function getCurrentISO3Language() {
-    if (__IOS__) {
-        return NSLocale.alloc().initWithLocaleIdentifier(lang).ISO639_2LanguageCode();
-    } else {
-        const locale = java.util.Locale.forLanguageTag(lang);
-        return locale.getISO3Language();
-    }
+    return getISO3Language(lang);
 }
 async function internalSelectLanguage() {
     // try {
@@ -243,7 +239,7 @@ export async function selectLanguage() {
 // TODO: on android 13 check for per app language, we dont need to store it
 setLang(deviceLanguage);
 
-Application.on('activity_started', () => {
+Application.android.on(Application.android.activityStartedEvent, () => {
     // on android after switching to auto we dont get the actual language
     // before an activity restart
     if (__ANDROID__) {

@@ -185,6 +185,8 @@ dependencies {
     // baselineProfile project(':baselineprofile')
 
     implementation "com.anggrayudi:storage:2.0.0"
+
+    implementation "androidx.palette:palette:1.0.0"
 }
 
 if (project.hasProperty("sentryEnabled")) {

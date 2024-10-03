@@ -13,6 +13,7 @@ import { closePopover } from '@nativescript-community/ui-popover/svelte';
 import { ALERT_OPTION_MAX_HEIGHT, DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from '~/utils/constants';
 import { confirm } from '@nativescript-community/ui-material-dialogs';
 import { restartApp, setCustomCssRootClass } from '~/utils';
+import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 
 export type Themes = 'auto' | 'light' | 'dark' | 'black';
 export type ColorThemes = 'default' | 'lunii' | 'eink' | 'dynamic';
@@ -43,7 +44,7 @@ Application.on(Application.systemAppearanceChangedEvent, (event: SystemAppearanc
             if (__ANDROID__) {
                 const activity = Application.android.startActivity;
                 if (activity) {
-                    com.akylas.conty.Utils.Companion.applyDayNight(activity, useDynamicColors);
+                    AppUtilsAndroid.applyDayNight(activity, true);
                 }
             }
             Theme.setMode(Theme.Auto, undefined, realTheme, false);
@@ -315,7 +316,7 @@ export function start() {
         if (__ANDROID__) {
             const activity = Application.android.startActivity;
             if (activity) {
-                com.akylas.conty.Utils.Companion.applyDayNight(activity, useDynamicColors);
+                AppUtilsAndroid.applyDayNight(activity, true);
             }
         }
         currentRealTheme.set(realTheme);
@@ -343,7 +344,7 @@ export function start() {
             Application.once(Application.launchEvent, onReady);
         }
 
-        Application.on('activity_started', () => {
+        Application.android.on(Application.android.activityStartedEvent, () => {
             getRealThemeAndUpdateColors();
         });
     } else {

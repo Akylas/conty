@@ -6,6 +6,20 @@ declare namespace com {
     }
     export namespace akylas {
         export namespace conty {
+            export namespace UnZip {
+                export class ZipCallback extends java.lang.Object {
+                    public constructor(implementation: {
+                        onStart(worker: string, mode: number);
+                        onUnzipComplete(worker: string, extractedFolder: string);
+                        onError(worker: string, e: Exception, mode: number);
+                    });
+                    public onStart(worker: string, mode: number);
+                    public onZipComplete(worker: string, zipFile: string);
+                    public onUnzipComplete(worker: string, extractedFolder: string);
+                    public onError(worker: string, e: Exception, mode: number);
+                }
+                export function unzip(context: Context, zipFile: string, destinationFolder: string, workerIdentifier: string, callback: ZipCallback);
+            }
             class ZipMediaDataSource extends android.media.MediaDataSource {
                 constructor(zipPath: string, asset: string);
             }
@@ -20,12 +34,7 @@ declare namespace com {
             class BgServiceBinder extends globalAndroid.os.Binder {}
             class ActionReceiver extends globalAndroid.content.BroadcastReceiver {}
             class CustomMediaButtonReceiver extends androidx.media.session.MediaButtonReceiver {}
-            export namespace WorkersContext {
-                export class Companion {
-                    public static getValue(key): any;
-                    public static setValue(key: string, value);
-                }
-            }
+
             export namespace utils {
                 export class FunctionCallback extends java.lang.Object {
                     public static class: java.lang.Class<FunctionCallback>;
@@ -44,16 +53,21 @@ declare namespace com {
                     public onProgress(param0: number, param1: number, param2: number): void;
                 }
                 export class Companion {
-                    static prepareActivity(arg0: androidx.appcompat.app.AppCompatActivity, applyDynamicColors: boolean);
-                    static prepareWindow(arg0: android.view.Window);
-                    static applyDayNight(context: android.content.Context, applyDynamicColors: boolean);
-                    static applyDynamicColors(context: android.content.Context);
-                    static getDimensionFromInt(context: android.content.Context, intToGet);
-                    static getColorFromInt(context: android.content.Context, intToGet);
-                    static getColorFromName(context: android.content.Context, intToGet);
-                    static restartApp(context: android.content.Context, activity: android.app.Activity);
-                    static getSystemLocale(): java.util.Locale;
                     static cleanFilenameString(str: string): string;
+                }
+            }
+            export namespace Colors {
+                export class Companion {
+                    static createPaletteSync(bitmap: android.graphics.Bitmap): {
+                        vibrant: string;
+                        muted: string;
+                        darkVibrant: string;
+                        darkMuted: string;
+                        lightVibrant: string;
+                        lightMuted;
+                    };
+                    static getDominantColors(bitmap: android.graphics.Bitmap, k: number, callback: FunctionCallback);
+                    static getDominantColorsSync(bitmap: android.graphics.Bitmap, k: number, resizeThreshod?: number): string;
                 }
             }
             export namespace FileUtils {

@@ -30,6 +30,7 @@
     "dependencies": {
         "@akylas/kiss-orm": "2.1.7",
         "@akylas/nativescript": "8.8.3",
+        "@akylas/nativescript-app-utils": "1.0.0",
         "@akylas/nativescript-inappbrowser": "3.1.8",
         "@akylas/non-playstore": "portal:plugin_non_playstore",
         "@mdi/font": "7.4.47",
@@ -143,7 +144,8 @@
         "webpack-bundle-analyzer": "^4.10.2"
     },
     "resolutions": {
-        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core"
+        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
+        "@akylas/nativescript-app-utils": "portal:/home/mguillon/dev/nativescript/app-utils/packages/app-utils"
     },
     "packageManager": "yarn@4.3.1"
 }

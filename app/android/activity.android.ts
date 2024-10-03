@@ -1,12 +1,5 @@
 import { AndroidActivityCallbacks, Application, ApplicationSettings, Frame, Utils, setActivityCallbacks } from '@nativescript/core';
 
-function getThemeColor(context, colorResId) {
-    const ta = context.obtainStyledAttributes([Utils.android.resources.getId(':attr/' + colorResId)]);
-    const color = ta.getColor(0, 0);
-    ta.recycle();
-    return color;
-}
-
 const TAG = '[MainActivity]';
 @NativeClass()
 @JavaProxy('__PACKAGE__.MainActivity')
@@ -28,12 +21,6 @@ export class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
 
         this._callbacks.onCreate(this, savedInstanceState, this.getIntent(), super.onCreate);
-        try {
-            com.akylas.conty.Utils.Companion.prepareActivity(this, ApplicationSettings.getString('color_theme', 'default') === 'dynamic');
-        } catch (error) {
-            console.error(error, error.stack);
-        }
-        // this.getWindow().setStatusBarColor(getThemeColor(this, 'colorPrimaryDark'));
     }
 
     public onNewIntent(intent: android.content.Intent): void {
@@ -47,7 +34,6 @@ export class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     public onStart(): void {
         DEV_LOG && console.log(TAG, 'onStart');
         this._callbacks.onStart(this, super.onStart);
-        Application.notify({ eventName: 'activity_started' });
     }
 
     public onStop(): void {
