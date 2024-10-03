@@ -1,66 +1,8 @@
 import { AndroidActivityResultEventData, Application, File, Folder, Utils } from '@nativescript/core';
 import { SDK_VERSION, wrapNativeException } from '@nativescript/core/utils';
-import { Zip } from '@nativescript/zip';
-import { doInBatch } from './index.common';
 
 export * from './index.common';
 
-export function restartApp() {
-    com.akylas.conty.Utils.Companion.restartApp(Utils.android.getApplicationContext(), Application.android.startActivity);
-}
-
-export async function copyFolderContent(src: string, dst: string) {
-    // ensure we create the folder
-    const dstFolder = Folder.fromPath(dst);
-    if (!Folder.exists(dst)) {
-        throw new Error('failed copying folder ' + dst);
-    }
-    const folder = Folder.fromPath(src);
-    DEV_LOG && console.log('copyFolderContent ', src, dst, Folder.exists(dst));
-    await doInBatch(
-        await folder.getEntities(),
-        async (e, index) => {
-            DEV_LOG && console.log('doInBatch ', src, index);
-            if (typeof e['getFolder'] === 'undefined') {
-                const dstFile = dstFolder.getFile(e.name, true).path;
-                DEV_LOG && console.log('copyFile ', e.path, dstFile);
-                const r = await (e as File).copy(dstFile);
-                DEV_LOG && console.info('copyFile done ', e.path, dstFile, r, File.exists(dstFile));
-                if (!File.exists(dstFile)) {
-                    throw new Error('failed copying file ' + dstFile);
-                }
-            } else {
-                const newDstFolder = dstFolder.getFolder(e.name, true);
-                // DEV_LOG && console.log('copyFolder ', e.path, dstFolder.path, e.name, newDstFolder.path);
-                await copyFolderContent(e.path, newDstFolder.path);
-            }
-            DEV_LOG && console.log('doInBatch done ', src, index);
-        },
-        2
-    );
-    // return Promise.all(
-    //     (await folder.getEntities()).map((e) => {
-    //         if (typeof e['getFolder'] === 'undefined') {
-    //             const dstFile = dstFolder.getFile(e.name, true).path;
-    //             DEV_LOG && console.log('copyFile ', e.path, dstFile);
-    //             return (e as File).copy(dstFile).then((r) => {
-    //                 DEV_LOG && console.log('copyFile done ', e.path, dstFile, r, File.exists(dstFile));
-    //                 if (!File.exists(dstFile)) {
-    //                     throw new Error('failed copying file ' + dstFile);
-    //                 }
-    //             });
-    //         } else {
-    //             const newDstFolder = dstFolder.getFolder(e.name, true);
-    //             // DEV_LOG && console.log('copyFolder ', e.path, dstFolder.path, e.name, newDstFolder.path);
-    //             return copyFolderContent(e.path, newDstFolder.path);
-    //         }
-    //     })
-    // );
-}
-export async function removeFolderContent(src: string) {
-    const folder = Folder.fromPath(src);
-    return Promise.all((await folder.getEntities()).map((e) => e.remove()));
-}
 // export async function saveImage(
 //     imageSource: ImageSource,
 //     {

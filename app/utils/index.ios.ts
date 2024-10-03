@@ -3,6 +3,13 @@ import { Zip } from '@nativescript/zip';
 
 export * from './index.common';
 
+export function checkManagePermission() {
+    return true;
+}
+export async function askForManagePermission() {
+    return true;
+}
+
 // @NativeClass
 // class SaveAlbumCompletion extends NSObject {
 //     static ObjCExposedMethods = {
@@ -29,16 +36,6 @@ export * from './index.common';
 //     }
 // }
 
-export function restartApp() {
-    throw new Error('not possible on iOS');
-}
-
-export async function copyFolderContent(src: string, dst: string) {
-    throw new Error('not implemented on iOS');
-}
-export async function removeFolderContent(src: string, dst: string) {
-    throw new Error('not implemented on iOS');
-}
 // export async function saveImage(
 //     imageSource: ImageSource,
 //     {

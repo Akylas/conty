@@ -1,5 +1,6 @@
 import { Screen } from '@nativescript/core';
 import { createColorMatrix } from './index.common';
+import { SDK_VERSION } from '@nativescript/core/utils';
 
 export const ALERT_OPTION_MAX_HEIGHT = Screen.mainScreen.heightDIPs * 0.47;
 export const ANDROID_CONTENT = 'content://';
@@ -14,6 +15,8 @@ export const EVENT_PACK_UPDATED = 'packUpdated';
 export const EVENT_PACK_DELETED = 'packDeleted';
 export const EVENT_IMPORT_STATE = 'importState';
 export const EVENT_STATE = 'state';
+
+export const BOTTOM_BUTTON_OFFSET = 100;
 
 export const IMAGE_COLORMATRIX = createColorMatrix('#ffffff');
 export const COLORMATRIX_BLACK_TRANSPARENT = [

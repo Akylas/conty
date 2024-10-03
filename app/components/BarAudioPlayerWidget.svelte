@@ -75,6 +75,10 @@
     //     });
     // }
 
+    function currentPack() {
+        return pack || story?.pack;
+    }
+
     function getTimeFromProgress(progress: number) {
         return playingInfo ? (playingInfo.duration || 1) * progress : 0;
     }
@@ -223,7 +227,7 @@
 
 <gridlayout {...$$restProps} on:tap={() => {}}>
     <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*" rows="*">
-        <image sharedTransitionTag="cover" src={currentImage} stretch="aspectFill" on:tap={showFullscreenPlayer} />
+        <image backgroundColor={currentPack()?.extra?.colors?.[0]} sharedTransitionTag="cover" src={currentImage} stretch="aspectFit" on:tap={showFullscreenPlayer} />
         <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />

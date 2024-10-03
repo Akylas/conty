@@ -21,7 +21,7 @@
     import { Pack, RemoteContent } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
     import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
-    import { EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
+    import { BOTTOM_BUTTON_OFFSET, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { fade, showModal } from '~/utils/svelte/ui';
     import { hideLoading, onBackButton, playPack, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
@@ -108,7 +108,7 @@
             DEV_LOG && console.log('refresh', filter);
             const whereQuery = filter ? `title LIKE '%${filter}%' or description LIKE '%${filter}%' or keywords LIKE '%${filter}%'` : undefined;
             const r = await documentsService.packRepository.search({
-                orderBy: SqlQuery.createFromTemplateString`id DESC`,
+                orderBy: SqlQuery.createFromTemplateString`importedDate DESC`,
                 // , postfix: SqlQuery.createFromTemplateString`LIMIT 50`
                 ...(filter
                     ? {
@@ -116,7 +116,11 @@
                       }
                     : {})
             });
-            DEV_LOG && console.log('r', r);
+            // DEV_LOG &&
+            //     console.log(
+            //         'r',
+            //         r.map((p) => p.colors)
+            //     );
             DEV_LOG && console.log('refresh done', filter, r.length);
             packs = new ObservableArray(
                 r.map((pack) => ({
@@ -268,35 +272,9 @@
                     cancelButtonText: lc('cancel')
                 });
                 if (confirmed) {
-                    const supportsCompressedData = documentsService.supportsCompressedData;
                     showLoading('loading');
                     DEV_LOG && console.log('importContentFromFiles', files);
                     await importService.importContentFromFiles(files);
-                    // for (let index = 0; index < files.length; index++) {
-                    //     const inputFilePath = files[index];
-                    //     let destinationFolderPath = inputFilePath;
-                    //     const id = Date.now() + '';
-                    //     destinationFolderPath = path.join(documentsService.dataFolder.path, `${id}.zip`);
-                    //     if (!supportsCompressedData) {
-                    //         destinationFolderPath = path.join(documentsService.dataFolder.path, id);
-                    //         if (!Folder.exists(destinationFolderPath)) {
-                    //             await unzip(inputFilePath, documentsService.dataFolder.getFolder(id).path);
-                    //         }
-                    //     } else {
-                    //         await File.fromPath(inputFilePath).copy(destinationFolderPath);
-                    //     }
-                    //     const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, 'story.json', supportsCompressedData));
-                    //     await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
-                    //         size: getFileOrFolderSize(destinationFolderPath),
-                    //         title: storyJSON.title,
-                    //         description: storyJSON.description,
-                    //         format: storyJSON.format,
-                    //         age: storyJSON.age,
-                    //         version: storyJSON.version,
-                    //         subtitle: storyJSON.subtitle,
-                    //         keywords: storyJSON.keywords
-                    //     });
-                    // }
                 }
             }
         } catch (error) {
@@ -662,7 +640,7 @@
                 height="100%"
                 iosOverflowSafeArea={true}
                 items={packs}
-                paddingBottom={100}
+                paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
                 rowHeight={getItemRowHeight(viewStyle) * $fontScale}
                 width="100%">
                 <Template let:item>
@@ -677,6 +655,7 @@
                         on:longPress={(e) => onItemLongPress(item, e)}
                         on:draw={(e) => onCanvasDraw(item, e)}>
                         <image
+                            backgroundColor={item.pack.extra?.colors?.[0]}
                             borderRadius={12}
                             decodeWidth={IMAGE_DECODE_WIDTH}
                             failureImageUri="res://icon_not_found"
@@ -684,7 +663,7 @@
                             margin={getImageMargin(viewStyle)}
                             rippleColor={colorSurface}
                             src={item.pack.getThumbnail()}
-                            stretch="aspectFill"
+                            stretch="aspectFit"
                             width={getItemImageWidth(viewStyle)} />
                         <label class="cardLabel" row={1} text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />

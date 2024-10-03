@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { Pager } from '@nativescript-community/ui-pager';
     import { Color, Page, Screen } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
     import { onDestroy, onMount } from 'svelte';
@@ -40,6 +41,7 @@
     let { colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors;
     $: ({ colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors);
     let page: NativeViewElementNode<Page>;
+    let pager: NativeViewElementNode<Pager>;
     const colorMatrix = IMAGE_COLORMATRIX;
 
     const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
@@ -58,12 +60,14 @@
     let pack: Pack = null;
     let story: Story = null;
     let playerStateInterval;
+    let hideOtherPageItems = false;
     let controlSettings: ControlSettings;
     $: currentStage = items[selectedStageIndex]?.stage;
     $: controlSettings = currentStage?.controlSettings;
+    $: hideOtherPageItems = controlSettings?.wheel === false && items.length > 0;
     // $: storyHandler?.getStageImage(pack, currentStage).then((r) => (currentImage = r));
-    // $: DEV_LOG && console.warn('currentStage', currentStage);
-    $: DEV_LOG && console.warn('selectedStageIndex', selectedStageIndex);
+    // $: DEV_LOG && console.warn('currentStage', JSON.stringify(currentStage));
+    // $: DEV_LOG && console.warn('selectedStageIndex', selectedStageIndex);
 
     function getTimeFromProgress(progress: number) {
         return playingInfo ? (playingInfo.duration || 1) * progress : 0;
@@ -217,7 +221,7 @@
     }
     async function onStageChanged(event) {
         try {
-            // DEV_LOG && console.warn('FullScreen', 'onStageChanged', event.currentStatesChanged, event.stages.length, event.selectedStageIndex, JSON.stringify(event.stages));
+            DEV_LOG && console.warn('FullScreen', 'onStageChanged', event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
             if (event.currentStatesChanged) {
                 items = await Promise.all(
                     event.stages.map(async (stage) => ({
@@ -230,13 +234,20 @@
                 //     image: getImage(stage)
                 // }));
             }
+            selectedStageIndex = event.selectedStageIndex;
+            // if (pager?.nativeElement) {
+            //     pager.nativeElement.selectedIndex = event.selectedStageIndex;
+            //     pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, false);
+
+            // }
             // DEV_LOG &&
             //     console.warn(
             //         'FullScreen',
             //         'onStageChanged1',
             //         items.map((i) => i.image)
             //     );
-            selectedStageIndex = event.selectedStageIndex;
+
+            // changing pager selectedIndex is animated by default
             showReplay = false;
             storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
@@ -283,10 +294,10 @@
         storyHandler?.handleAction('home');
     }
     async function onPagerChanged(e) {
-        DEV_LOG && console.log('onPagerChanged', e.value);
-        if (pack) {
+        DEV_LOG && console.log('onPagerChanged', !!pack, selectedStageIndex, e.value);
+        if (pack && selectedStageIndex !== e.value) {
             selectedStageIndex = e.value;
-            storyHandler?.setSelectedStage(e.value);
+            storyHandler?.setSelectedStage(selectedStageIndex);
         }
     }
     async function getImage(stage: Stage) {
@@ -332,7 +343,7 @@
     async function showPlaylist() {
         try {
             const component = (await import('~/components/PlaylistView.svelte')).default;
-            const result = await showBottomSheet({
+            await showBottomSheet({
                 view: component as any,
                 props: {
                     trackingScrollView: 'collectionView'
@@ -371,7 +382,17 @@
 
             <gridlayout flexGrow={1} flexShrink={0} height={0.8 * screenWidth * 0.86} row={2}>
                 {#if __IOS__ || pack}
-                    <pager {items} orientation="horizontal" peaking={PAGER_PEAKING} selectedIndex={selectedStageIndex} visibility={pack ? 'visible' : 'hidden'} on:selectedIndexChange={onPagerChanged}>
+                    <pager
+                        bind:this={pager}
+                        {items}
+                        marginLeft={hideOtherPageItems ? PAGER_PEAKING : 0}
+                        marginRight={hideOtherPageItems ? PAGER_PEAKING : 0}
+                        orientation="horizontal"
+                        peaking={hideOtherPageItems ? 0 : PAGER_PEAKING}
+                        preserveIndexOnItemsChange={true}
+                        selectedIndex={selectedStageIndex}
+                        visibility={pack ? 'visible' : 'hidden'}
+                        on:selectedIndexChange={onPagerChanged}>
                         <Template let:index let:item>
                             <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->

@@ -26,7 +26,6 @@ export default [
             globals: {
                 SENTRY_DSN: 'readonly',
                 SENTRY_PREFIX: 'readonly',
-                OWM_KEY: 'readonly',
                 __ANDROID__: 'readonly',
                 __IOS__: 'readonly',
                 DEV_LOG: 'readonly',

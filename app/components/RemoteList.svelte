@@ -127,12 +127,10 @@
         DEV_LOG && console.log('onNavigatedTo', sources.length);
         sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
         currentRemoteSource = sources[0];
-        if (!e.isBackNavigation) {
-            if (documentsService.started) {
-                refresh();
-            } else {
-                documentsService.once('started', refreshSimple);
-            }
+        if (documentsService.started) {
+            refresh();
+        } else {
+            documentsService.once('started', refreshSimple);
         }
     }
 
@@ -239,7 +237,7 @@
 </script>
 
 <frame>
-    <page bind:this={page} actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
+    <page bind:this={page} id="remoteList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
         <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
             <textfield
                 editable={false}

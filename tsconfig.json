@@ -22,7 +22,7 @@
         "noFallthroughCasesInSwitch": true,
         "resolveJsonModule": true,
         "lib": ["esnext", "es2017", "dom"],
-        "types": ["node", "svelte-native", "geojson", "offscreencanvas"],
+        "types": ["node", "svelte-native"],
         "baseUrl": ".",
         "paths": {
             "~/*": ["app/*"],

@@ -1,8 +1,12 @@
+import { isString } from '@akylas/nativescript/utils';
 import { lc } from '@nativescript-community/l';
 import { Folder, ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getAudioDuration } from '~/utils';
 import { EVENT_PACK_UPDATED } from '~/utils/constants';
+
+export const LUNII_DATA_FILE = 'story.json';
+export const TELMI_DATA_FILE = 'metadata.json';
 
 export interface RemoteContentProvider {
     name?: string;
@@ -46,13 +50,15 @@ export interface Action {
     options: string[];
 }
 export interface PackMetadata {
+    image?: string;
     format: string;
     title: string;
     version: number;
     description: string;
+    category: string;
     nightModeAvailable: boolean;
-    uri: string;
-    thumbnail: string;
+    uri?: string;
+    thumbnail?: string;
     age: number;
     keywords?: string;
     subtitle?: string;
@@ -152,6 +158,11 @@ export interface IPack {
     description?: string;
     category?: string;
     pack?: string;
+    // colors?: string[];
+    extra?: {
+        colors?: string[];
+        [k: string]: any;
+    };
     keywords?: string;
     subtitle?: string;
     age?: number;
@@ -220,6 +231,10 @@ export abstract class Pack extends Observable implements IPack {
     version?: number;
     format?: string;
     age?: number;
+    extra?: {
+        colors?: string[];
+        [k: string]: any;
+    };
     size: number;
     compressed: 1 | 0;
 
@@ -244,8 +259,11 @@ export abstract class Pack extends Observable implements IPack {
         return documentsService.dataFolder.getFile(this.id + '.zip').path;
     }
 
+    get dataFileName() {
+        return LUNII_DATA_FILE;
+    }
     async getData<T = StoryJSON>() {
-        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'story.json', this.compressed === 1 ? true : false)) as StoryJSON;
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, this.dataFileName, this.compressed === 1 ? true : false)) as StoryJSON;
         return {
             stageNodes: storyJSON.stageNodes,
             actionNodes: storyJSON.actionNodes
@@ -421,10 +439,10 @@ export abstract class Pack extends Observable implements IPack {
 
     mapOfStagesForOption(stages: Stage[], optionIndex: number = -1): Stage[] {
         if (optionIndex === -1 || optionIndex >= stages.length) {
-            if (stages.length && stages[0].controlSettings.autoplay) {
-                // running it alone will ensure we play automatically
-                return [stages[0]];
-            }
+            // if (stages.length && stages[0].controlSettings.autoplay) {
+            //     // running it alone will ensure we play automatically
+            //     return [stages[0]];
+            // }
             return stages;
         } else {
             return [stages[optionIndex]];
@@ -499,23 +517,38 @@ export abstract class Pack extends Observable implements IPack {
 
 export class LuniiPack extends Pack {
     static fromJSON(jsonObj: IPack) {
+        const { id, extra, ...others } = jsonObj;
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
-        const doc = new LuniiPack(jsonObj.id);
-        Object.assign(doc, jsonObj);
+        const doc = new LuniiPack(id);
+        Object.assign(doc, {
+            extra: isString(extra) ? JSON.parse(extra) : extra,
+            ...others
+        });
         return doc;
     }
 }
 
 export class TelmiPack extends Pack {
     static fromJSON(jsonObj: IPack) {
+        const { id, extra, ...others } = jsonObj;
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
         const doc = new TelmiPack(jsonObj.id);
-        Object.assign(doc, jsonObj);
+        Object.assign(doc, {
+            extra: isString(extra) ? JSON.parse(extra) : extra,
+            ...others
+        });
         return doc;
     }
 
+    override get dataFileName() {
+        return TELMI_DATA_FILE;
+    }
+
     override async getData<T = TelmiStoryJSON>() {
-        const metadata = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'metadata.json', this.compressed === 1 ? true : false)) as PackMetadata;
+        DEV_LOG && console.log('telmi story getData');
+        const metadata = JSON.parse(
+            await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, this.dataFileName, this.compressed === 1 ? true : false)
+        ) as PackMetadata;
         const nodes = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'nodes.json', this.compressed === 1 ? true : false)) as TelmiNodes;
         return {
             ...metadata,

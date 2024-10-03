@@ -20,7 +20,7 @@
     import { getColorThemeDisplayName, getThemeDisplayName, onColorThemeChanged, onThemeChanged, selectColorTheme, selectTheme } from '~/helpers/theme';
     import { RemoteContentProvider } from '~/models/Pack';
     import { documentsService } from '~/services/documents';
-    import { copyFolderContent, getAndroidRealPath, removeFolderContent, requestManagePermission, restartApp } from '~/utils';
+    import { getAndroidRealPath, requestManagePermission, restartApp } from '~/utils';
     import { SETTINGS_LANGUAGE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { Sentry } from '~/utils/sentry';
     import { share } from '~/utils/share';
@@ -29,6 +29,7 @@
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
     import { SilentError } from '~/utils/error';
+    import { copyFolderContent, removeFolderContent } from '~/utils/file';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -590,17 +591,17 @@
                             DEV_LOG && console.log('confirmed move data to', srcFolder, dstFolder);
                             showLoading(lc('moving_files'));
                             await copyFolderContent(srcFolder, dstFolder);
-                            ApplicationSettings.setString('data_folder', dstFolder);
-                            DEV_LOG && console.log('copyFolderContent done');
-                            // documentsService.dataFolder = Folder.fromPath(dstFolder);
                             await removeFolderContent(srcFolder);
-                            await alert({
-                                cancelable: false,
-                                message: lc('restart_app'),
-                                okButtonText: lc('restart')
-                            });
-                            restartApp();
+                            DEV_LOG && console.log('copyFolderContent done');
                         }
+                        ApplicationSettings.setString('data_folder', dstFolder);
+                        // documentsService.dataFolder = Folder.fromPath(dstFolder);
+                        await alert({
+                            cancelable: false,
+                            message: lc('restart_app'),
+                            okButtonText: lc('restart')
+                        });
+                        restartApp();
                         // item.text = dstFolder;
                         item.description = dstFolder;
                         updateItem(item);

@@ -398,7 +398,7 @@ export class StoryHandler extends Handler {
             const stage = this.currentStageSelected();
             this.currentStageImage = stageIsStory(stage) ? undefined : stage?.image;
             this.currentPlayingInfo = this.playingInfo();
-            // DEV_LOG && console.info('notifyStageChange', stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage);
+            DEV_LOG && console.info('notifyStageChange', stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage);
             this.notify({ eventName: StagesChangeEvent, playingInfo: this.currentPlayingInfo, currentStatesChanged, ...this.stageChangeEventData() } as StageEventData);
         } catch (error) {
             showError(error);
@@ -407,21 +407,25 @@ export class StoryHandler extends Handler {
     async onStageOk() {
         const oldSelected = this.currentStageSelected();
         const oldSelectedIndex = this.selectedStageIndex;
-        DEV_LOG && console.log('onStageOk', oldSelected.uuid, oldSelected?.okTransition);
+        DEV_LOG && console.log('onStageOk', oldSelected.uuid, oldSelected?.okTransition, new Error().stack);
         if (oldSelected?.okTransition === null) {
             // should be packed ended
             this.stopPlaying({ updatePlaylist: true });
             return;
         }
         const nextStages = this.nextStageFrom(oldSelected) || [];
-        DEV_LOG && console.log('nextStages', nextStages);
+        DEV_LOG &&
+            console.log(
+                'nextStages',
+                nextStages.map((s) => s.uuid)
+            );
 
         const optionIndex = this.currentStages[oldSelectedIndex].okTransition?.optionIndex;
-        DEV_LOG && console.log('optionIndex', optionIndex);
 
         this.currentStages = this.pack.mapOfStagesForOption(nextStages);
-        this.selectedStageIndex = optionIndex >= 0 ? optionIndex : 0;
+        this.selectedStageIndex = optionIndex >= 0 ? optionIndex : Math.round(Math.random() * (this.currentStages.length - 1));
         const currentStageSelected = this.currentStageSelected();
+        DEV_LOG && console.log('optionIndex', optionIndex, this.selectedStageIndex, this.currentStages.length, currentStageSelected.uuid);
         if (currentStageSelected.controlSettings.home && !currentStageSelected.homeTransition) {
             // the json is missing the homeTransition. Let s fake it
             const action = this.actionNodes.find((a) => a.options.indexOf(currentStageSelected.uuid) !== -1);
@@ -466,7 +470,7 @@ export class StoryHandler extends Handler {
             }
             const stage = this.currentStageSelected();
             // this.notify({ eventName: 'runStage', stage, selectedStageIndex: this.selectedStageIndex, stages: this.currentStages });
-            DEV_LOG && console.info('runStage', JSON.stringify(stage));
+            DEV_LOG && console.info('runStage', JSON.stringify(stage), this.currentStages.length);
             if (stage.audio) {
                 const compressed = this.playingPack.compressed;
                 const fileName = this.playingPack.getAudio(stage.audio);
@@ -476,16 +480,15 @@ export class StoryHandler extends Handler {
                     this.stopPlaying();
                     return;
                 }
-                DEV_LOG && console.log('runStage playAudio done', JSON.stringify(stage.controlSettings));
-                if ((stage === this.currentStageSelected() && stage?.controlSettings?.autoplay === true) || this.currentStages.length === 1) {
-                    await this.onStageOk();
-                }
-            } else {
+            }
+            DEV_LOG && console.log('runStage playAudio done', JSON.stringify(stage.controlSettings));
+            if (stage === this.currentStageSelected() /*  && stage?.controlSettings?.autoplay === true */ && (this.currentStages.length === 1 || !stage?.controlSettings?.wheel)) {
                 await this.onStageOk();
             }
         } catch (error) {
             if (error) {
                 showError(error);
+                this.stopPlaying();
             } else {
                 //cancelled (could be on ok or home)
             }
@@ -581,7 +584,7 @@ export class StoryHandler extends Handler {
         if (!this.isPlaying) {
             return;
         }
-        TEST_LOG && console.log('stopPlaying', fade, this.mPlayer.isAudioPlaying(), this.isPlaying, !!this.toPlayNext);
+        TEST_LOG && console.log('stopPlaying', fade, this.isPlaying, !!this.toPlayNext);
 
         const onDone = async () => {
             try {
@@ -636,7 +639,8 @@ export class StoryHandler extends Handler {
                 this.toPlayNext = null;
             }
         };
-        if (this.mPlayer.isAudioPlaying()) {
+
+        if (this.mPlayer?.isAudioPlaying()) {
             if (fade) {
                 try {
                     await new Promise((resolve) => {

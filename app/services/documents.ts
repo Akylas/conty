@@ -1,11 +1,11 @@
 import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
-import dayjs from 'dayjs';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
-import { IPack, LuniiPack, Pack, Tag } from '~/models/Pack';
+import { IPack, LuniiPack, Pack, Tag, TelmiPack } from '~/models/Pack';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
 import NSQLDatabase from './NSQLDatabase';
 import { getAndroidRealPath } from '~/utils';
+import { isObject, isString } from '@akylas/nativescript/utils';
 
 const sql = SqlQuery.createFromTemplateString;
 
@@ -26,7 +26,7 @@ export async function getFileTextContentFromPackFile(folderPath, asset, compress
             }
         });
     } else {
-        return Folder.fromPath(folderPath).getFile(asset).readText();
+        return Folder.fromPath(folderPath).getFile(asset, false).readText();
         // return File.fromPath(path.join(folderPath, asset)).readText();
     }
 }
@@ -152,13 +152,22 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
         addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`,
         addType: sql`ALTER TABLE Pack ADD COLUMN type TEXT`,
-        addCategory: sql`ALTER TABLE Pack ADD COLUMN category TEXT`
+        addExtra: sql`ALTER TABLE Pack ADD COLUMN extra TEXT`
+        // addColors: sql`ALTER TABLE Pack ADD COLUMN colors TEXT`
     });
 
     async createPack(data: Partial<Pack>) {
+        const { extra, id, ...others } = data;
         // pack.createdDate = pack.modifiedDate = Date.now();
-        DEV_LOG && console.log('createPack', data);
-        const pack = await this.create(cleanUndefined({ id: Date.now() + '', ...data }));
+        DEV_LOG && console.log('createPack', id, JSON.stringify(others), extra);
+        const pack = await this.create(
+            cleanUndefined({
+                id: id || Date.now() + '',
+                ...others,
+                extra: isObject(extra) ? JSON.stringify(extra) : extra
+                // colors: Array.isArray(data.colors) ? JSON.stringify(data.colors) : data.colors
+            })
+        );
         this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack } as PackAddedEventData);
 
         return pack;
@@ -238,15 +247,16 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
     }
 
     async createModelFromAttributes(attributes: Required<any> | Pack): Promise<Pack> {
-        const { id, type, thumbnail, compressed, ...others } = attributes;
-        // DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, documentsService.dataFolder.path);
-        const pack = new LuniiPack(id);
+        const { id, type, thumbnail, compressed, extra, ...others } = attributes;
+        const pack = type === 'telmi' ? new TelmiPack(id) : new LuniiPack(id);
         Object.assign(pack, {
             id,
+            extra: isString(extra) ? JSON.parse(extra) : extra,
             compressed,
             thumbnail: compressed ? thumbnail : path.join(this.documentsService.dataFolder.path, id, thumbnail),
             ...others
         });
+        // DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, `"${colors}"`, typeof colors, JSON.parse(colors), typeof JSON.parse(colors));
         return pack;
     }
 }
@@ -361,19 +371,14 @@ export class DocumentsService extends Observable {
     }
 
     async importStory(id: string, folderOrZipPath: string, compressed: boolean, data: Partial<Pack> = {}) {
-        // const storyJSON = JSON.parse(await File.fromPath(path.join(folderPath, 'story.json')).readText());
         DEV_LOG && console.log('importStory ', id, folderOrZipPath, compressed, JSON.stringify(data));
         return this.packRepository.createPack({
             id,
             compressed: compressed ? 1 : 0,
-            importedDate: dayjs().valueOf(),
+            importedDate: Date.now(),
             // title: storyJSON.title,
-            thumbnail: 'thumbnail.png',
-            // description: storyJSON.description,
-            // format: storyJSON.format,
-            // age: storyJSON.age,
-            // version: storyJSON.version,
-            ...data
+            ...data,
+            thumbnail: data.thumbnail || 'thumbnail.png'
         });
     }
 }
