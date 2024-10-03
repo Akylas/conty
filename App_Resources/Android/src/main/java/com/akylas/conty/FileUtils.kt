@@ -1,35 +1,9 @@
 package com.akylas.conty
 
-import com.akylas.conty.utils.FunctionCallback
-
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.io.BufferedInputStream
-import java.io.IOException
-
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipEntry
-
 import android.content.Context
-import android.net.Uri
-import android.util.Log
-
 import androidx.documentfile.provider.DocumentFile
-
-import com.anggrayudi.storage.file.decompressZip
-import com.anggrayudi.storage.result.ZipDecompressionResult
-
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
 
 class FileUtils {
     interface ProgressCallback {
@@ -72,36 +46,6 @@ class FileUtils {
                 }
             }
             return totalSize
-        }
-        
-        @JvmStatic
-        fun unzip(context: Context, zipFile: String, destFolder: String, callback: FunctionCallback? = null, progress: ProgressCallback? = null) {
-            GlobalScope.launch(Dispatchers.IO)  {
-                val targetFolder = DocumentFile.fromTreeUri(context, Uri.parse(destFolder))
-                val srcFile = DocumentFile.fromSingleUri(context, Uri.parse(zipFile))
-                srcFile!!.decompressZip(context, targetFolder!!)
-                    .onCompletion  {
-                        if (it is CancellationException) {
-                            callback?.onResult(Exception("Decompression is aborted"), null)
-                        }
-                    }.collect {
-                        when (it) {
-                            is ZipDecompressionResult.Decompressing ->  {
-                                progress?.onProgress(it.bytesDecompressed, it.writeSpeed, it.fileCount)
-                            }
-                            is ZipDecompressionResult.Completed ->  {
-                                callback?.onResult(null, true)
-                            }
-
-                            is ZipDecompressionResult.Error ->  {
-                                callback?.onResult(Exception("error while decompressing zip ${it.errorCode.name}: ${it.message}"), null)
-                            }
-
-                            ZipDecompressionResult.Validating ->  {
-                            }
-                        }
-                    }
-            }
         }
     }
 }
