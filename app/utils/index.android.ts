@@ -216,22 +216,41 @@ function androidFunctionCallbackPromise<T>(onCallback: (calback: com.akylas.cont
 
 export async function unzip(srcPath: string, dstPath: string) {
     DEV_LOG && console.log('unzip', srcPath, dstPath);
-    if (srcPath.startsWith('content:/') && dstPath.startsWith('content:/')) {
-        return androidFunctionCallbackPromise<any[]>((callback) => {
-            com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
-        });
-    }
-    return Zip.unzip({
-        archive: srcPath,
-        directory: dstPath,
-        overwrite: true
-        // onProgress: (percent) => {
-        //     ProgressNotifications.update(progressNotification, {
-        //         rightIcon: `${Math.round(percent)}%`,
-        //         progress: percent
-        //     });
-        // }
+    // if (srcPath.startsWith('content:/') && dstPath.startsWith('content:/')) {
+    //     return androidFunctionCallbackPromise<any[]>((callback) => {
+    //         com.akylas.conty.FileUtils.Companion.unzip(Utils.android.getApplicationContext(), srcPath, dstPath, callback, null);
+    //     });
+    // }
+    return new Promise<void>((resolve, reject) => {
+        com.akylas.conty.UnZip.unzip(
+            Utils.android.getApplicationContext(),
+            srcPath,
+            dstPath,
+            'unzip',
+            new com.akylas.conty.UnZip.ZipCallback({
+                onStart(worker, mode) {},
+                onUnzipComplete(worker, zipFile) {
+                    DEV_LOG && console.log('onUnzipComplete', worker, zipFile);
+                    resolve();
+                },
+                onError(worker, e, mode) {
+                    DEV_LOG && console.log('onError', e);
+                    reject(wrapNativeException(e));
+                }
+            })
+        );
     });
+    // return Zip.unzip({
+    //     archive: srcPath,
+    //     directory: dstPath,
+    //     overwrite: true
+    //     // onProgress: (percent) => {
+    //     //     ProgressNotifications.update(progressNotification, {
+    //     //         rightIcon: `${Math.round(percent)}%`,
+    //     //         progress: percent
+    //     //     });
+    //     // }
+    // });
 }
 export function getFileOrFolderSize(filePath: string) {
     return com.akylas.conty.FileUtils.Companion.getFolderSize(new java.io.File(getAndroidRealPath(filePath)));

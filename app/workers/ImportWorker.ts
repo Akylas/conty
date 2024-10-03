@@ -344,17 +344,17 @@ export default class ImportWorker extends Observable {
             destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
             if (!supportsCompressedData) {
                 destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                let tempPath;
-                if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
-                    tempPath = this.dataFolder.getFile(`${id}.zip`).path;
-                    File.fromPath(inputFilePath).copySync(tempPath);
-                    inputFilePath = tempPath;
-                }
+                // let tempPath;
+                // if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
+                //     tempPath = this.dataFolder.getFile(`${id}.zip`).path;
+                //     File.fromPath(inputFilePath).copySync(tempPath);
+                //     inputFilePath = tempPath;
+                // }
                 // if (!Folder.exists(destinationFolderPath)) {
                 await unzip(inputFilePath, destinationFolderPath);
-                if (tempPath) {
-                    File.fromPath(tempPath).removeSync();
-                }
+                // if (tempPath) {
+                //     File.fromPath(tempPath).removeSync();
+                // }
                 // }
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
@@ -375,12 +375,12 @@ export default class ImportWorker extends Observable {
                 destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
                     destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                    let tempPath;
-                    if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
-                        tempPath = this.dataFolder.getFile(`${id}.zip`).path;
-                        File.fromPath(inputFilePath).copySync(tempPath);
-                        inputFilePath = tempPath;
-                    }
+                    // let tempPath;
+                    // if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
+                    //     tempPath = this.dataFolder.getFile(`${id}.zip`).path;
+                    //     File.fromPath(inputFilePath).copySync(tempPath);
+                    //     inputFilePath = tempPath;
+                    // }
                     // if (!Folder.exists(destinationFolderPath)) {
                     await unzip(inputFilePath, destinationFolderPath);
                     // }
