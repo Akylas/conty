@@ -12,7 +12,7 @@ import {
     StoryStartEvent,
     StoryStopEvent
 } from '~/handlers/StoryHandler';
-import { Stage, stageCanGoHome } from '~/models/Pack';
+import { Stage } from '~/models/Pack';
 import { showError } from '~/utils/showError';
 import { Application, ImageSource } from '@nativescript/core';
 
@@ -79,7 +79,7 @@ export class BgService extends BgServiceCommon {
     async updatePlayerNotification(currentStage: Stage, currentStages: Stage[], playingState: string) {
         try {
             const playingInfo = this.playingInfo;
-            const controlSettings = currentStage?.controlSettings;
+            const pack = playingInfo.pack;
             const keys = [
                 MPMediaItemPropertyTitle,
                 MPMediaItemPropertyAlbumTitle,
@@ -90,7 +90,7 @@ export class BgService extends BgServiceCommon {
             const objects = [playingInfo.name, playingInfo.description, playingInfo.duration / 1000, this.playingState === 'playing' ? 1 : 0, this.storyHandler.playerCurrentTime / 1000];
             DEV_LOG && console.log('updatePlayerNotification', this.playingState);
             if (playingInfo.cover) {
-                const cover = await playingInfo.cover();
+                const cover = playingInfo.cover();
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;
                 // metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, image || playingInfo.cover);
                 if (imageSource?.ios) {
@@ -101,9 +101,9 @@ export class BgService extends BgServiceCommon {
             const sharedCommandCenter = MPRemoteCommandCenter.sharedCommandCenter();
             this._enableDisableCommand('next', sharedCommandCenter.nextTrackCommand, currentStages?.length > 1);
             this._enableDisableCommand('previous', sharedCommandCenter.previousTrackCommand, currentStages?.length > 1);
-            this._enableDisableCommand('pause', sharedCommandCenter.togglePlayPauseCommand, !controlSettings || controlSettings?.pause);
-            this._enableDisableCommand('ok', sharedCommandCenter.likeCommand, controlSettings?.ok === true);
-            this._enableDisableCommand('home', sharedCommandCenter.bookmarkCommand, !!currentStage && stageCanGoHome(currentStage));
+            this._enableDisableCommand('pause', sharedCommandCenter.togglePlayPauseCommand, pack.canPause(currentStage));
+            this._enableDisableCommand('ok', sharedCommandCenter.likeCommand, pack.canOk(currentStage));
+            this._enableDisableCommand('home', sharedCommandCenter.bookmarkCommand, !!currentStage && pack.canHome(currentStage));
             this._enableDisableCommand('stop', sharedCommandCenter.stopCommand, true);
             MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = NSDictionary.dictionaryWithObjectsForKeys(objects, keys);
             MPNowPlayingInfoCenter.defaultCenter().playbackState = this.playingState === 'playing' ? MPNowPlayingPlaybackState.Playing : MPNowPlayingPlaybackState.Paused;

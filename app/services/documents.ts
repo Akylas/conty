@@ -9,7 +9,12 @@ import { isObject, isString } from '@akylas/nativescript/utils';
 
 const sql = SqlQuery.createFromTemplateString;
 
+function cleanHTML(str: string) {
+    return str.replaceAll('&', '&amp;');
+}
+
 export async function getFileTextContentFromPackFile(folderPath, asset, compressed: boolean) {
+    DEV_LOG && console.log('getFileTextContentFromPackFile', folderPath, asset, compressed);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -157,13 +162,14 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
     });
 
     async createPack(data: Partial<Pack>) {
-        const { extra, id, ...others } = data;
+        const { extra, id, description, ...others } = data;
         // pack.createdDate = pack.modifiedDate = Date.now();
         DEV_LOG && console.log('createPack', id, JSON.stringify(others), extra);
         const pack = await this.create(
             cleanUndefined({
                 id: id || Date.now() + '',
                 ...others,
+                description: cleanHTML(description),
                 extra: isObject(extra) ? JSON.stringify(extra) : extra
                 // colors: Array.isArray(data.colors) ? JSON.stringify(data.colors) : data.colors
             })

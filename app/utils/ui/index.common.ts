@@ -453,8 +453,9 @@ export async function showFullscreenPlayer() {
 }
 
 export async function playPack(pack: Pack, showFullscreen = true) {
-    await getBGServiceInstance().storyHandler.playPack(pack);
-    if (showFullscreen) {
+    const storyHandler = getBGServiceInstance().storyHandler;
+    await storyHandler.playPack(pack);
+    if (showFullscreen && storyHandler.playingPack) {
         showFullscreenPlayer();
     }
 }
