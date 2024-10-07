@@ -171,12 +171,15 @@ export class BgService extends android.app.Service {
                     // const newBitmap = modifyBitmap(originalBitmap, createColorMatrix(get(colors).colorPrimary));
                     // originalBitmap.finalize();
                     metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, originalBitmap);
+                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, originalBitmap);
                 }
             } else {
                 const context = Utils.android.getApplicationContext();
                 const resources = context.getResources();
                 const identifier = context.getResources().getIdentifier('ic_launcher', 'mipmap', context.getPackageName());
-                metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, android.graphics.BitmapFactory.decodeResource(resources, identifier));
+                const bitmap = android.graphics.BitmapFactory.decodeResource(resources, identifier);
+                metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmap);
+                metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap);
             }
             metadataBuilder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, playingInfo.duration);
             this.getMediaSessionCompat().setMetadata(metadataBuilder.build());
@@ -313,7 +316,7 @@ export class BgService extends android.app.Service {
                 break;
             }
             case android.view.KeyEvent.KEYCODE_MEDIA_STOP:
-                this.storyHandler.stopPlaying({ fade: true });
+                this.storyHandler.stopPlaying();
         }
     }
     updateAlbumArt(image) {
