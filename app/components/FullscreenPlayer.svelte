@@ -18,13 +18,14 @@
         StagesChangeEvent,
         StoryHandler,
         StoryStartEvent,
-        StoryStopEvent
+        StoryStopEvent,
+        imagesMatrix
     } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
-    import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
+    import { colorTheme } from '~/helpers/theme';
+    import { Pack, Stage, Story } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { ALERT_OPTION_MAX_HEIGHT, IMAGE_COLORMATRIX } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { closeModal, goBack } from '~/utils/svelte/ui';
     import { openLink, showBottomsheetOptionSelect } from '~/utils/ui';
@@ -38,11 +39,11 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors;
-    $: ({ colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline } = $colors);
+    let { colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline, colorOutlineVariant } = $colors;
+    $: ({ colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline, colorOutlineVariant } = $colors);
     let page: NativeViewElementNode<Page>;
     let pager: NativeViewElementNode<Pager>;
-    const colorMatrix = IMAGE_COLORMATRIX;
+    const colorMatrix = imagesMatrix;
 
     const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
     const screenWidth = Screen.mainScreen.widthDIPs;
@@ -58,16 +59,16 @@
     let progress = 0;
     let playingInfo: PlayingInfo = null;
     let pack: Pack = null;
+    let packHasStories = false;
     let story: Story = null;
     let playerStateInterval;
     let hideOtherPageItems = false;
-    let controlSettings: ControlSettings;
+    // let controlSettings: ControlSettings;
     $: currentStage = items[selectedStageIndex]?.stage;
-    $: controlSettings = currentStage?.controlSettings;
-    $: hideOtherPageItems = controlSettings?.wheel === false && items.length > 0;
+    $: hideOtherPageItems = !pack?.isMenuStage(currentStage) && items.length > 1;
     // $: storyHandler?.getStageImage(pack, currentStage).then((r) => (currentImage = r));
-    // $: DEV_LOG && console.warn('currentStage', JSON.stringify(currentStage));
     // $: DEV_LOG && console.warn('selectedStageIndex', selectedStageIndex);
+    $: DEV_LOG && console.error('hideOtherPageItems', hideOtherPageItems);
 
     function getTimeFromProgress(progress: number) {
         return playingInfo ? (playingInfo.duration || 1) * progress : 0;
@@ -88,7 +89,6 @@
         storyHandler = handler;
         playlist = getBGServiceInstance().storyHandler.playlist;
         handler.on(PlaybackEvent, onPlayerState);
-        handler.on('selectedStageChange', onSelectedStageChanged);
         handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
@@ -99,6 +99,7 @@
         story = handler.playingStory;
         DEV_LOG && console.log('onSetup', handler.selectedStageIndex, JSON.stringify(handler.currentStages), JSON.stringify(handler.currentPlayingInfo), !!pack, !!story);
         if (pack) {
+            onPackStart({ pack });
             onStageChanged({
                 eventName: StagesChangeEvent,
                 stages: handler.currentStages,
@@ -119,7 +120,6 @@
         DEV_LOG && console.log('onUnsetup', !!handler);
         storyHandler = null;
         handler?.off(PlaybackEvent, onPlayerState);
-        handler?.off('selectedStageChange', onSelectedStageChanged);
         handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
@@ -151,10 +151,11 @@
     function onPackStart(event) {
         // state = 'play';
         pack = event.pack;
+        packHasStories = pack.hasStories();
         progress = 0;
         currentTime = 0;
         showReplay = false;
-        DEV_LOG && console.log('onPackStart', JSON.stringify(playingInfo));
+        DEV_LOG && console.log('onPackStart', packHasStories, JSON.stringify(playingInfo));
     }
     function onStoryStart(event) {
         // state = 'play';
@@ -162,7 +163,8 @@
         progress = 0;
         currentTime = 0;
         showReplay = false;
-        story.pack.getThumbnail().then((r) => (currentImage = r));
+        // story.pack.getThumbnail().then((r) => (currentImage = r));
+        currentImage = story.pack.getThumbnail();
         DEV_LOG && console.log('onStoryStart', JSON.stringify(playingInfo));
     }
 
@@ -180,7 +182,7 @@
     function onPackStop(event) {
         pack = null;
         currentImage = null;
-        controlSettings = null;
+        // controlSettings = null;
         currentStage = null;
         items = [];
         selectedStageIndex = 0;
@@ -216,47 +218,50 @@
     async function getItem(stage: Stage) {
         return {
             stage,
-            image: await getImage(stage)
+            image: getImage(stage)
         };
     }
-    async function onStageChanged(event) {
+    function onStageChanged(event) {
         try {
-            DEV_LOG && console.warn('FullScreen', 'onStageChanged', event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
+            DEV_LOG && console.log('FullScreen', 'onStageChanged', event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
             if (event.currentStatesChanged) {
-                items = await Promise.all(
-                    event.stages.map(async (stage) => ({
-                        stage,
-                        image: await getImage(stage)
-                    }))
-                );
-                //     items = event.stages.map((stage) => ({
-                //     stage,
-                //     image: getImage(stage)
-                // }));
+                // items = await Promise.all(
+                //     event.stages.map(async (stage) => ({
+                //         stage,
+                //         image: await getImage(stage)
+                //     }))
+                // );
+                items = event.stages.map((stage) => ({
+                    stage,
+                    image: getImage(stage)
+                }));
             }
-            selectedStageIndex = event.selectedStageIndex;
+            // we dont want stage change to be animated if event.currentStatesChanged
+            if (pager?.nativeElement) {
+                pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, !event.currentStatesChanged, !event.currentStatesChanged);
+            } else {
+                selectedStageIndex = event.selectedStageIndex;
+            }
             // if (pager?.nativeElement) {
             //     pager.nativeElement.selectedIndex = event.selectedStageIndex;
             //     pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, false);
 
             // }
-            // DEV_LOG &&
-            //     console.warn(
-            //         'FullScreen',
-            //         'onStageChanged1',
-            //         items.map((i) => i.image)
-            //     );
+            DEV_LOG &&
+                console.log(
+                    'FullScreen',
+                    'onStageChanged1',
+                    items[selectedStageIndex].image,
+                    items.map((i) => i.image)
+                );
 
             // changing pager selectedIndex is animated by default
             showReplay = false;
-            storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
+            currentImage = storyHandler.getCurrentStageImage();
+            // storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
             showError(error);
         }
-    }
-    function onSelectedStageChanged(event) {
-        selectedStageIndex = event.selectedStageIndex;
-        showReplay = false;
     }
 
     function stopPlayback() {
@@ -285,7 +290,7 @@
         }
     }
     async function onOkButtonIfOption() {
-        if (!controlSettings?.ok || items.length <= 1) {
+        if (!pack?.canOk(currentStage) || items.length <= 1) {
             return;
         }
         storyHandler?.handleAction('ok');
@@ -300,7 +305,7 @@
             storyHandler?.setSelectedStage(selectedStageIndex);
         }
     }
-    async function getImage(stage: Stage) {
+    function getImage(stage: Stage) {
         return storyHandler?.getStageImage(pack, stage);
     }
 
@@ -315,7 +320,7 @@
         try {
             const thePack = pack || story?.pack;
             const stories = await storyHandler.findAllStories(thePack);
-            const thumbnail = await thePack.getThumbnail();
+            const thumbnail = thePack.getThumbnail();
             const rowHeight = 60;
             const data: any = await showBottomsheetOptionSelect({
                 height: Math.min(stories.length * rowHeight, Screen.mainScreen.heightDIPs * 0.7),
@@ -369,7 +374,7 @@
                 color={colorOnSecondaryContainer}
                 flexGrow={0}
                 flexShrink={5}
-                fontSize={18}
+                fontSize={16}
                 html={pack?.description || pack?.subtitle || story?.pack?.description || ' '}
                 lineBreak="end"
                 linkColor={colorPrimary}
@@ -396,8 +401,14 @@
                         <Template let:index let:item>
                             <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
-                                <gridlayout borderRadius={20} elevation={IMAGE_ELEVATION} horizontalAlignment="center" verticalAlignment="center">
-                                    <image id={`image_${index}`} borderRadius={20} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
+                                <gridlayout
+                                    borderColor={colorOutlineVariant}
+                                    borderRadius={20}
+                                    borderWidth={colorTheme === 'eink' ? 1 : 0}
+                                    elevation={IMAGE_ELEVATION}
+                                    horizontalAlignment="center"
+                                    verticalAlignment="center">
+                                    <image id={`image_${index}`} borderRadius={20} {colorMatrix} sharedTransitionTag={index === 0 ? 'cover' : null} src={item.image} />
                                 </gridlayout>
                             </gridlayout>
                         </Template>
@@ -407,13 +418,15 @@
                 {#if __IOS__ || story}
                     <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} visibility={pack ? 'hidden' : 'visible'} on:tap={onOkButtonIfOption}>
                         <gridlayout
+                            borderColor={colorOutlineVariant}
                             borderRadius={20}
+                            borderWidth={colorTheme === 'eink' ? 1 : 0}
                             elevation={IMAGE_ELEVATION}
                             horizontalAlignment="center"
                             margin={PAGER_PAGE_PADDING - 10}
                             verticalAlignment="center"
                             visibility={pack ? 'hidden' : 'visible'}>
-                            <image borderRadius={20} sharedTransitionTag="cover" src={currentImage} />
+                            <image borderRadius={20} {colorMatrix} sharedTransitionTag="cover" src={currentImage} />
                             <stacklayout
                                 height={50}
                                 horizontalAlignment="center"
@@ -424,7 +437,7 @@
                                 {#if story}
                                     {#each story.images as image}
                                         <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
-                                            <image borderRadius={10} opacity={0.6} src={story.pack.getImage(image)} />
+                                            <image borderRadius={10} {colorMatrix} opacity={0.6} src={story.pack.getImage(image)} />
                                         </gridlayout>
                                     {/each}
                                 {/if}
@@ -472,7 +485,7 @@
                 horizontalAlignment="right"
                 text={pack ? 'mdi-home' : 'mdi-skip-previous'}
                 verticalAlignment="center"
-                visibility={stageCanGoHome(currentStage) ? 'visible' : 'hidden'}
+                visibility={pack?.canHome(currentStage) ? 'visible' : 'hidden'}
                 on:tap={onHomeButton} />
             <mdbutton
                 class="playerButton"
@@ -486,7 +499,7 @@
                 horizontalAlignment="right"
                 text={pack ? 'mdi-check' : 'mdi-skip-next'}
                 verticalAlignment="center"
-                visibility={!PRODUCTION || (story && playlist.length > 1) || !!controlSettings?.ok ? 'visible' : 'hidden'}
+                visibility={!PRODUCTION || (story && playlist.length > 1) || pack?.canOk(currentStage) ? 'visible' : 'hidden'}
                 on:tap={onOkButton} />
         </stacklayout>
         <CActionBar
@@ -500,7 +513,13 @@
             title={pack?.title || story?.name}
             titleProps={{ fontWeight: 'bold', autoFontSize: true, sharedTransitionTag: 'title' }}>
             <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-playlist-music-outline" variant="text" on:tap={showPlaylist} />
-            <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-folder-music-outline" variant="text" on:tap={showAllPlayableStories} />
+            <mdbutton
+                class="actionBarButton"
+                defaultVisualState="secondary"
+                text="mdi-folder-music-outline"
+                variant="text"
+                visibility={packHasStories ? 'visible' : 'collapse'}
+                on:tap={showAllPlayableStories} />
         </CActionBar>
     </gridlayout>
 </page>

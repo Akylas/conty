@@ -21,7 +21,7 @@
     import { RemoteContentProvider } from '~/models/Pack';
     import { documentsService } from '~/services/documents';
     import { getAndroidRealPath, requestManagePermission, restartApp } from '~/utils';
-    import { SETTINGS_LANGUAGE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { DEFAULT_INVERSE_IMAGES, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { Sentry } from '~/utils/sentry';
     import { share } from '~/utils/share';
     import { showError } from '~/utils/showError';
@@ -196,6 +196,13 @@
                     id: 'auto_black',
                     title: lc('auto_black'),
                     value: ApplicationSettings.getBoolean('auto_black', false)
+                },
+                {
+                    type: 'switch',
+                    id: SETTINGS_INVERSE_IMAGES,
+                    title: lc('inverse_images'),
+                    description: lc('inverse_images_desc'),
+                    value: ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES)
                 },
                 {
                     id: 'sub_settings',

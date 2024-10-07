@@ -1,7 +1,6 @@
 <script context="module" lang="ts">
-    import { GridLayout, Screen } from '@nativescript/core';
+    import { Screen } from '@nativescript/core';
     import { onDestroy, onMount } from 'svelte';
-    import { NativeViewElementNode } from 'svelte-native/dom';
     import {
         PackStartEvent,
         PackStopEvent,
@@ -13,15 +12,14 @@
         StagesChangeEvent,
         StoryHandler,
         StoryStartEvent,
-        StoryStopEvent
+        StoryStopEvent,
+        imagesMatrix
     } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
-    import { ControlSettings, Pack, Stage, Story, stageCanGoHome } from '~/models/Pack';
+    import { Pack, Stage, Story } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { IMAGE_COLORMATRIX } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { showFullscreenPlayer } from '~/utils/ui';
-    import { fonts } from '~/variables';
     const screenWidth = Screen.mainScreen.widthDIPs;
 </script>
 
@@ -37,12 +35,14 @@
     let playingInfo: PlayingInfo = null;
     let pack: Pack = null;
     let story: Story = null;
+    const colorMatrix = imagesMatrix;
+
     // let visible = false;
     let storyHandler: StoryHandler;
     let playerStateInterval;
-    let controlSettings: ControlSettings;
+    // let controlSettings: ControlSettings;
     $: currentStage = currentStages?.[selectedStageIndex];
-    $: controlSettings = currentStage?.controlSettings;
+    // $: controlSettings = currentStage?.controlSettings;
     // $: storyHandler?.getStageImage(pack, currentStage).then((r) => (currentImage = r));
     // $: DEV_LOG && console.log('controlSettings', JSON.stringify(controlSettings));
     // $: DEV_LOG && console.log('currentStage', JSON.stringify(currentStage));
@@ -92,7 +92,6 @@
     onSetup(async (handler) => {
         storyHandler = handler;
         handler.on(PlaybackEvent, onPlayerState);
-        handler.on('selectedStageChange', onSelectedStageChanged);
         handler.on(StagesChangeEvent, onStageChanged);
         handler.on(PackStartEvent, onPackStart);
         handler.on(PackStopEvent, onPackStop);
@@ -116,7 +115,6 @@
         DEV_LOG && console.log('onUnsetup');
         storyHandler = null;
         handler?.off(PlaybackEvent, onPlayerState);
-        handler?.off('selectedStageChange', onSelectedStageChanged);
         handler?.off(StagesChangeEvent, onStageChanged);
         handler?.off(PackStartEvent, onPackStart);
         handler?.off(PackStopEvent, onPackStop);
@@ -154,7 +152,7 @@
     function onPackStop(event) {
         currentImage = null;
         pack = null;
-        controlSettings = null;
+        // controlSettings = null;
         currentStage = null;
         currentStages = [];
         selectedStageIndex = 0;
@@ -165,7 +163,8 @@
         DEV_LOG && console.log('onStoryStart');
         pack = null;
         story = event.story;
-        story.pack.getThumbnail().then((r) => (currentImage = r));
+        currentImage = story.pack.getThumbnail();
+        // story.pack.getThumbnail().then((r) => (currentImage = r));
     }
     function onStoryStop(event) {
         DEV_LOG && console.log('onStoryStop');
@@ -193,14 +192,11 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
+            currentImage = storyHandler.getCurrentStageImage();
+            // storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
             showError(error);
         }
-    }
-    function onSelectedStageChanged(event) {
-        selectedStageIndex = event.selectedStageIndex;
-        showReplay = false;
     }
 
     function stopPlayback() {
@@ -226,15 +222,15 @@
 </script>
 
 <gridlayout {...$$restProps} on:tap={() => {}}>
-    <gridlayout backgroundColor="#000000dd" borderRadius={4} columns="70,*" rows="*">
-        <image backgroundColor={currentPack()?.extra?.colors?.[0]} sharedTransitionTag="cover" src={currentImage} stretch="aspectFit" on:tap={showFullscreenPlayer} />
+    <gridlayout class="barPlayer" columns="70,*" rows="*">
+        <image backgroundColor={currentPack()?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag="cover" src={currentImage} stretch="aspectFit" on:tap={showFullscreenPlayer} />
         <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
         <gridlayout col={1} columns="auto,auto,auto,auto,auto,auto" horizontalAlignment="right" orientation="horizontal" verticalAlignment="center">
-            <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={stageCanGoHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
+            <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={pack?.canHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton
                 class="whiteSmallActionBarButton"
                 col={1}
@@ -250,7 +246,7 @@
                 variant="text"
                 visibility={story || currentStages?.length ? 'visible' : 'hidden'}
                 on:tap={togglePlayState} />
-            <mdbutton class="whiteSmallActionBarButton" col={4} text="mdi-check" variant="text" visibility={controlSettings && !!controlSettings?.ok ? 'visible' : 'collapsed'} on:tap={onOkButton} />
+            <mdbutton class="whiteSmallActionBarButton" col={4} text="mdi-check" variant="text" visibility={pack?.canOk(currentStage) ? 'visible' : 'collapsed'} on:tap={onOkButton} />
             <mdbutton class="whiteSmallActionBarButton" col={5} text="mdi-close" variant="text" on:tap={stopPlayback} />
         </gridlayout>
 
