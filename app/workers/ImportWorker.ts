@@ -4,9 +4,9 @@ import { ApplicationSettings, Color, type EventData, File, Folder, ImageSource, 
 import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
 import { LUNII_DATA_FILE, PackMetadata, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
-import { DocumentsService, getFileTextContentFromPackFile } from '~/services/documents';
+import { DocumentsService, PackDeletedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getFileOrFolderSize, unzip } from '~/utils';
-import { EVENT_IMPORT_STATE } from '~/utils/constants';
+import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
 import Queue from './queue';
 import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 import { copyFolderContent, removeFolderContent } from '~/utils/file';
@@ -186,6 +186,21 @@ export default class ImportWorker extends Observable {
                         await worker.handleStart(event);
                         this.importFromFileQueue(event.data.messageData);
                         break;
+                    case 'delete_packs':
+                        await worker.handleStart(event);
+                        const ids = event.data.messageData as string[];
+                        DEV_LOG && console.log('deleteDocuments', ids);
+                        // await this.packRepository.delete(model);
+                        await Promise.all(
+                            ids.map(async (id) => {
+                                await documentsService.packRepository.delete({ id } as any);
+                                const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id);
+                                await docData.remove();
+                                // we notify on each delete so that UI updates fast
+                                documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id] } as PackDeletedEventData);
+                            })
+                        );
+                        break;
                     case 'stop':
                         worker.stop(data.messageData?.error, data.id);
                         break;
@@ -353,7 +368,7 @@ export default class ImportWorker extends Observable {
         DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath.path);
         if (__ANDROID__ && File.exists(thumbnailPath.path)) {
             const start = Date.now();
-            const image = await loadImageSync(thumbnailPath.path, { resizeThreshold: 20 });
+            const image = loadImageSync(thumbnailPath.path, { resizeThreshold: 20 });
             DEV_LOG && console.log('image', image.android);
             // image.saveToFile(knownFolders.externalDocuments().getFile(thumbnailFileName).path, 'png');
             colors = JSON.parse(com.akylas.conty.Colors.Companion.getDominantColorsSync(image.android, 3));

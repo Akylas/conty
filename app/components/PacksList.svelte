@@ -185,8 +185,10 @@
         }
     }
     function onPacksDeleted(event: PackDeletedEventData) {
-        for (let index = packs.length - 1; index >= 0; index--) {
-            if (event.packs.indexOf(packs.getItem(index).pack) !== -1) {
+        for (let i = 0; i < event.packIds.length; i++) {
+            const id = event.packIds[i];
+            const index = packs.findIndex((item) => item.pack.id === id);
+            if (index !== -1) {
                 packs.splice(index, 1);
                 nbSelected -= 1;
             }
@@ -430,7 +432,7 @@
                     if (currentPack && selectedPacks.findIndex((d) => d.id === currentPack.id)) {
                         storyHandler?.stopPlaying();
                     }
-                    await documentsService.deletePacks(selectedPacks);
+                    await importService.deletePacks(selectedPacks.map((s) => s.id));
                 }
             } catch (error) {
                 showError(error);

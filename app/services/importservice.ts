@@ -203,5 +203,10 @@ export class ImportService extends Observable {
         this.ensureWorker();
         await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
+    async deletePacks(data: string[]) {
+        DEV_LOG && console.log('deleteDocuments', JSON.stringify(data));
+        this.ensureWorker();
+        await this.sendMessageToWorker('delete_packs', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+    }
 }
 export const importService = new ImportService();

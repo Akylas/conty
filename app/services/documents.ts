@@ -269,7 +269,7 @@ export interface PackUpdatedEventData extends EventData {
     updateModifiedDate: boolean;
 }
 export interface PackDeletedEventData extends EventData {
-    packs: Pack[];
+    packIds: string[];
 }
 
 export type DocumentEvents = PackAddedEventData | PackUpdatedEventData | PackDeletedEventData;
@@ -344,18 +344,6 @@ export class DocumentsService extends Observable {
 
         this.notify({ eventName: 'started' });
         this.started = true;
-    }
-    async deletePacks(packs: Pack[]) {
-        DEV_LOG &&
-            console.log(
-                'deleteDocuments',
-                packs.map((d) => d.id)
-            );
-        // await this.packRepository.delete(model);
-        await Promise.all(packs.map((d) => this.packRepository.delete(d)));
-        // await Pack.delete(docs.map((d) => d.id));
-        packs.forEach((doc) => doc.removeFromDisk());
-        this.notify({ eventName: EVENT_PACK_DELETED, packs } as PackDeletedEventData);
     }
     stop() {
         DEV_LOG && console.log('DocumentsService stop');
