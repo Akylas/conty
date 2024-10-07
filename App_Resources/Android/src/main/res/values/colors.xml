@@ -310,7 +310,7 @@
     <color name="md_theme_eink_surfaceVariant">#FFFFFF</color>
     <color name="md_theme_eink_onSurfaceVariant">#444748</color>
     <color name="md_theme_eink_outline">#747878</color>
-    <color name="md_theme_eink_outlineVariant">#FFFFFF</color>
+    <color name="md_theme_eink_outlineVariant">#747878</color>
     <color name="md_theme_eink_scrim">#000000</color>
     <color name="md_theme_eink_inverseSurface">#313030</color>
     <color name="md_theme_eink_inverseOnSurface">#F4F0EF</color>

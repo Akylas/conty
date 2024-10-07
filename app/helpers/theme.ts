@@ -28,6 +28,11 @@ export const currentRealTheme = writable('auto');
 
 export let useDynamicColors = false;
 
+colorTheme = getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes;
+DEV_LOG && console.log('theme', 'start');
+
+useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
+
 let started = false;
 let autoDarkToBlack = getBoolean('auto_black', false);
 const ThemeBlack = 'ns-black';
@@ -44,7 +49,7 @@ Application.on(Application.systemAppearanceChangedEvent, (event: SystemAppearanc
             if (__ANDROID__) {
                 const activity = Application.android.startActivity;
                 if (activity) {
-                    AppUtilsAndroid.applyDayNight(activity, true);
+                    AppUtilsAndroid.applyDayNight(activity, useDynamicColors);
                 }
             }
             Theme.setMode(Theme.Auto, undefined, realTheme, false);
@@ -233,10 +238,8 @@ export function start() {
         return;
     }
     started = true;
-    colorTheme = getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes;
     DEV_LOG && console.log('theme', 'start');
 
-    useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
     if (__IOS__ && SDK_VERSION < 13) {
         theme = 'light';
     } else {
@@ -316,7 +319,7 @@ export function start() {
         if (__ANDROID__) {
             const activity = Application.android.startActivity;
             if (activity) {
-                AppUtilsAndroid.applyDayNight(activity, true);
+                AppUtilsAndroid.applyDayNight(activity, useDynamicColors);
             }
         }
         currentRealTheme.set(realTheme);

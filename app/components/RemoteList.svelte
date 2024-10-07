@@ -14,7 +14,7 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
-    import { onThemeChanged } from '~/helpers/theme';
+    import { colorTheme, onThemeChanged } from '~/helpers/theme';
     import { RemoteContent, RemoteContentProvider } from '~/models/Pack';
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
@@ -259,11 +259,9 @@
                 android:paddingBottom={$windowInset.bottom}>
                 <Template let:item>
                     <canvasview
-                        backgroundColor={colorSurfaceContainerHigh}
-                        borderRadius={12}
+                        class="card"
+                        borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
                         fontSize={14 * $fontScale}
-                        margin={8}
-                        rippleColor={colorSurface}
                         on:tap={() => onItemTap(item)}
                         on:draw={(e) => onCanvasDraw(item, e)}>
                         <image

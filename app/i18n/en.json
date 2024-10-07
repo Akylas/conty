@@ -45,6 +45,8 @@
     "import_settings": "import settings",
     "import_settings_desc": "import all settings from a previous backup",
     "importing": "importing",
+    "inverse_images": "inverse images colors",
+    "inverse_images_desc": "can make images render better on eink devices",
     "ios": {
         "info": {
             "plist": {

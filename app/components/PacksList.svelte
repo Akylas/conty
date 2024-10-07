@@ -17,7 +17,7 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
-    import { onThemeChanged } from '~/helpers/theme';
+    import { colorTheme, onThemeChanged } from '~/helpers/theme';
     import { Pack, RemoteContent } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
     import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
@@ -647,12 +647,9 @@
                 width="100%">
                 <Template let:item>
                     <canvasview
-                        backgroundColor={colorSurfaceContainerHigh}
-                        borderColor={colorOutlineVariant}
-                        borderRadius={12}
-                        borderWidth={viewStyle === 'card' ? 1 : 0}
+                        class="card"
+                        borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
                         fontSize={14 * $fontScale}
-                        margin={8}
                         on:tap={() => onItemTap(item)}
                         on:longPress={(e) => onItemLongPress(item, e)}
                         on:draw={(e) => onCanvasDraw(item, e)}>

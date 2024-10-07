@@ -5,7 +5,7 @@ import { get, writable } from 'svelte/store';
 import { ColorThemes, getRealTheme, theme } from './helpers/theme';
 import { SDK_VERSION, layout } from '@nativescript/core/utils';
 import { DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from './utils/constants';
-import { start as startThemeHelper } from '~/helpers/theme';
+import { start as startThemeHelper, useDynamicColors } from '~/helpers/theme';
 import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 
 export const colors = writable({
@@ -66,7 +66,8 @@ function updateSystemFontScale(value) {
 
 if (__ANDROID__) {
     Application.android.on(Application.android.activityCreateEvent, (event) => {
-        AppUtilsAndroid.prepareActivity(event.activity);
+        DEV_LOG && console.log('activityCreateEvent', useDynamicColors);
+        AppUtilsAndroid.prepareActivity(event.activity, useDynamicColors);
     });
     Page.on('shownModally', function (event) {
         AppUtilsAndroid.prepareWindow(event.object['_dialogFragment'].getDialog().getWindow());
@@ -224,7 +225,7 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
         });
         colors.set(currentColors);
         Application.notify({ eventName: 'colorsChange', colors: currentColors });
-        // DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
+        DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
         rootView?._onCssStateChange();
         const rootModalViews = rootView?._getRootModalViews();
         rootModalViews.forEach((rootModalView) => rootModalView._onCssStateChange());
