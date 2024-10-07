@@ -1,0 +1,9 @@
+### Bug fixes
+- prevent error while adding source
+- dont misleading message on export settings cancelled
+- correctly use device language by default
+- packs now removed in background thread to not slow the UI
+- option to inverse images colors
+- some eink fixes
+- basic telmi story support
+- notification image pixelated
