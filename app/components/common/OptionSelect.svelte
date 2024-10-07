@@ -259,7 +259,7 @@
                     subtitle={item.subtitle}
                     title={item.name}
                     on:tap={(event) => onTap(item, event)}>
-                    <image borderRadius={4} col={0} height={45} marginRight={10} src={item.image} />
+                    <image borderRadius={4} col={0} marginTop={5} marginBottom={5} marginRight={10} src={item.image} />
                 </svelte:component>
             </Template>
             <Template let:item>

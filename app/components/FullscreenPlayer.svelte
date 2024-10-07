@@ -164,7 +164,7 @@
         currentTime = 0;
         showReplay = false;
         // story.pack.getThumbnail().then((r) => (currentImage = r));
-        currentImage = story.pack.getThumbnail();
+        currentImage = story.thumbnail || story.pack.getThumbnail();
         DEV_LOG && console.log('onStoryStart', JSON.stringify(playingInfo));
     }
 
@@ -203,7 +203,6 @@
     function onPlayerState(event: PlaybackEventData) {
         playingInfo = event.playingInfo;
         state = event.state;
-        // DEV_LOG && console.warn('onPlayerState', state, playingInfo.duration);
         if (state === 'playing') {
             startPlayerInterval();
         } else {
@@ -265,7 +264,7 @@
     }
 
     function stopPlayback() {
-        storyHandler.stopPlaying({ fade: true });
+        storyHandler.stopPlaying();
     }
 
     const onSliderChange = throttle((e) => {
@@ -471,7 +470,7 @@
             margin="0 10 0 10"
             maxLines={2}
             row={2}
-            text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || ' '}
+            text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) ||  story.name || ' '}
             textAlignment="center" />
 
         <slider margin="0 10 0 10" maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />

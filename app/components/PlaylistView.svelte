@@ -64,7 +64,7 @@
                     subtitle={item.story ? formatDuration(item.story.duration) : null}
                     title={item.pack?.title || item.story.name}
                     on:tap={(event) => onTap(item, event)}>
-                    <image borderRadius={4} col={0} height={45} marginRight={10} src={(item.pack || item.story.pack).getThumbnail()} />
+                    <image borderRadius={4} col={0} height={45} marginRight={10} src={item.story?.thumbnail || (item.pack || item.story.pack).getThumbnail()} />
                     <label
                         class="mdi"
                         color={colorOnBackground}

@@ -210,6 +210,7 @@ export interface Story {
     id: string;
     pack: Pack;
     name: string;
+    thumbnail?: string;
     audioFiles: any[];
     images: any[];
     names: string[];
@@ -404,7 +405,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     abstract stageName(s: S): string;
     abstract isMenuStage(s: S): boolean;
     abstract canPause(s: S): boolean;
-    abstract findAllStories(): Promise<Story[]>;
+    abstract findAllStories(podcastMode?: boolean): Promise<Story[]>;
     abstract hasStories(): boolean;
 }
 
@@ -495,10 +496,13 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         // we need to see if this stage is part of a multile options action
         return this.actions.some((a) => a.options.indexOf(s.uuid) !== -1 && a.options.length > 1);
     }
-    async findAllStories() {
+    findAllPodcastEpisodes() {
+        return this.stages.filter((s) => s.duration > 30000);
+    }
+    async findAllStories(podcastMode = false) {
         await this.initData();
         const currentStage = this.stages.find((s) => s.squareOne === true);
-        const storiesStages = this.findStoriesFromStage(currentStage, []);
+        const storiesStages = podcastMode ? this.findAllPodcastEpisodes().map((s) => [s]) : this.findStoriesFromStage(currentStage, []);
         const result = await Promise.all(
             storiesStages.map(async (s, index) => {
                 const images = [];
@@ -511,7 +515,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                 //         s.map((s2) => s2.uuid)
                 //     );
                 const stages = s.reduce((acc, stage) => {
-                    if (this.stageIsStory(stage)) {
+                    if (podcastMode || this.stageIsStory(stage)) {
                         audioFiles.push(this.getAudio(stage.audio));
                         durations.push(stage.duration);
                         acc.push(stage);
@@ -536,10 +540,10 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                     (lastStage.name && !ignoreStageNameRegex.test(lastStage.name) && this.cleanupStageName(lastStage)) ||
                     (hasMultipleChoices ? undefined : names[0]) ||
                     lc('story') + ' ' + (index + 1);
-                // DEV_LOG && console.log('adding story', name, audioFiles, images, names, durations, duration);
                 return {
                     id: this.id + '_' + index,
                     pack: this,
+                    thumbnail: podcastMode ? this.getImage(this.findStoryImage(stages[0])): undefined,
                     stages,
                     name,
                     audioFiles,
@@ -605,7 +609,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         }
         const action = this.actions.find((a) => a.options.indexOf(s.uuid) !== -1);
         const beforeStage = this.stages.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
-        // DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
+        DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, this.stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
         if (!this.stageIsStory(beforeStage) && beforeStage?.image) {
             return beforeStage.image;
         } else {

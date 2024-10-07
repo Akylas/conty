@@ -163,7 +163,7 @@
         DEV_LOG && console.log('onStoryStart');
         pack = null;
         story = event.story;
-        currentImage = story.pack.getThumbnail();
+        currentImage = story.thumbnail || story.pack.getThumbnail();
         // story.pack.getThumbnail().then((r) => (currentImage = r));
     }
     function onStoryStop(event) {

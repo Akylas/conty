@@ -18,13 +18,13 @@
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
     import { colorTheme, onThemeChanged } from '~/helpers/theme';
-    import { Pack, RemoteContent } from '~/models/Pack';
+    import { Pack, RemoteContent, Story } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
     import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
     import { BOTTOM_BUTTON_OFFSET, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { fade, showModal } from '~/utils/svelte/ui';
-    import { hideLoading, onBackButton, playPack, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
+    import { hideLoading, onBackButton, playPack, showBottomsheetOptionSelect, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
     import { colors, fontScale, fonts, windowInset } from '~/variables';
 
     const textPaint = new Paint();
@@ -42,6 +42,7 @@
     import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
     import { getBGServiceInstance } from '~/services/BgService';
+    import { formatDuration } from '~/helpers/formatter';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -630,6 +631,34 @@
         storyHandler.off(PackStopEvent, hidePlayer);
         storyHandler.off(StoryStopEvent, hidePlayer);
     });
+
+    async function showAllPodcastStories(item: Item) {
+        try {
+            const thePack = item.pack;
+            const storyHandler = getBGServiceInstance().storyHandler;
+            const stories = await storyHandler.findAllStories(thePack, true);
+            const rowHeight = 80;
+            const data: any = await showBottomsheetOptionSelect({
+                height: Math.min(stories.length * rowHeight, Screen.mainScreen.heightDIPs * 0.7),
+                rowHeight,
+                fontSize: 18,
+                options: stories.map((story) => ({
+                    type: 'image',
+                    image: story.thumbnail,
+                    name: story.name,
+                    subtitle: formatDuration(story.duration),
+                    story
+                }))
+            });
+            if (data?.story) {
+                const index = stories.findIndex((s) => s.id === data.story.id);
+                storyHandler.playStory(data?.story as Story, false);
+                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
 </script>
 
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
@@ -666,6 +695,14 @@
                             width={getItemImageWidth(viewStyle)} />
                         <label class="cardLabel" row={1} text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
+                        <mdbutton
+                            class="actionBarButton"
+                            horizontalAlignment="right"
+                            text="mdi-podcast"
+                            variant="text"
+                            verticalAlignment="top"
+                            visibility={item.pack.extra?.podcast ? 'visible' : 'hidden'}
+                            on:tap={() => showAllPodcastStories(item)} />
                     </canvasview>
                 </Template>
             </collectionView>

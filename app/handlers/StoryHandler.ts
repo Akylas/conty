@@ -150,7 +150,7 @@ export class StoryHandler extends Handler {
                     duration: this.playingStory.duration,
                     name: this.playingStory.name,
                     description: pack.title,
-                    cover: () => pack.getThumbnail()
+                    cover: () => this.playingStory?.thumbnail || pack.getThumbnail()
                 };
             }
         }
@@ -329,7 +329,7 @@ export class StoryHandler extends Handler {
         if (this.playingPack && this.currentStageImage) {
             return this.playingPack.getImage(this.currentStageImage) || this.playingPack.getThumbnail();
         }
-        return this.playingPack.getThumbnail();
+        return this.playingStory.thumbnail || this.playingPack.getThumbnail();
     }
     getStageName(pack: Pack, stage: Stage) {
         if (pack && stage) {
@@ -371,7 +371,7 @@ export class StoryHandler extends Handler {
                 this.onStageOk();
                 break;
             case 'stop':
-                this.stopPlaying({ fade: true });
+                this.stopPlaying();
                 break;
             case 'home':
                 this.onStageHome();
@@ -585,45 +585,43 @@ export class StoryHandler extends Handler {
         const onDone = async () => {
             try {
                 this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: null, closeFullscreenPlayer, ...this.stageChangeEventData() } as PlaybackEventData);
-                if (this.playingPack) {
-                    this.notify({ eventName: PackStopEvent, pack: this.playingPack, closeFullscreenPlayer: updatePlaylist ? this.playlist.length <= 1 : closeFullscreenPlayer });
+                this.selectedStageIndex = 0;
+                this.currentStages = [];
+                this.isPlayingPaused = false;
+                this.isPlaying = false;
+                this.currentPlayingInfo = null;
+                const currentPlayingPack = this.playingPack;
+                const currentPlayingStory = this.playingStory;
+                this.playingPack = null;
+                this.playingStory = null;
+                this.clearPlayer();
+                if (currentPlayingPack) {
+                    this.notify({ eventName: PackStopEvent, pack: currentPlayingPack, closeFullscreenPlayer: updatePlaylist ? this.playlist.length <= 1 : closeFullscreenPlayer });
                     if (updatePlaylist) {
                         this.handleOnPlayingEndPlaylist();
                     }
-                } else if (this.playingStory) {
+
+                    currentPlayingPack.close();
+                } else if (currentPlayingStory) {
                     this.notify({
                         eventName: StoryStopEvent,
-                        story: this.playingStory,
+                        story: currentPlayingStory,
                         closeFullscreenPlayer: updatePlaylist ? this.playlist.length <= 1 : closeFullscreenPlayer
                     } as StoryStartEventData);
                     if (updatePlaylist) {
                         this.handleOnPlayingEndPlaylist();
                     }
+                    currentPlayingStory.pack.close();
                 }
             } catch (error) {
                 showError(error);
             }
-            // we need to wait to set those otherwise another instruction might want to start
-            // before onDone and it could break the state machine
-            if (this.playingPack) {
-                this.playingPack.close();
-                this.playingPack = null;
-            }
-            if (this.playingStory) {
-                this.playingStory.pack?.close();
-                this.playingStory = null;
-            }
-            this.selectedStageIndex = 0;
-            this.currentStages = [];
-            this.isPlayingPaused = false;
-            this.isPlaying = false;
-            this.currentPlayingInfo = null;
+
             TEST_LOG && console.warn('stopPlaying');
             // if (this.lyric) {
             //     this.lyric.pause();
             //     this.lyric = null;
             // }
-            this.clearPlayer();
             if (this.appExited) {
                 Application.notify({ eventName: 'shouldStopBgService' });
             }
@@ -653,8 +651,8 @@ export class StoryHandler extends Handler {
             await onDone();
         }
     }
-    async findAllStories(pack: Pack) {
-        return pack.findAllStories();
+    async findAllStories(pack: Pack, podcastMode = false) {
+        return pack.findAllStories(podcastMode);
     }
 
     canOverrideButtons() {
