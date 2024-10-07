@@ -1,8 +1,9 @@
-import { Utils } from '@nativescript/core';
+import { AndroidActivityResultEventData, Application, Utils } from '@nativescript/core';
 import { BgService as AndroidBgService } from '~/services/android/BgService';
 import { BgServiceBinder, IBgServiceBinder } from '~/services/android/BgServiceBinder';
 import { BgServiceCommon, BgServiceLoadedEvent } from '~/services/BgService.common';
 import { NotificationHelper } from './android/NotificationHelper';
+import { SDK_VERSION } from '@akylas/nativescript/utils';
 
 export { BgServiceLoadedEvent };
 
@@ -66,6 +67,9 @@ export class BgService extends BgServiceCommon {
     }
     async handleBinder(binder: android.os.IBinder) {
         try {
+            // if (!PRODUCTION && START_ACCESSIBILITY) {
+            //     this.enableAccessibilityService();
+            // }
             const bgBinder = binder as IBgServiceBinder;
             const localservice = bgBinder.getService();
             bgBinder.setService(null);
@@ -80,6 +84,67 @@ export class BgService extends BgServiceCommon {
     get storyHandler() {
         return this.bgService?.get()?.storyHandler;
     }
+    isBatteryOptimized() {
+        DEV_LOG && console.log('isBatteryOptimized');
+        const context = Utils.android.getApplicationContext();
+        const pwrm = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager;
+        if (SDK_VERSION >= 23) {
+            return !pwrm.isIgnoringBatteryOptimizations(__APP_ID__);
+        }
+        return false;
+    }
+    async checkBatteryOptimDisabled() {
+        DEV_LOG && console.log('checkBatteryOptimDisabled');
+        const activity = Application.android.startActivity;
+        if (this.isBatteryOptimized() && SDK_VERSION >= 22) {
+            return new Promise<boolean>((resolve, reject) => {
+                const REQUEST_CODE = 6645;
+                const onActivityResultHandler = (data: AndroidActivityResultEventData) => {
+                    DEV_LOG && console.log('onActivityResultHandler', data.requestCode);
+                    if (data.requestCode === REQUEST_CODE) {
+                        Application.android.off(Application.android.activityResultEvent, onActivityResultHandler);
+                        resolve(!this.isBatteryOptimized());
+                    }
+                };
+                Application.android.on(Application.android.activityResultEvent, onActivityResultHandler);
+                const intent = new android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(android.net.Uri.parse('package:' + __APP_ID__));
+                DEV_LOG && console.log('startActivityForResult');
+                activity.startActivityForResult(intent, REQUEST_CODE);
+            });
+        }
+        return Promise.resolve(true);
+    }
+    // isAccessibilityServiceEnabled() {
+    //     const context = Utils.android.getApplicationContext();
+    //     const enabled = android.provider.Settings.Secure.getString(
+    //         context.getContentResolver(),
+    //         'enabled_accessibility_services' /* android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES */
+    //     );
+    //     DEV_LOG && console.log('isAccessibilityServiceEnabled', enabled);
+    //     return !!enabled && enabled.indexOf(__APP_ID__) !== -1;
+    // }
+    // async enableAccessibilityService() {
+    //     const activity = Application.android.startActivity;
+    //     if (!this.isAccessibilityServiceEnabled()) {
+    //         DEV_LOG && console.log('enableAccessibilityService1');
+
+    //         return new Promise<boolean>((resolve, reject) => {
+    //             const REQUEST_CODE = 6645;
+    //             const onActivityResultHandler = (data: AndroidActivityResultEventData) => {
+    //                 if (data.requestCode === REQUEST_CODE) {
+    //                     Application.android.off(Application.android.activityResultEvent, onActivityResultHandler);
+    //                     resolve(this.isAccessibilityServiceEnabled());
+    //                 }
+    //             };
+    //             Application.android.on(Application.android.activityResultEvent, onActivityResultHandler);
+    //             const intent = new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+    //             // intent.setData(android.net.Uri.parse('package:' + activity.getPackageName()));
+    //             activity.startActivityForResult(intent, REQUEST_CODE);
+    //         });
+    //     }
+    //     return Promise.resolve(true);
+    // }
 }
 
 let bgService: BgService;

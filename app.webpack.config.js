@@ -92,6 +92,7 @@ module.exports = (env, params = {}) => {
         playStoreBuild = !!process.env['PLAY_STORE_BUILD'],
         keep_classnames_functionnames = true,
         accessibility = true,
+        startAccessibility = false,
         locale = 'fr',
         theme = 'auto',
         adhoc
@@ -105,6 +106,7 @@ module.exports = (env, params = {}) => {
         '~/services/android/BgServiceBinder',
         '~/android/activity.android',
         '~/services/android/CustomMediaButtonReceiver',
+        // '~/services/android/AccessiblityService',
         '~/android/ActionReceiver'
     );
 
@@ -233,6 +235,7 @@ module.exports = (env, params = {}) => {
         DEFAULT_LOCALE: `"${locale}"`,
         DEFAULT_THEME: `"${theme}"`,
         SENTRY_ENABLED: !!sentry,
+        START_ACCESSIBILITY: !!startAccessibility,
         NO_CONSOLE: noconsole,
         SENTRY_DSN: `"${process.env.SENTRY_DSN}"`,
         SENTRY_PREFIX: `"${!!sentry ? process.env.SENTRY_PREFIX : ''}"`,

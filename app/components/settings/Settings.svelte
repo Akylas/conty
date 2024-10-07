@@ -30,6 +30,7 @@
     import IconButton from '../common/IconButton.svelte';
     import { SilentError } from '~/utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
+    import { getBGServiceInstance } from '~/services/BgService';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -221,6 +222,26 @@
                                   description: documentsService.dataFolder.path
                                   //   rightBtnIcon: 'mdi-chevron-right'
                               }
+                          ]
+                        : ([] as any)
+                )
+                .concat(
+                    __ANDROID__
+                        ? [
+                              {
+                                  id: 'battery_optimisation',
+                                  title: lc('battery_optimization'),
+                                  description: lc('battery_optimization_desc'),
+                                  rightValue: getBGServiceInstance().isBatteryOptimized() ? lc('enabled') : lc('disabled')
+                                  //   rightBtnIcon: 'mdi-chevron-right'
+                              }
+                              //   {
+                              //       id: 'accessibility_service',
+                              //       title: lc('accessibility_service'),
+                              //       description: lc('accessibility_service_desc'),
+                              //       rightValue: getBGServiceInstance().isAccessibilityServiceEnabled() ? lc('enabled') : lc('disabled')
+                              //       //   rightBtnIcon: 'mdi-chevron-right'
+                              //   }
                           ]
                         : ([] as any)
                 )
@@ -565,7 +586,14 @@
                         }
                     }
                     break;
-
+                case 'battery_optimisation':
+                    await getBGServiceInstance().checkBatteryOptimDisabled();
+                    refreshCollectionView();
+                    break;
+                // case 'accessibility_service':
+                //     await getBGServiceInstance().enableAccessibilityService();
+                //     refreshCollectionView();
+                //     break;
                 case 'data_location': {
                     if (!(await requestManagePermission())) {
                         throw new Error(lc('missing_manage_permission'));

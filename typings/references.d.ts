@@ -17,6 +17,7 @@ declare const DEV_LOG: boolean;
 declare const NO_CONSOLE: boolean;
 declare const TEST_LOG: boolean;
 declare const PRODUCTION: boolean;
+declare const START_ACCESSIBILITY: boolean;
 declare const SENTRY_ENABLED: boolean;
 declare const SENTRY_DSN: string;
 declare const SENTRY_PREFIX: string;

@@ -5,6 +5,7 @@ import { BgService, getInstance } from './BgService';
 export class CustomMediaButtonReceiver extends androidx.media.session.MediaButtonReceiver {
     onReceive(context: android.content.Context, intent: android.content.Intent) {
         const action = intent.getAction();
+        DEV_LOG && console.log('onReceive', action);
         try {
             switch (action) {
                 case 'android.intent.action.MEDIA_BUTTON':
