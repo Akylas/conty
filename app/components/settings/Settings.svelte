@@ -506,9 +506,10 @@
                     //         throw new Error(lc('missing_storage_perm_settings'));
                     //     }
                     // }
+                    DEV_LOG && console.log('export_settings');
                     const jsonStr = ApplicationSettings.getAllJSON();
+                    DEV_LOG && console.log('export_settings1', typeof jsonStr, jsonStr);
                     if (jsonStr) {
-                        DEV_LOG && console.log('export_settings');
                         const result = await saveFile({
                             name: `${__APP_ID__}_settings_${dayjs().format('YYYY-MM-DD')}.json`,
                             data: jsonStr,
