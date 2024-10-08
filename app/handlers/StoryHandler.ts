@@ -34,6 +34,7 @@ function getRandomFromArray(array) {
     return array[Math.floor(Math.random() * array.length)];
 }
 export const PlaybackEvent = 'playback';
+export const PlaybackTimeEvent = 'playbackTime';
 export const PackStartEvent = 'packStart';
 export const PackStopEvent = 'packStop';
 export const StagesChangeEvent = 'stagesChange';
@@ -60,9 +61,14 @@ export interface PlaybackEventData extends StageEventData {
 export interface PlayingInfo {
     pack: Pack;
     canPause?: boolean;
+    canHome?: boolean;
     canStop?: boolean;
+    canNext?: boolean;
+    canPrev?: boolean;
+    canOk?: boolean;
     durations?: number[];
     duration: number;
+    state: PlayingState;
     name: any;
     description?: any;
     cover?: () => string | ImageSource;
@@ -130,10 +136,15 @@ export class StoryHandler extends Handler {
                     }
                 }
                 // DEV_LOG && console.log('updating playing info', currentStage.uuid, currentStage.image, duration, name);
-
+                const canNextPrev = this.currentStages?.length > 1;
                 return {
                     pack,
                     canPause: pack.canPause(currentStage),
+                    canHome: pack.canHome(currentStage),
+                    canOk: pack.canOk(currentStage),
+                    canNext: canNextPrev,
+                    canPrev: canNextPrev,
+                    state: this.playerState,
                     duration,
                     name,
                     description,
@@ -147,6 +158,10 @@ export class StoryHandler extends Handler {
                 return {
                     pack,
                     canPause: true,
+                    canHome: false,
+                    canOk: false,
+                    canNext: this.playlist.length > 1,
+                    state: this.playerState,
                     durations: episode.durations,
                     duration: episode.duration,
                     name: episode.name + (pack.extra?.podcast && episode.episode !== undefined ? ` (${lc('episode', episode.episode)})` : ''),
@@ -155,7 +170,7 @@ export class StoryHandler extends Handler {
                 };
             }
         }
-        return { duration: 0, name: null, pack: null };
+        return { duration: 0, name: null, pack: null, state: 'stopped' };
     }
 
     async stop() {
@@ -279,7 +294,7 @@ export class StoryHandler extends Handler {
         }
     }
     async togglePlayState() {
-        DEV_LOG && console.log('togglePlayState', this.isPlaying, this.isPlayingPaused, this.playerState);
+        // DEV_LOG && console.log('togglePlayState', this.isPlaying, this.isPlayingPaused, this.playerState);
         if (this.isPlaying) {
             if (this.playerState === 'playing') {
                 this.pausePlayback();
@@ -307,6 +322,7 @@ export class StoryHandler extends Handler {
             } else {
                 // this.lyric?.play(playTime);
             }
+            this.notify({ eventName: PlaybackTimeEvent, state: this.playerState, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
         }
     }
     nextStageFrom(stage?: Stage): Stage[] {
@@ -366,7 +382,11 @@ export class StoryHandler extends Handler {
                 this.togglePlayState();
                 break;
             case 'ok':
-                this.onStageOk();
+                if (this.playingStory && this.playlist.length > 1) {
+                    this.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
+                } else if (this.playingPack) {
+                    this.onStageOk();
+                }
                 break;
             case 'stop':
                 this.stopPlaying();
@@ -378,7 +398,11 @@ export class StoryHandler extends Handler {
                 this.selectPreviousStage();
                 break;
             case 'next':
-                this.selectNextStage();
+                if (this.playingStory && this.playlist.length > 1) {
+                    this.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
+                } else if (this.playingPack) {
+                    this.selectNextStage();
+                }
                 break;
         }
     }

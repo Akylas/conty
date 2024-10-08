@@ -681,8 +681,8 @@
             });
             if (data?.story) {
                 const index = stories.findIndex((s) => s.id === data.story.id);
-                playStory(data?.story as Story, true, false);
                 storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
+                playStory(data?.story as Story, true, false);
             }
         } catch (error) {
             showError(error);

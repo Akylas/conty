@@ -46,6 +46,6 @@ export class MediaSessionCompatCallback extends android.support.v4.media.session
         return super.onMediaButtonEvent(mediaButtonIntent);
     }
     onCustomAction(action: string, bundle) {
-        getInstance().handleButtonAction(action);
+        getInstance().storyHandler?.handleAction(action);
     }
 }
