@@ -339,12 +339,12 @@ export default class ImportWorker extends Observable {
     async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?) {
         const telmiMetadataPath = Folder.fromPath(destinationFolderPath).getFile(TELMI_DATA_FILE, false)?.path;
         const isTelmi = !!telmiMetadataPath && File.exists(telmiMetadataPath);
-        DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, isTelmi);
-        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as PackMetadata;
+        // DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, isTelmi);
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
         if (__IOS__ && !isTelmi) {
             // no compressed on iOS!
             let needsSaving = false;
-            const luniJSON = storyJSON as StoryJSON;
+            const luniJSON = storyJSON;
             // we need to rewrite all images to jpg
             for (let index = 0; index < luniJSON.stageNodes.length; index++) {
                 const action = luniJSON.stageNodes[index];
@@ -378,7 +378,7 @@ export default class ImportWorker extends Observable {
             DEV_LOG && console.log('palette', `"${colors}"`, Date.now() - start, 'ms');
         }
 
-        const { title, description, format, age, version, subtitle, keywords, image, thumbnail, ...extra } = storyJSON;
+        const { title, description, format, age, version, subtitle, keywords, image, thumbnail, stageNodes, actionNodes, ...extra } = storyJSON;
         await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
             size: getFileOrFolderSize(destinationFolderPath),
             type: isTelmi ? 'telmi' : 'studio',
