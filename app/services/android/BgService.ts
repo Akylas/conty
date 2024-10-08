@@ -1,6 +1,18 @@
 import { Canvas, Paint } from '@nativescript-community/ui-canvas';
 import { ImageSource, Utils } from '@nativescript/core';
-import { PackStartEvent, PackStartEventData, PackStopEvent, PlaybackEvent, PlaybackEventData, PlayingInfo, PlayingState, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+import {
+    PackStartEvent,
+    PackStartEventData,
+    PackStopEvent,
+    PlaybackEvent,
+    PlaybackEventData,
+    PlaybackTimeEvent,
+    PlayingInfo,
+    PlayingState,
+    StoryHandler,
+    StoryStartEvent,
+    StoryStopEvent
+} from '~/handlers/StoryHandler';
 import { lc } from '~/helpers/locale';
 import { Pack, Stage } from '~/models/Pack';
 import { BgServiceBinder } from '~/services/android/BgServiceBinder';
@@ -53,7 +65,6 @@ export class BgService extends android.app.Service {
     mNotificationBuilder: androidx.core.app.NotificationCompat.Builder;
     mNotification: globalAndroid.app.Notification;
     playingInfo: PlayingInfo = null;
-    playingState: PlayingState = 'stopped';
     onStartCommand(intent: android.content.Intent, flags: number, startId: number) {
         super.onStartCommand(intent, flags, startId);
         console.log('onStartCommand', intent);
@@ -97,6 +108,7 @@ export class BgService extends android.app.Service {
         this.bounded = false;
         const storyHandler = this.storyHandler;
         storyHandler.off(PlaybackEvent, this.onPlayerState, this);
+        storyHandler.off(PlaybackTimeEvent, this.onPlayerTimeChanged, this);
         // storyHandler.off('stateChange', this.onStateChange, this);
         storyHandler.off(PackStartEvent, this.onPackStart, this);
         storyHandler.off(StoryStartEvent, this.onPackStart, this);
@@ -113,6 +125,7 @@ export class BgService extends android.app.Service {
             DEV_LOG && console.log(TAG, 'onBounded');
             this.storyHandler = new StoryHandler(commonService);
             this.storyHandler.on(PlaybackEvent, this.onPlayerState, this);
+            this.storyHandler.on(PlaybackTimeEvent, this.onPlayerTimeChanged, this);
             // this.storyHandler.on('stateChange', this.onStateChange, this);
             this.storyHandler.on(PackStartEvent, this.onPackStart, this);
             this.storyHandler.on(StoryStartEvent, this.onPackStart, this);
@@ -153,9 +166,12 @@ export class BgService extends android.app.Service {
     }
     async updateMediaSessionMetadata() {
         try {
+            const playingInfo = this.playingInfo;
+            if (!playingInfo) {
+                return;
+            }
             const MediaMetadataCompat = android.support.v4.media.MediaMetadataCompat;
             const metadataBuilder = new MediaMetadataCompat.Builder();
-            const playingInfo = this.playingInfo;
             // DEV_LOG && console.log('updateMediaSessionMetadata', JSON.stringify(playingInfo));
             metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, playingInfo.name);
             if (playingInfo.description) {
@@ -215,8 +231,14 @@ export class BgService extends android.app.Service {
         }
     }
 
-    async updatePlayerNotification(pack: Pack, currentStage: Stage, currentStages: Stage[], playingState: PlayingState) {
+    async updatePlayerNotification() {
         try {
+            const pack = this.playingInfo?.pack;
+            const playingInfo = this.playingInfo;
+            if (!pack || !playingInfo) {
+                return;
+            }
+            DEV_LOG && console.log('updatePlayerNotification', JSON.stringify(playingInfo));
             await this.updateMediaSessionMetadata();
             const playbackstateBuilder = new PlaybackStateCompat.Builder();
             const context = Utils.android.getApplicationContext();
@@ -227,28 +249,29 @@ export class BgService extends android.app.Service {
             const MediaStyle = androidx.media.app.NotificationCompat.MediaStyle;
             let actionIndex = 0;
             const actionsInCompactView = [];
-            if (currentStages?.length > 1) {
+            if (playingInfo.canPrev) {
                 actionsInCompactView.push(actionIndex++);
                 this.addAction(context, 'previous', lc('previous'), ic_previous_id, notifBuilder, playbackstateBuilder);
+            }
+            if (playingInfo.canNext) {
                 actionsInCompactView.push(actionIndex++);
                 this.addAction(context, 'next', lc('next'), ic_next_id, notifBuilder, playbackstateBuilder);
             }
             let playbackState = PlaybackStateCompat.STATE_PLAYING;
-            let currentTime = 0;
+            const currentTime = this.storyHandler.playerCurrentTime;
 
-            if (pack.canHome(currentStage)) {
+            if (playingInfo.canOk) {
                 actionsInCompactView.push(actionIndex++);
                 this.addAction(context, 'ok', lc('ok'), ic_check_id, notifBuilder, playbackstateBuilder);
             }
-            if (pack.canPause(currentStage)) {
-                currentTime = this.storyHandler.playerCurrentTime;
+            if (playingInfo.canPause) {
                 // playbackState = PlaybackStateCompat.STATE_STOPPED;
-                if (playingState === 'playing') {
+                if (playingInfo.state === 'playing') {
                     playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PAUSE);
                     playbackState = PlaybackStateCompat.STATE_PLAYING;
                     actionsInCompactView.push(actionIndex++);
                     this.addAction(context, 'pause', lc('pause'), ic_pause_id, notifBuilder);
-                } else if (playingState === 'paused') {
+                } else if (playingInfo.state === 'paused') {
                     playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY);
                     playbackState = PlaybackStateCompat.STATE_PAUSED;
                     actionsInCompactView.push(actionIndex++);
@@ -256,7 +279,7 @@ export class BgService extends android.app.Service {
                 }
             }
 
-            if (currentStage && pack.canHome(currentStage)) {
+            if (playingInfo.canHome) {
                 actionIndex++;
                 this.addAction(context, 'home', lc('home'), ic_home_id, notifBuilder, playbackstateBuilder);
             }
@@ -294,18 +317,17 @@ export class BgService extends android.app.Service {
     //     this.updatePlayerNotification(event.currentStage, event.stages, this.playingState);
     // }
     onPlayerState(event: PlaybackEventData) {
+        // DEV_LOG && console.log('onPlayerState', event.state);
         this.playingInfo = event.playingInfo;
-        this.playingState = event.state;
+        // this.playingState = event.state;
         // this.playingInfo = this.bluetoothHandler.playingInfo;
-        if (!event.playingInfo) {
+        if (!this.playingInfo) {
             return;
         }
-        if (this.playingInfo?.pack) {
-            this.updatePlayerNotification(this.playingInfo?.pack, event.currentStage, event.stages, this.playingState);
-        }
+        this.updatePlayerNotification();
     }
-    handleButtonAction(action: string) {
-        this.storyHandler?.handleAction(action);
+    onPlayerTimeChanged(event: PlaybackEventData) {
+        this.updatePlayerNotification();
     }
     handleMediaIntent(intent: android.content.Intent) {
         const event = intent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT) as android.view.KeyEvent;

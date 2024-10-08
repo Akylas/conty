@@ -298,11 +298,7 @@
         storyHandler?.handleAction('play');
     }
     async function onOkButton() {
-        if (story && playlist.length > 1) {
-            storyHandler.stopPlaying({ updatePlaylist: true, closeFullscreenPlayer: true });
-        } else {
-            storyHandler?.handleAction('ok');
-        }
+        storyHandler?.handleAction('ok');
     }
     async function onOkButtonIfOption() {
         if (!pack?.canOk(currentStage) || items.length <= 1) {
@@ -354,8 +350,8 @@
             });
             if (data?.story) {
                 const index = stories.findIndex((s) => s.id === data.story.id);
-                playStory(data?.story as Story, false, false);
                 storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
+                playStory(data?.story as Story, false, false);
             }
         } catch (error) {
             showError(error);
@@ -523,12 +519,12 @@
                 horizontalAlignment="right"
                 text={!!pack ? 'mdi-home' : 'mdi-skip-previous'}
                 verticalAlignment="center"
-                visibility={pack?.canHome(currentStage) ? 'visible' : 'hidden'}
+                visibility={playingInfo?.canHome ? 'visible' : 'hidden'}
                 on:tap={onHomeButton} />
             <mdbutton
                 class="playerButton"
                 horizontalAlignment="right"
-                text={state === 'playing' ? 'mdi-pause' : showReplay ? 'mdi-replay' : 'mdi-play'}
+                text={state === 'playing' ? 'mdi-pause' : pack && showReplay ? 'mdi-replay' : 'mdi-play'}
                 verticalAlignment="center"
                 on:tap={togglePlayState} />
             <mdbutton
@@ -537,7 +533,7 @@
                 horizontalAlignment="right"
                 text={!!pack ? 'mdi-check' : 'mdi-skip-next'}
                 verticalAlignment="center"
-                visibility={!PRODUCTION || (story && playlist.length > 1) || pack?.canOk(currentStage) ? 'visible' : 'hidden'}
+                visibility={story && playingInfo?.canNext ? 'visible' : 'hidden'}
                 on:tap={onOkButton} />
         </stacklayout>
         <CActionBar
