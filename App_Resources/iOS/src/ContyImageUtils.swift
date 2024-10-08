@@ -2,8 +2,8 @@ import Foundation
 import UIKit
 
 @objcMembers
-@objc(ImageUtils)
-class ImageUtils : NSObject {
+@objc(ContyImageUtils)
+class ContyImageUtils : NSObject {
   // Struct to represent BMP header and DIB header fields
   struct BMPHeader {
     var fileSize: UInt32
@@ -179,10 +179,8 @@ class ImageUtils : NSObject {
     
     // Verify that the image is RLE4 compressed
     if bmpHeader.bitDepth != 4 || bmpHeader.compression != 2 {
-      print("Unsupported BMP format: Only RLE4 compressed 4-bit BMPs are supported.")
       return nil
     }
-    print("test \(bmpHeader)")
     
     // Extract the color palette (4 bytes per color, usually 16 colors for 4-bit BMPs)
     let colorPaletteOffset = 14 + Int(bmpHeader.dibHeaderSize)
