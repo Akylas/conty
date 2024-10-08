@@ -1,0 +1,2 @@
+### Features
+- podcast mode where packs found out to be podcasts will be presented as podcast for fast listening (with playlist support)
