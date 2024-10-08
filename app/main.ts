@@ -16,7 +16,7 @@ import { FrameElement, PageElement, createElement, registerElement, registerNati
 import { start as startThemeHelper } from '~/helpers/theme';
 import { getBGServiceInstance } from '~/services/BgService';
 import { startSentry } from '~/utils/sentry';
-import PacksList from './components/PacksList.svelte';
+import PacksList from './components/App.svelte';
 import { setDocumentsService } from './models/Pack';
 import { NestedScrollView } from './NestedScrollView';
 import { networkService } from './services/api';

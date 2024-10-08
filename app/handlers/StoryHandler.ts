@@ -7,7 +7,7 @@ import { Action, Pack, Stage, Story, ignoreStageNameRegex } from '~/models/Pack'
 import { getAudioDuration } from '~/utils';
 import { showError } from '~/utils/showError';
 import { Handler } from './Handler';
-import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
+import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, DEFAULT_PODCAST_MODE, SETTINGS_INVERSE_IMAGES, SETTINGS_PODCAST_MODE } from '~/utils/constants';
 import { prefs } from '~/services/preferences';
 
 export type PlayingState = 'stopped' | 'playing' | 'paused';
@@ -118,7 +118,6 @@ export class StoryHandler extends Handler {
                 const duration = this.mPlayer?.duration || 0;
                 let name = pack.title;
                 let description = pack.subtitle || pack.description;
-                DEV_LOG && console.log();
                 if (currentStage) {
                     if (duration > 10000 || pack.stageIsStory(currentStage)) {
                         name = this.getStoryName(pack, currentStage) || name;
@@ -130,7 +129,7 @@ export class StoryHandler extends Handler {
                         name = pack.cleanupStageName(currentStage);
                     }
                 }
-                DEV_LOG && console.log('updating playing info', currentStage.uuid, currentStage.image, duration, name);
+                // DEV_LOG && console.log('updating playing info', currentStage.uuid, currentStage.image, duration, name);
 
                 return {
                     pack,
@@ -141,16 +140,18 @@ export class StoryHandler extends Handler {
                     cover: () => this.getStageImage(pack, currentStage)
                 };
             } else if (this.playingStory) {
-                pack = this.playingStory.pack;
+                const episode = this.playingStory;
+                pack = episode.pack;
+
                 // we need to get the total duration
                 return {
                     pack,
                     canPause: true,
-                    durations: this.playingStory.durations,
-                    duration: this.playingStory.duration,
-                    name: this.playingStory.name,
+                    durations: episode.durations,
+                    duration: episode.duration,
+                    name: episode.name + (pack.extra?.podcast && episode.episode !== undefined ? ` (${lc('episode', episode.episode)})` : ''),
                     description: pack.title,
-                    cover: () => this.playingStory?.thumbnail || pack.getThumbnail()
+                    cover: () => episode?.thumbnail || pack.getThumbnail()
                 };
             }
         }
@@ -173,7 +174,7 @@ export class StoryHandler extends Handler {
 
     clearPlayer() {
         // ensure current player is stopped
-        DEV_LOG && console.info('clearPlayer');
+        // DEV_LOG && console.info('clearPlayer');
         const oldPlayer = this.mPlayer;
         oldPlayer?.stop();
         this.mPlayer = new TNSPlayer();
@@ -198,7 +199,7 @@ export class StoryHandler extends Handler {
         throwErrorUp?: boolean;
         updatePlayingInfo?: boolean;
     }) {
-        DEV_LOG && console.info('playAudio', fileName, dataSource);
+        // DEV_LOG && console.info('playAudio', fileName, dataSource);
         try {
             await new Promise<void>(async (resolve, reject) => {
                 try {
@@ -216,7 +217,6 @@ export class StoryHandler extends Handler {
                               }
                             : {}),
                         completeCallback: async () => {
-                            DEV_LOG && console.log('completeCallback', fileName, loop, resolved);
                             // this.clearPlayer();
                             if (!loop && !resolved) {
                                 resolved = true;
@@ -225,7 +225,7 @@ export class StoryHandler extends Handler {
                             this._setPlaybackState('stopped');
                         },
                         errorCallback: async (e) => {
-                            DEV_LOG && console.log('errorCallback', fileName, e.error);
+                            DEV_LOG && console.error('errorCallback', fileName, e.error);
                             this._setPlaybackState('stopped');
                             if (!resolved) {
                                 resolved = true;
@@ -238,33 +238,33 @@ export class StoryHandler extends Handler {
                         }
                     });
                     if (updatePlayingInfo) {
-                        DEV_LOG && console.log('playAudio', 'updating playing info');
                         this.currentPlayingInfo = this.playingInfo();
                     }
-                    DEV_LOG && console.log('playAudio', 'updated playing info', this.currentPlayingInfo.name);
                     this._setPlaybackState('playing');
                 } catch (error) {
-                    console.error('playAudio ', error, error.stack);
                     reject(error);
                 }
             });
         } finally {
-            DEV_LOG && console.log('playAudio', 'done');
         }
     }
     currentStoryAudioIndex = 0;
-    async playAudios(audios: string[], updatePlayingInfo = true) {
+    async playAudios(audios: string[], updatePlayingInfo = true, onDone?) {
         TEST_LOG && console.log('playAaudios', updatePlayingInfo);
-        // try {
-        // we use throwErrorUp to ensure the loops stop and we dont play other audios
-        for (let index = 0; index < audios.length; index++) {
-            if (!this.isPlaying) {
-                break;
+        try {
+            // we use throwErrorUp to ensure the loops stop and we dont play other audios
+            for (let index = 0; index < audios.length; index++) {
+                if (!this.isPlaying) {
+                    break;
+                }
+                this.currentStoryAudioIndex = index;
+                await this.playAudio({ fileName: audios[index], loop: false, throwErrorUp: true, updatePlayingInfo });
             }
-            this.currentStoryAudioIndex = index;
-            await this.playAudio({ fileName: audios[index], loop: false, throwErrorUp: true, updatePlayingInfo });
+            onDone?.();
+        } catch (error) {
+            showError(error);
+        } finally {
         }
-        // } catch (err) {}
     }
 
     pausedStoryPlayTime = 0;
@@ -299,7 +299,7 @@ export class StoryHandler extends Handler {
         }
     }
     async setPlayerTimestamp(playTime: number) {
-        DEV_LOG && console.log(TAG, 'setStoryTimestamp', playTime, this.isPlaying, this.isPlayingPaused);
+        // DEV_LOG && console.log(TAG, 'setStoryTimestamp', playTime, this.isPlaying, this.isPlayingPaused);
         if (this.isPlaying) {
             this.mPlayer.seekTo(playTime / 1000);
             if (this.isPlayingPaused) {
@@ -321,15 +321,13 @@ export class StoryHandler extends Handler {
     }
 
     getStageImage(pack: Pack, stage: Stage): string | ImageSource {
-        if (pack) {
-            return pack.getCurrentStageImage(stage, this.currentStageSelected(), this.currentStageImage);
-        }
+        return pack?.getCurrentStageImage(stage, this.currentStageSelected(), this.currentStageImage);
     }
     getCurrentStageImage() {
         if (this.playingPack && this.currentStageImage) {
             return this.playingPack.getImage(this.currentStageImage) || this.playingPack.getThumbnail();
         }
-        return this.playingStory.thumbnail || this.playingPack.getThumbnail();
+        return this.playingStory?.thumbnail || this.playingPack.getThumbnail();
     }
     getStageName(pack: Pack, stage: Stage) {
         if (pack && stage) {
@@ -394,7 +392,7 @@ export class StoryHandler extends Handler {
             this.currentStageImage = pack.stageIsStory(stage) ? undefined : stage?.image;
             // this.currentStageImage = stage?.image;
             this.currentPlayingInfo = this.playingInfo();
-            DEV_LOG && console.info('notifyStageChange', stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage, this.currentPlayingInfo.cover);
+            // DEV_LOG && console.info('notifyStageChange', stage?.image, stage.uuid, this.currentStages.length, this.selectedStageIndex, this.currentStageImage);
             this.notify({ eventName: StagesChangeEvent, playingInfo: this.currentPlayingInfo, currentStatesChanged, ...this.stageChangeEventData() } as StageEventData);
         } catch (error) {
             showError(error);
@@ -404,27 +402,27 @@ export class StoryHandler extends Handler {
         const pack = this.pack;
         const oldSelected = this.currentStageSelected();
         const oldSelectedIndex = this.selectedStageIndex;
-        DEV_LOG && console.log('onStageOk', oldSelectedIndex, oldSelected.uuid);
+        // DEV_LOG && console.log('onStageOk', oldSelectedIndex, oldSelected.uuid);
         if (!pack.hasOkTransition(oldSelected)) {
             // should be packed ended
             this.stopPlaying({ updatePlaylist: true });
             return;
         }
         const nextStages = this.nextStageFrom(oldSelected) || [];
-        DEV_LOG &&
-            console.log(
-                'nextStages',
-                nextStages.map((s) => s.uuid),
-                JSON.stringify(nextStages)
-            );
+        // DEV_LOG &&
+        //     console.log(
+        //         'nextStages',
+        //         nextStages.map((s) => s.uuid),
+        //         JSON.stringify(nextStages)
+        //     );
 
         const optionIndex = pack.okTransitionIndex(this.currentStages[oldSelectedIndex]) ?? 0;
 
         this.currentStages = pack.mapOfStagesForOption(nextStages);
-        DEV_LOG && console.log('this.currentStages', JSON.stringify(this.currentStages));
+        // DEV_LOG && console.log('this.currentStages', JSON.stringify(this.currentStages));
         this.selectedStageIndex = optionIndex !== undefined ? (optionIndex >= 0 ? optionIndex : Math.round(Math.random() * (this.currentStages.length - 1))) : 0;
         const currentStageSelected = this.currentStageSelected();
-        DEV_LOG && console.log('optionIndex', optionIndex, this.selectedStageIndex, this.currentStages.length, currentStageSelected.uuid);
+        // DEV_LOG && console.log('optionIndex', optionIndex, this.selectedStageIndex, this.currentStages.length, currentStageSelected?.uuid);
         if (pack.isMissingHome(currentStageSelected)) {
             // the json is missing the homeTransition. Let s fake it
             pack.buildMissingHome(currentStageSelected);
@@ -476,7 +474,7 @@ export class StoryHandler extends Handler {
                     return;
                 }
             }
-            DEV_LOG && console.log('runStage playAudio done', stage === this.currentStageSelected(), this.currentStages.length, pack.isAutoPlay(stage));
+            // DEV_LOG && console.log('runStage playAudio done', stage === this.currentStageSelected(), this.currentStages.length, pack.isAutoPlay(stage));
             if (stage === this.currentStageSelected() /*  && stage?.controlSettings?.autoplay === true */ && (this.currentStages.length === 1 || pack.isAutoPlay(stage))) {
                 await this.onStageOk();
             }
@@ -553,11 +551,12 @@ export class StoryHandler extends Handler {
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
-            await this.playAudios(story.audioFiles, false);
+            this.playAudios(story.audioFiles, false, () => {
+                this.stopPlaying({ updatePlaylist: true });
+            });
         } catch (error) {
             showError(error);
         } finally {
-            this.stopPlaying({ updatePlaylist: true });
         }
     }
     getPlayingPack() {
@@ -580,7 +579,7 @@ export class StoryHandler extends Handler {
         if (!this.isPlaying) {
             return;
         }
-        TEST_LOG && console.log('stopPlaying', fade, this.isPlaying, new Error().stack);
+        TEST_LOG && console.log('stopPlaying', fade, this.isPlaying);
 
         const onDone = async () => {
             try {

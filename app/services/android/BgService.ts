@@ -163,7 +163,7 @@ export class BgService extends android.app.Service {
             }
             if (playingInfo.cover) {
                 const cover = playingInfo.cover();
-                DEV_LOG && console.warn('updateMediaSessionMetadata cover', cover, playingInfo.name, playingInfo.description);
+                // DEV_LOG && console.warn('updateMediaSessionMetadata cover', cover, playingInfo.name, playingInfo.description);
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;
                 // metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, image || playingInfo.cover);
                 if (imageSource?.android) {

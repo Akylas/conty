@@ -21,7 +21,7 @@
     import { RemoteContentProvider } from '~/models/Pack';
     import { documentsService } from '~/services/documents';
     import { getAndroidRealPath, requestManagePermission, restartApp } from '~/utils';
-    import { DEFAULT_INVERSE_IMAGES, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { DEFAULT_INVERSE_IMAGES, DEFAULT_PODCAST_MODE, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_PODCAST_MODE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { Sentry } from '~/utils/sentry';
     import { share } from '~/utils/share';
     import { showError } from '~/utils/showError';
@@ -204,6 +204,13 @@
                     title: lc('inverse_images'),
                     description: lc('inverse_images_desc'),
                     value: ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES)
+                },
+                {
+                    type: 'switch',
+                    id: SETTINGS_PODCAST_MODE,
+                    title: lc('podcast_mode'),
+                    description: lc('podcast_mode_desc'),
+                    value: ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE, DEFAULT_PODCAST_MODE)
                 },
                 {
                     id: 'sub_settings',

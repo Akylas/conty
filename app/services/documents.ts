@@ -10,7 +10,7 @@ import { isObject, isString } from '@akylas/nativescript/utils';
 const sql = SqlQuery.createFromTemplateString;
 
 function cleanHTML(str: string) {
-    return str.replaceAll('&', '&amp;');
+    return str?.replaceAll('&', '&amp;');
 }
 
 export async function getFileTextContentFromPackFile(folderPath, asset, compressed: boolean) {
@@ -257,6 +257,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         const pack = type === 'telmi' ? new TelmiPack(id) : new LuniiPack(id);
         Object.assign(pack, {
             id,
+            type,
             extra: isString(extra) ? JSON.parse(extra) : extra,
             compressed,
             thumbnail: compressed ? thumbnail : path.join(this.documentsService.dataFolder.path, id, thumbnail),

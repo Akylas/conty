@@ -1,7 +1,7 @@
 declare module 'svelte/internal' {
     export function get_current_component();
 }
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-qualifier
+
 declare namespace svelteNative.JSX {
     type Override<What, With> = Omit<What, keyof With> & With;
     type TViewAugmentedAttributes = Override<
@@ -71,6 +71,8 @@ declare namespace svelteNative.JSX {
     type TPageAugmentedAttributes = Override<
         TPageAttributes,
         {
+            'on:sharedElementTo'?: (args) => void;
+            'on:sharedElementFrom'?: (args) => void;
             navigationBarColor?: string;
             statusBarColor?: string;
             screenOrientation?: string;

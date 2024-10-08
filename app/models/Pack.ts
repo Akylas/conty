@@ -88,6 +88,7 @@ export interface LuniiStage extends Stage {
     uuid: string;
     type: StageType;
     name: string;
+    episode?: number;
     okTransition?: Transition;
     homeTransition?: Transition;
     controlSettings?: ControlSettings;
@@ -210,6 +211,7 @@ export interface Story {
     id: string;
     pack: Pack;
     name: string;
+    episode?: number;
     thumbnail?: string;
     audioFiles: any[];
     images: any[];
@@ -235,6 +237,8 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     age?: number;
     extra?: {
         colors?: string[];
+        podcast?: boolean;
+        episodeCount?: number;
         [k: string]: any;
     };
     size: number;
@@ -422,7 +426,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         return s?.controlSettings?.autoplay === true;
     }
     isMenuStage(s: LuniiStage): boolean {
-        return s?.type === 'menu.optionstage' || (!!s?.controlSettings?.ok && !!s?.controlSettings?.wheel);
+        return s && (s.type === 'menu.optionstage' || (!!s.controlSettings?.ok && !!s.controlSettings?.wheel));
     }
     startData() {
         return { index: 0, stages: [this.stages.find((s) => s.squareOne === true)] };
@@ -443,10 +447,10 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         return !!s?.homeTransition;
     }
     canPause(s: LuniiStage): boolean {
-        return s?.controlSettings?.pause;
+        return s?.controlSettings?.pause === true;
     }
     canHome(s: LuniiStage): boolean {
-        return !!s?.homeTransition && s.controlSettings?.home === true;
+        return s && !!s.homeTransition && s.controlSettings?.home === true;
     }
     buildMissingHome(s: LuniiStage) {
         const action = this.actions.find((a) => a.options.indexOf(s.uuid) !== -1);
@@ -497,7 +501,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         return this.actions.some((a) => a.options.indexOf(s.uuid) !== -1 && a.options.length > 1);
     }
     findAllPodcastEpisodes() {
-        return this.stages.filter((s) => s.duration > 30000);
+        return this.stages.filter((s) => s.duration > 30000).sort((a, b) => a.episode - b.episode);
     }
     async findAllStories(podcastMode = false) {
         await this.initData();
@@ -540,10 +544,17 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                     (lastStage.name && !ignoreStageNameRegex.test(lastStage.name) && this.cleanupStageName(lastStage)) ||
                     (hasMultipleChoices ? undefined : names[0]) ||
                     lc('story') + ' ' + (index + 1);
+                let thumbnail = this.getThumbnail();
+                if (podcastMode) {
+                    thumbnail = this.getImage(this.findStoryImage(stages[0])) || thumbnail;
+                } else if (images.length === 1) {
+                    thumbnail = this.getImage(images[0]);
+                }
                 return {
                     id: this.id + '_' + index,
                     pack: this,
-                    thumbnail: podcastMode ? this.getImage(this.findStoryImage(stages[0])): undefined,
+                    thumbnail,
+                    episode: podcastMode ? stages[0].episode : undefined,
                     stages,
                     name,
                     audioFiles,
@@ -609,7 +620,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         }
         const action = this.actions.find((a) => a.options.indexOf(s.uuid) !== -1);
         const beforeStage = this.stages.find((s) => s.type !== 'story' && s.okTransition?.actionNode === action.id && s.controlSettings.wheel);
-        DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, this.stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
+        // DEV_LOG && console.log('findStoryImage', s.uuid, beforeStage.uuid, this.stageIsStory(beforeStage), beforeStage.image, beforeStage.audio);
         if (!this.stageIsStory(beforeStage) && beforeStage?.image) {
             return beforeStage.image;
         } else {
@@ -669,9 +680,6 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
     audioPath = 'audios';
     async initData() {
         if (!this.stages) {
-            // const metadata = JSON.parse(
-            //     await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, this.dataFileName, this.compressed === 1 ? true : false)
-            // ) as PackMetadata;
             const nodes = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'nodes.json', this.compressed === 1 ? true : false)) as TelmiNodes;
             this.notes = JSON.parse(await getFileTextContentFromPackFile(this.compressed ? this.zipPath : this.folderPath.path, 'notes.json', this.compressed === 1 ? true : false)) as TelmiJSONNotes;
             Object.assign(this, nodes);
@@ -702,10 +710,11 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
         // for now we only check for story || pause
         // we could add a test for home. But sometimes stories are missing this.
         // we also test for duration but will only work if stage duration is set
-        return s.control?.autoplay === true && s.control?.ok !== true;
+        // return s.control?.autoplay === true && s.control?.ok !== true;
+        return false;
     }
     cleanupStageName(s: TelmiStage): string {
-        return s ? this.notes[s.uuid].title : undefined;
+        return s ? this.notes[s.uuid].title?.replace(/^s\d+\s*/, '') : undefined;
     }
     nextStageFrom(s?: TelmiStage): TelmiStage[] {
         // DEV_LOG && console.log('nextStageFrom', JSON.stringify(stage));
@@ -773,7 +782,6 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
         return !!s?.home && s.control?.home === true;
     }
     mapOfStagesForOption(stages: TelmiStage[], optionIndex?: number): TelmiStage[] {
-        DEV_LOG && console.log('mapOfStagesForOption', optionIndex, JSON.stringify(stages));
         if (optionIndex === undefined || optionIndex === -1 || optionIndex >= stages.length) {
             // if (stages.length && stages[0].controlSettings.autoplay) {
             //     // running it alone will ensure we play automatically

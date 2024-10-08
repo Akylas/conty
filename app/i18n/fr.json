@@ -25,6 +25,7 @@
     "confirm_delete_packs": "êtes-vous sûr de vouloir supprimer ces %1$s paquets?",
     "data_location": "emplacement des données",
     "delete": "supprimer",
+    "disabled": "désactivé",
     "donate": "Veuillez envisager de faire un petit don pour financer le projet",
     "download": "Télécharger",
     "download_packs": "télécharger des packs",
@@ -32,6 +33,9 @@
     "downloading_story": "téléchargement de l'histoire",
     "downloading_story_progress": "téléchargement de l'histoire %1$s%%",
     "email": "e-mail",
+    "enabled": "activé",
+    "episode": "épisode %1$s",
+    "episodes": "%1s épisodes",
     "error": "erreur",
     "expanded": "élargie",
     "export_settings": "exportation des paramètres",
@@ -45,6 +49,8 @@
     "import_settings": "importer les paramètres",
     "import_settings_desc": "importer tous les paramètres d'une sauvegarde précédente",
     "importing": "importer",
+    "inverse_images": "couleurs des images inversées",
+    "inverse_images_desc": "peut améliorer le rendu des images sur les appareils eink",
     "ios": {
         "info": {
             "plist": {
@@ -62,6 +68,7 @@
     "move_data_desc": "toutes vos données d'application seront déplacées et une application redémarrera à la fin",
     "moving_files": "déplacer des fichiers",
     "name": "nom",
+    "next": "suivant",
     "no_network": "pas de réseau",
     "no_pack_yet": "aucun paquet",
     "no_remote_source": "pas encore de source distante",
@@ -74,7 +81,10 @@
     "play": "jouer",
     "please_refresh": "veuillez actualiser pour voir les packs",
     "please_restart_app": "veuillez redémarrer l'application pour voir le changement",
+    "podcast_mode": "mode podcast",
+    "podcast_mode_desc": "lorsqu'un pack est détecté comme podcast, il ne sera pas lu comme une \"histoire\" mais comme un podcast",
     "preparing_download": "préparation du téléchargement",
+    "previous": "précédent",
     "proposed_sources": "sources proposées",
     "remote_source_already_added": "cette source est déjà ajoutée",
     "remote_source_json_url": "URL vers le magasin JSON de packs distants",
@@ -99,6 +109,7 @@
     "source": "source",
     "startup_error": "une erreur s'est produite lors du démarrage de l'application. Veuillez redémarrer l'application pour réessayer. Si le problème persiste, veuillez le signaler",
     "stop": "arrêt",
+    "stories": "%1$s histoires",
     "story": "histoire",
     "theme": {
         "auto": "Auto",

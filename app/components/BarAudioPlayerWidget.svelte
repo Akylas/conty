@@ -18,8 +18,10 @@
     import { formatDuration } from '~/helpers/formatter';
     import { Pack, Stage, Story } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
+    import { BAR_AUDIO_PLAYER_HEIGHT } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { showFullscreenPlayer } from '~/utils/ui';
+    import { coverSharedTransitionTag, windowInset } from '~/variables';
     const screenWidth = Screen.mainScreen.widthDIPs;
 </script>
 
@@ -30,6 +32,10 @@
     let currentStage: Stage;
     let currentTime = 0;
     let currentImage: any;
+    export let translateY = BAR_AUDIO_PLAYER_HEIGHT + 5;
+    export const verticalAlignment = 'bottom';
+    export const height = 'auto';
+    export const rows = BAR_AUDIO_PLAYER_HEIGHT + '';
     let showReplay = false;
     let progress = 0;
     let playingInfo: PlayingInfo = null;
@@ -85,7 +91,11 @@
     onMount(() => {});
     onDestroy(() => {
         storyHandler?.off(PlaybackEvent, onPlayerState);
+        storyHandler?.off(PackStartEvent, onPackStop);
         storyHandler?.off(PackStartEvent, onPackStart);
+        storyHandler?.off(StoryStartEvent, onStoryStart);
+        storyHandler?.off(StoryStopEvent, onStoryStop);
+        storyHandler?.off(StagesChangeEvent, onStageChanged);
         state = 'stopped';
     });
 
@@ -100,14 +110,16 @@
 
         pack = handler.playingPack;
         story = handler.playingStory;
-        DEV_LOG && console.log('onSetup', selectedStageIndex);
+        // DEV_LOG && console.log('onSetup', selectedStageIndex);
         if (pack) {
+            onPackStart({ pack });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
             onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
         }
         if (story) {
+            onStoryStart({ story });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
-            // onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
         }
     });
 
@@ -146,13 +158,16 @@
     }
 
     function onPackStart(event) {
+        DEV_LOG && console.log('BarPlayer', 'onPackStart');
         story = null;
         pack = event.pack;
     }
     function onPackStop(event) {
+        DEV_LOG && console.log('BarPlayer', 'onPackStop');
         currentImage = null;
         pack = null;
         // controlSettings = null;
+        playingInfo = null;
         currentStage = null;
         currentStages = [];
         selectedStageIndex = 0;
@@ -160,16 +175,22 @@
     }
 
     function onStoryStart(event) {
-        DEV_LOG && console.log('onStoryStart');
+        DEV_LOG && console.log('BarPlayer', 'onStoryStart');
         pack = null;
         story = event.story;
-        currentImage = story.thumbnail || story.pack.getThumbnail();
+        currentImage = story.thumbnail;
         // story.pack.getThumbnail().then((r) => (currentImage = r));
     }
     function onStoryStop(event) {
-        DEV_LOG && console.log('onStoryStop');
+        DEV_LOG && console.log('BarPlayer', 'onStoryStop');
+        playingInfo = null;
         story = null;
         currentImage = null;
+        playingInfo = null;
+        currentStage = null;
+        currentStages = [];
+        selectedStageIndex = 0;
+        showReplay = false;
     }
     function onPlayerState(event: PlaybackEventData) {
         playingInfo = event.playingInfo;
@@ -221,9 +242,9 @@
     }
 </script>
 
-<gridlayout {...$$restProps} on:tap={() => {}}>
-    <gridlayout class="barPlayer" columns="70,*" rows="*">
-        <image backgroundColor={currentPack()?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag="cover" src={currentImage} stretch="aspectFit" on:tap={showFullscreenPlayer} />
+<gridlayout {height} margin={`0 2 ${$windowInset.bottom + 5} 2`} {translateY} {verticalAlignment} {...$$restProps} on:tap={() => {}}>
+    <gridlayout class="barPlayer" columns="70,*" {rows} on:tap={showFullscreenPlayer}>
+        <image backgroundColor={(pack || story?.pack)?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} stretch="aspectFit" />
         <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />

@@ -4,9 +4,11 @@ import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale
 import { get, writable } from 'svelte/store';
 import { ColorThemes, getRealTheme, theme } from './helpers/theme';
 import { SDK_VERSION, layout } from '@nativescript/core/utils';
-import { DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from './utils/constants';
+import { DEFAULT_COLOR_THEME, DEFAULT_PODCAST_MODE, SETTINGS_COLOR_THEME, SETTINGS_PODCAST_MODE } from './utils/constants';
 import { start as startThemeHelper, useDynamicColors } from '~/helpers/theme';
 import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
+import { prefs } from './services/preferences';
+import { createGlobalEventListener, globalObservable } from './utils/svelte/ui';
 
 export const colors = writable({
     colorPrimary: '',
@@ -59,6 +61,14 @@ export const screenRatio = screenWidthDips / screenHeightDips;
 
 export const fontScale = writable(1);
 export const isRTL = writable(false);
+export const coverSharedTransitionTag = writable('cover_0');
+
+export const podcastMode = writable(ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE, DEFAULT_PODCAST_MODE));
+prefs.on(`key:${SETTINGS_PODCAST_MODE}`, () => {
+    podcastMode.set(ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE));
+    globalObservable.notify({ eventName: SETTINGS_PODCAST_MODE, data: get(podcastMode) });
+});
+export const onPodcastModeChanged = createGlobalEventListener(SETTINGS_PODCAST_MODE);
 
 function updateSystemFontScale(value) {
     fontScale.set(value);

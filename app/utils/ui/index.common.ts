@@ -1,6 +1,6 @@
 import { InAppBrowser } from '@akylas/nativescript-inappbrowser';
 import { lc } from '@nativescript-community/l';
-import { AlertDialog, MDCAlertControlerOptions, alert } from '@nativescript-community/ui-material-dialogs';
+import { AlertDialog, MDCAlertControlerOptions, action, alert } from '@nativescript-community/ui-material-dialogs';
 import { SnackBarOptions, showSnack as mdShowSnack } from '@nativescript-community/ui-material-snackbar';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
@@ -27,13 +27,17 @@ import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.
 import type LoadingIndicator__SvelteComponent_ from '~/components/common/LoadingIndicator.svelte';
 import LoadingIndicator from '~/components/common/LoadingIndicator.svelte';
 import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
-import { colors, fontScale, screenWidthDips } from '~/variables';
+import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { navigate, showModal } from '../svelte/ui';
 import { showError } from '../showError';
 import BottomSnack from '~/components/common/BottomSnack.svelte';
 import { getBGServiceInstance } from '~/services/BgService';
-import { Pack } from '~/models/Pack';
+import { Pack, Story } from '~/models/Pack';
 import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
+import type BarAudioPlayer__SvelteComponent_ from '~/components/BarAudioPlayerWidget.svelte';
+import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
+import { duration } from 'dayjs';
 
 export function timeout(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -343,12 +347,28 @@ export async function showSettings(props?) {
     });
 }
 
+const animationDuration = 100;
+function sendAnimationEvent(animationArgs) {
+    let offset = 0;
+    if (snackMessageVisible) {
+        offset += 55;
+    }
+    if (barPlayerVisible) {
+        offset += BAR_AUDIO_PLAYER_HEIGHT;
+    }
+    // if (offset !== 0) {
+    //     offset += get(windowInset).bottom;
+    // }
+    Application.notify({ eventName: 'bottomOffsetAnimation', animationArgs, offset });
+}
+
 export interface ShowSnackMessageOptions {
     text: string;
     progress?: number;
     translateY?: number;
 }
 let snackMessage: ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
+let snackMessageVisible = false;
 function getSnackMessage(props?) {
     if (!snackMessage) {
         try {
@@ -372,39 +392,109 @@ export function updateSnackMessage(msg: Partial<ShowSnackMessageOptions>) {
         snackMessage.viewInstance.$set(props);
     }
 }
+
+async function animateSnackMessage(y: number, update = true) {
+    const animationArgs = [
+        {
+            target: snackMessage.element.nativeView,
+            translate: { x: 0, y },
+            duration: animationDuration
+        }
+    ];
+    sendAnimationEvent(animationArgs);
+    await new Animation(animationArgs).play();
+    if (update) {
+        updateSnackMessage({ translateY: y });
+    }
+}
 export async function showSnackMessage(props: ShowSnackMessageOptions) {
     // DEV_LOG && console.log('showSnackMessage', JSON.stringify(props));
     if (snackMessage) {
         updateSnackMessage(props);
     } else {
-        const snackMessage = getSnackMessage(props);
-        const animationArgs = [
-            {
-                target: snackMessage.element.nativeView,
-                translate: { x: 0, y: 0 },
-                duration: 100
-            }
-        ];
-        Application.notify({ eventName: 'snackMessageAnimation', animationArgs });
-        await new Animation(animationArgs).play();
-        updateSnackMessage({ translateY: 0, ...props });
+        getSnackMessage(props);
+
+        snackMessageVisible = true;
+        await animateSnackMessage(barPlayerVisible ? -(BAR_AUDIO_PLAYER_HEIGHT + 10) : 0);
     }
 }
 export async function hideSnackMessage() {
     if (snackMessage) {
-        const animationArgs: AnimationDefinition[] = [
-            {
-                target: snackMessage.element.nativeView,
-                translate: { x: 0, y: 100 },
-                duration: 100
-            }
-        ];
-        Application.notify({ eventName: 'snackMessageAnimation', animationArgs });
-        await new Animation(animationArgs).play();
+        snackMessageVisible = false;
+        await animateSnackMessage(100, false);
         (Application.getRootView() as GridLayout).removeChild(snackMessage.element.nativeView);
         snackMessage.element.nativeElement._tearDownUI();
         snackMessage.viewInstance.$destroy();
         snackMessage = null;
+    }
+}
+
+export type BarPlayerOptions = object;
+let barPlayer: ComponentInstanceInfo<GridLayout, BarAudioPlayer__SvelteComponent_>;
+let barPlayerVisible = false;
+function getAudioPlayer(props?: BarPlayerOptions) {
+    if (!barPlayer) {
+        try {
+            barPlayer = resolveComponentElement(BarAudioPlayer, props || {}) as ComponentInstanceInfo<GridLayout, BarAudioPlayer__SvelteComponent_>;
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            (Application.getRootView().getViewById('inner-frame-holder') as GridLayout).addChild(barPlayer.element.nativeView);
+        } catch (error) {
+            console.error(error, error.stack);
+        }
+    }
+    return barPlayer;
+}
+export async function showBarPlayer(props?: BarPlayerOptions) {
+    // DEV_LOG && console.log('showSnackMessage', JSON.stringify(props));
+    if (barPlayerVisible) {
+        // updateSnackMessage(props);
+    } else {
+        const barPlayer = getAudioPlayer(props);
+        DEV_LOG && console.log('showBarPlayer1', snackMessageVisible);
+        const animationArgs = [
+            {
+                target: barPlayer.element.nativeView,
+                translate: { x: 0, y: 0 },
+                duration: animationDuration
+            }
+        ];
+        barPlayerVisible = true;
+        sendAnimationEvent(animationArgs);
+        DEV_LOG && console.log('showBarPlayer', snackMessageVisible);
+        if (snackMessageVisible) {
+            await Promise.all([new Animation(animationArgs).play(), animateSnackMessage(-(BAR_AUDIO_PLAYER_HEIGHT + 10))]);
+        } else {
+            await new Animation(animationArgs).play();
+        }
+        updateAudioPlayer({ translateY: 0, ...props });
+    }
+}
+export async function hideBarPlayer() {
+    if (barPlayerVisible) {
+        const animationArgs: AnimationDefinition[] = [
+            {
+                target: barPlayer.element.nativeView,
+                translate: { x: 0, y: BAR_AUDIO_PLAYER_HEIGHT + 5 + get(windowInset).bottom },
+                duration: animationDuration
+            }
+        ];
+        barPlayerVisible = false;
+        sendAnimationEvent(animationArgs);
+        if (snackMessageVisible) {
+            await Promise.all([new Animation(animationArgs).play(), animateSnackMessage(0)]);
+        } else {
+            await new Animation(animationArgs).play();
+        }
+        // (Application.getRootView() as GridLayout).removeChild(barPlayer.element.nativeView);
+        // barPlayer.element.nativeElement._tearDownUI();
+        // barPlayer.viewInstance.$destroy();
+        // barPlayer = null;
+    }
+}
+export function updateAudioPlayer(props: Partial<BarPlayerOptions>) {
+    if (barPlayer) {
+        DEV_LOG && console.log('updateAudioPlayer', props);
+        barPlayer.viewInstance.$set(props);
     }
 }
 
@@ -456,6 +546,14 @@ export async function playPack(pack: Pack, showFullscreen = true) {
     const storyHandler = getBGServiceInstance().storyHandler;
     await storyHandler.playPack(pack);
     if (showFullscreen && storyHandler.playingPack) {
+        showFullscreenPlayer();
+    }
+}
+
+export async function playStory(story: Story, showFullscreen = true, updatePlaylist = true) {
+    const storyHandler = getBGServiceInstance().storyHandler;
+    await storyHandler.playStory(story, updatePlaylist);
+    if (showFullscreen && storyHandler.playingStory) {
         showFullscreenPlayer();
     }
 }

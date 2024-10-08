@@ -1,6 +1,7 @@
 <svelte:options accessors />
 
 <script context="module" lang="ts">
+    import { lc } from '@nativescript-community/l';
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Screen } from '@nativescript/core';
     import { Template } from 'svelte-native/components';
@@ -21,7 +22,7 @@
     export let containerColumns: string = '*';
     export let fontWeight = 'bold';
     export let onClose = null;
-    export let height: number | string = Math.min(playlist.length * rowHeight, Screen.mainScreen.heightDIPs * 0.7);
+    export let height: number | string = Math.min(playlist.length * rowHeight + 50, Screen.mainScreen.heightDIPs * 0.7);
     export let fontSize = 16;
     export let iconFontSize = 24;
 
@@ -49,7 +50,8 @@
 </script>
 
 <gesturerootview columns={containerColumns} rows="auto">
-    <gridlayout {backgroundColor} {borderRadius} columns={`${width}`} {height} {...$$restProps}>
+    <gridlayout {backgroundColor} {borderRadius} columns={`${width}`} {height} rows="auto,*" {...$$restProps}>
+        <label class="actionBarTitle" fontWeight="bold" margin="10 10 0 10" text={lc('playlist')} />
         <collectionView items={playlist} row={1} {rowHeight} on:dataPopulated={onDataPopulated} ios:contentInsetAdjustmentBehavior={2}>
             <Template let:index let:item>
                 <ListItemAutoSize

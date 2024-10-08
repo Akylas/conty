@@ -10,7 +10,9 @@ export const SETTINGS_LANGUAGE = 'language';
 export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
 export const SETTINGS_COLOR_THEME = 'color_theme';
 export const SETTINGS_INVERSE_IMAGES = 'inverse_images';
+export const SETTINGS_PODCAST_MODE = 'podcast_mode';
 export const DEFAULT_COLOR_THEME = 'default';
+export const DEFAULT_PODCAST_MODE = false;
 
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';
@@ -19,6 +21,7 @@ export const EVENT_IMPORT_STATE = 'importState';
 export const EVENT_STATE = 'state';
 
 export const BOTTOM_BUTTON_OFFSET = 100;
+export const BAR_AUDIO_PLAYER_HEIGHT = 79;
 
 export const IMAGE_COLORMATRIX = createColorMatrix('#ffffff');
 export const COLORMATRIX_BLACK_TRANSPARENT = [

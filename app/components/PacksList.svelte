@@ -24,8 +24,8 @@
     import { BOTTOM_BUTTON_OFFSET, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
     import { showError } from '~/utils/showError';
     import { fade, showModal } from '~/utils/svelte/ui';
-    import { hideLoading, onBackButton, playPack, showBottomsheetOptionSelect, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
-    import { colors, fontScale, fonts, windowInset } from '~/variables';
+    import { hideBarPlayer, hideLoading, onBackButton, playPack, playStory, showBarPlayer, showBottomsheetOptionSelect, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
+    import { colors, fontScale, fonts, onPodcastModeChanged, podcastMode, windowInset } from '~/variables';
 
     const textPaint = new Paint();
     const iconPaint = new Paint();
@@ -36,13 +36,14 @@
 
 <script lang="ts">
     import { request } from '@nativescript-community/perms';
-    import { PackStartEvent, PackStopEvent, StoryHandler, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
+    import { formatDuration } from '~/helpers/formatter';
+    import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
-    import BarAudioPlayerWidget from './BarAudioPlayerWidget.svelte';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
-    import { getBGServiceInstance } from '~/services/BgService';
-    import { formatDuration } from '~/helpers/formatter';
+    import IconButton from './common/IconButton.svelte';
+    import { transcode } from 'buffer';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -214,20 +215,22 @@
         }
     }
 
-    function onSnackMessageAnimation({ animationArgs }: EventData & { animationArgs: AnimationDefinition[] }) {
+    let bottomOffset = 0;
+    function onBottomOffsetAnimation({ animationArgs, offset }: EventData & { animationArgs: AnimationDefinition[]; offset }) {
+        DEV_LOG && console.log('onBottomOffsetAnimation', !!fabHolder, offset);
+        bottomOffset = offset;
         if (fabHolder) {
-            const snackAnimation = animationArgs[0];
             animationArgs.push({
                 target: fabHolder.nativeView,
-                height: 50 - snackAnimation.translate.y,
-                duration: snackAnimation.duration
+                translate: { y: -offset, x: 0 },
+                duration: animationArgs[0].duration
             });
         }
     }
 
     onMount(async () => {
         DEV_LOG && console.log('PackList', 'onMount');
-        Application.on('snackMessageAnimation', onSnackMessageAnimation);
+        Application.on('bottomOffsetAnimation', onBottomOffsetAnimation);
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
             // Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
@@ -245,7 +248,7 @@
     });
     onDestroy(() => {
         DEV_LOG && console.log('PackList', 'onDestroy');
-        Application.off('snackMessageAnimation', onSnackMessageAnimation);
+        Application.off('bottomOffsetAnimation', onBottomOffsetAnimation);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
             // Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
@@ -393,7 +396,11 @@
             if (nbSelected > 0) {
                 onItemLongPress(item);
             } else {
-                await playPack(item.pack);
+                if ($podcastMode && item.pack.extra.podcast === true) {
+                    await showAllPodcastStories(item);
+                } else {
+                    await playPack(item.pack);
+                }
             }
         } catch (error) {
             showError(error);
@@ -465,6 +472,7 @@
         collectionView?.nativeView?.refresh();
     }
     onThemeChanged(refreshCollectionView);
+    onPodcastModeChanged(refreshCollectionView);
 
     // let lottieLightColor = new Color(colorPrimaryContainer);
     // const
@@ -554,13 +562,18 @@
                     color: colorOnBackground,
                     lineHeight: 18 * $fontScale,
                     text: item.pack.title
-                },
-                {
-                    fontSize: 14 * $fontScale,
-                    lineHeight: (condensed ? 14 : 20) * $fontScale,
-                    text: '\n' + item.pack.description
                 }
-            ]
+            ].concat(
+                item.pack.description
+                    ? [
+                          {
+                              fontSize: 14 * $fontScale,
+                              lineHeight: (condensed ? 14 : 20) * $fontScale,
+                              text: '\n' + item.pack.description
+                          }
+                      ]
+                    : ([] as any)
+            )
         });
         canvas.save();
         let staticLayout = new StaticLayout(topText, textPaint, w - dx - 10, LayoutAlignment.ALIGN_NORMAL, 1, 0, true, 'end', w - dx - 10, h - 20 - 20);
@@ -577,7 +590,18 @@
             staticLayout = new StaticLayout(' ' + item.pack.age + '+ ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
             const width = staticLayout.getLineWidth(0);
             const height = staticLayout.getHeight();
-            canvas.translate(w - width - 20, h - height - 10);
+            canvas.translate(dx + 60, h - height - 10);
+            textPaint.setColor(colorTertiaryContainer);
+            canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+            textPaint.color = colorOnTertiaryContainer;
+            staticLayout.draw(canvas);
+        }
+        if (item.pack.extra?.episodeCount) {
+            textPaint.color = colorOnTertiaryContainer;
+            staticLayout = new StaticLayout(' ' + lc('episodes', item.pack.extra?.episodeCount) + ' ', textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+            const width = staticLayout.getLineWidth(0);
+            const height = staticLayout.getHeight();
+            canvas.translate(dx + 60, h - height - 10);
             textPaint.setColor(colorTertiaryContainer);
             canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
             textPaint.color = colorOnTertiaryContainer;
@@ -603,10 +627,12 @@
     }
 
     function showPlayer() {
+        showBarPlayer();
         stepIndex = 2;
     }
     function hidePlayer() {
-        DEV_LOG && console.log('home onPackStop');
+        hideBarPlayer();
+        DEV_LOG && console.log('hidePlayer', stepIndex);
         stepIndex = 1;
     }
 
@@ -617,7 +643,7 @@
         storyHandler.on(PackStopEvent, hidePlayer);
         storyHandler.on(StoryStopEvent, hidePlayer);
 
-        if (storyHandler.playingPack) {
+        if (storyHandler.pack) {
             showPlayer();
         } else {
             hidePlayer();
@@ -638,10 +664,13 @@
             const storyHandler = getBGServiceInstance().storyHandler;
             const stories = await storyHandler.findAllStories(thePack, true);
             const rowHeight = 80;
+            const showFilter = stories.length > 6;
             const data: any = await showBottomsheetOptionSelect({
-                height: Math.min(stories.length * rowHeight, Screen.mainScreen.heightDIPs * 0.7),
+                height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 40), Screen.mainScreen.heightDIPs * 0.7),
                 rowHeight,
                 fontSize: 18,
+                showFilter,
+                title: thePack.title,
                 options: stories.map((story) => ({
                     type: 'image',
                     image: story.thumbnail,
@@ -652,7 +681,7 @@
             });
             if (data?.story) {
                 const index = stories.findIndex((s) => s.id === data.story.id);
-                storyHandler.playStory(data?.story as Story, false);
+                playStory(data?.story as Story, true, false);
                 storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
             }
         } catch (error) {
@@ -662,62 +691,62 @@
 </script>
 
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
-    <gridlayout paddingBottom={$windowInset.bottom} paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto">
+    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto">
         <!-- {/if} -->
-        <bottomsheet gestureEnabled={false} row={1} {stepIndex} steps={[0, 90, 168]}>
-            <collectionView
-                bind:this={collectionView}
-                {colWidth}
-                height="100%"
-                iosOverflowSafeArea={true}
-                items={packs}
-                paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
-                rowHeight={getItemRowHeight(viewStyle) * $fontScale}
-                width="100%">
-                <Template let:item>
-                    <canvasview
-                        class="card"
-                        borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
-                        fontSize={14 * $fontScale}
-                        on:tap={() => onItemTap(item)}
-                        on:longPress={(e) => onItemLongPress(item, e)}
-                        on:draw={(e) => onCanvasDraw(item, e)}>
-                        <image
-                            backgroundColor={item.pack.extra?.colors?.[0]}
-                            borderRadius={12}
-                            decodeWidth={IMAGE_DECODE_WIDTH}
-                            failureImageUri="res://icon_not_found"
-                            horizontalAlignment={getImageHorizontalAlignment(viewStyle)}
-                            margin={getImageMargin(viewStyle)}
-                            rippleColor={colorSurface}
-                            src={item.pack.getThumbnail()}
-                            stretch="aspectFit"
-                            width={getItemImageWidth(viewStyle)} />
-                        <label class="cardLabel" row={1} text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
-                        <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
-                        <mdbutton
-                            class="actionBarButton"
-                            horizontalAlignment="right"
-                            text="mdi-podcast"
-                            variant="text"
-                            verticalAlignment="top"
-                            visibility={item.pack.extra?.podcast ? 'visible' : 'hidden'}
-                            on:tap={() => showAllPodcastStories(item)} />
-                    </canvasview>
-                </Template>
-            </collectionView>
-            <mdprogress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
+        <!-- <bottomsheet gestureEnabled={false} row={1} {stepIndex} steps={[0, 90, 90 + BAR_AUDIO_PLAYER_HEIGHT]}> -->
+        <collectionView
+            bind:this={collectionView}
+            {colWidth}
+            height="100%"
+            iosOverflowSafeArea={true}
+            items={packs}
+            paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) + bottomOffset}
+            row={1}
+            rowHeight={getItemRowHeight(viewStyle) * $fontScale}
+            width="100%">
+            <Template let:item>
+                <canvasview
+                    class="card"
+                    borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
+                    fontSize={14 * $fontScale}
+                    on:tap={() => onItemTap(item)}
+                    on:longPress={(e) => onItemLongPress(item, e)}
+                    on:draw={(e) => onCanvasDraw(item, e)}>
+                    <image
+                        backgroundColor={item.pack.extra?.colors?.[0]}
+                        borderRadius={12}
+                        decodeWidth={IMAGE_DECODE_WIDTH}
+                        failureImageUri="res://icon_not_found"
+                        horizontalAlignment={getImageHorizontalAlignment(viewStyle)}
+                        margin={getImageMargin(viewStyle)}
+                        rippleColor={colorSurface}
+                        src={item.pack.getThumbnail()}
+                        stretch="aspectFit"
+                        width={getItemImageWidth(viewStyle)} />
+                    <label class="cardLabel" row={1} text={getItemTitle(item, viewStyle)} verticalAlignment="bottom" visibility={viewStyle === 'card' ? 'visible' : 'hidden'} />
+                    <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
+                    <IconButton
+                        horizontalAlignment="right"
+                        size={40}
+                        text="mdi-podcast"
+                        verticalAlignment="bottom"
+                        visibility={item.pack.extra?.podcast ? 'visible' : 'hidden'}
+                        on:tap={() => showAllPodcastStories(item)} />
+                </canvasview>
+            </Template>
+        </collectionView>
+        <mdprogress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
 
-            <gridlayout prop:bottomSheet rows="90,78" width="100%">
-                <stacklayout horizontalAlignment="right" orientation="horizontal" verticalAlignment="bottom">
-                    {#if canImportFile}
-                        <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
-                    {/if}
-                    <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
-                </stacklayout>
-                <BarAudioPlayerWidget padding={2} row={1} />
-            </gridlayout>
-        </bottomsheet>
+        <!-- <gridlayout prop:bottomSheet rows={`90,${BAR_AUDIO_PLAYER_HEIGHT}`} width="100%"> -->
+        <stacklayout bind:this={fabHolder} horizontalAlignment="right" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={1} verticalAlignment="bottom">
+            {#if canImportFile}
+                <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
+            {/if}
+            <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
+        </stacklayout>
+        <!-- <BarAudioPlayerWidget padding={2} row={1} /> -->
+        <!-- </gridlayout> -->
+        <!-- </bottomsheet> -->
 
         {#if showNoPack}
             <flexlayout
@@ -752,6 +781,6 @@
         {#if __IOS__}
             <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
         {/if}
-        <absolutelayout bind:this={fabHolder} row={2} />
+        <absolutelayout row={2} />
     </gridlayout>
 </page>

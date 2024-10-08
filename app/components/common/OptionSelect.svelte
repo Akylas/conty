@@ -23,6 +23,7 @@
 </script>
 
 <script lang="ts">
+    export let title: string = null;
     export let showFilter = false;
     export let showBorders = false;
     export let backgroundColor = null;
@@ -172,15 +173,16 @@
 </script>
 
 <gesturerootview columns={containerColumns} rows="auto">
-    <gridlayout {backgroundColor} {borderRadius} columns={`${width}`} {height} rows="auto,*" {...$$restProps}>
+    <gridlayout {backgroundColor} {borderRadius} columns={`${width}`} {height} rows="auto,auto,*" {...$$restProps}>
+        {#if title}
+            <label class="actionBarTitle" fontWeight="bold" margin="10 10 0 10" text={title} />
+        {/if}
         {#if showFilter}
-            <gridlayout borderColor={colorOutline} margin="10 10 0 10">
+            <gridlayout borderColor={colorOutline} margin="10 10 0 10" row={1}>
                 <textfield
                     autocapitalizationType="none"
                     backgroundColor="transparent"
-                    height={$actionBarButtonHeight}
                     hint={lc('search')}
-                    padding="0 30 0 20"
                     placeholder={lc('search')}
                     returnKeyType="search"
                     text={filter}
@@ -197,10 +199,13 @@
                     size={40}
                     text="mdi-close"
                     verticalAlignment="middle"
-                    on:tap={() => (filter = null)} />
+                    on:tap={() => {
+                        blurTextField();
+                        filter = null;
+                    }} />
             </gridlayout>
         {/if}
-        <collectionView {itemTemplateSelector} items={filteredOptions} row={1} {rowHeight} on:dataPopulated={onDataPopulated} ios:contentInsetAdjustmentBehavior={2}>
+        <collectionView {itemTemplateSelector} items={filteredOptions} row={2} {rowHeight} on:dataPopulated={onDataPopulated} ios:contentInsetAdjustmentBehavior={2}>
             <Template key="checkbox" let:item>
                 <svelte:component
                     this={component}
@@ -259,7 +264,7 @@
                     subtitle={item.subtitle}
                     title={item.name}
                     on:tap={(event) => onTap(item, event)}>
-                    <image borderRadius={4} col={0} marginTop={5} marginBottom={5} marginRight={10} src={item.image} />
+                    <image borderRadius={4} col={0} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
                 </svelte:component>
             </Template>
             <Template let:item>
