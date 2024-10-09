@@ -161,7 +161,7 @@
         showNoPack = nbPacks === 0;
     }
     function onPackAdded(event: PackAddedEventData) {
-        DEV_LOG && console.log('onPackAdded', nbPacks);
+        DEV_LOG && console.log('onPackAdded', nbPacks, JSON.stringify(event.pack));
         packs?.unshift({
             pack: event.pack,
             selected: false

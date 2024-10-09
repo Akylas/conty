@@ -467,7 +467,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
         const doc = new LuniiPack(id);
         Object.assign(doc, {
-            extra: isString(extra) ? JSON.parse(extra) : extra,
+            extra: isString(extra) ? JSON.parse(extra as any as string) : extra,
             ...others
         });
         return doc;
@@ -697,7 +697,7 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
         const doc = new TelmiPack(jsonObj.id);
         Object.assign(doc, {
-            extra: isString(extra) ? JSON.parse(extra) : extra,
+            extra: isString(extra) ? JSON.parse(extra as any as string) : extra,
             ...others
         });
         return doc;

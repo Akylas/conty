@@ -72,7 +72,7 @@
         "@nativescript-community/ui-material-switch": "7.2.65",
         "@nativescript-community/ui-material-textfield": "7.2.65",
         "@nativescript-community/ui-material-textview": "7.2.65",
-        "@nativescript-community/ui-pager": "14.1.26",
+        "@nativescript-community/ui-pager": "14.1.27",
         "@nativescript-community/ui-persistent-bottomsheet": "0.0.29",
         "@nativescript-community/ui-popover": "0.1.19",
         "@nativescript-community/ui-share-file": "1.3.3",
@@ -86,7 +86,7 @@
         "svelte-native": "1.0.27"
     },
     "devDependencies": {
-        "@akylas/nativescript-android-runtime": "8.6.3",
+        "@akylas/nativescript-android-runtime": "8.8.5",
         "@akylas/nativescript-ios-runtime": "8.8.2",
         "@akylas/nativescript-webpack": "5.0.22",
         "@nativescript-community/fontmin": "0.9.11",
@@ -146,7 +146,7 @@
     },
     "resolutions": {
         "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
-        "@akylas/nativescript-app-utils": "portal:/home/mguillon/dev/nativescript/app-utils/packages/app-utils"
+        "@akylas/nativescript-app-utils": "portal:../app-utils/packages/app-utils"
     },
     "packageManager": "yarn@4.3.1"
 }

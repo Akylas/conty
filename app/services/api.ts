@@ -378,9 +378,6 @@ export async function downloadStories(story: RemoteContent) {
             },
             downloadFilePath
         );
-        if (__IOS__) {
-            hideSnackMessage();
-        }
 
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
@@ -399,6 +396,7 @@ export async function downloadStories(story: RemoteContent) {
         }
     } catch (error) {
         showError(error);
+        hideSnackMessage();
         if (destinationFilePath && File.exists(destinationFilePath)) {
             File.fromPath(destinationFilePath).remove();
         }
