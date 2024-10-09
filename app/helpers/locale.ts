@@ -198,7 +198,7 @@ export function getCurrentISO3Language() {
 async function internalSelectLanguage() {
     // try {
     const actions = SUPPORTED_LOCALES;
-    const currentLanguage = getString('language', DEFAULT_LOCALE);
+    const currentLanguage = getString('language', 'auto');
     let selectedIndex = -1;
     const options = [{ name: lc('auto'), data: 'auto' }].concat(actions.map((k) => ({ name: getLocaleDisplayName(k.replace('_', '-')), data: k }))).map((d, index) => {
         const selected = currentLanguage === d.data;

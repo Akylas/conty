@@ -26,12 +26,11 @@ export const currentTheme = writable('auto');
 export const currentColorTheme = writable('default');
 export const currentRealTheme = writable('auto');
 
-export let useDynamicColors = false;
 
 colorTheme = getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes;
 DEV_LOG && console.log('theme', 'start');
 
-useDynamicColors = useDynamicColors = colorTheme === 'dynamic';
+export let useDynamicColors = colorTheme === 'dynamic';
 
 let started = false;
 let autoDarkToBlack = getBoolean('auto_black', false);
