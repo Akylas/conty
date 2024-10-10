@@ -9,7 +9,7 @@
         "url": "https://github.com/Akylas/conty/issues"
     },
     "scripts": {
-        "createBase64Key":"openssl base64 < $KEYSTORE_PATH | tr -d '\n' | tee base64.txt",
+        "createBase64Key": "openssl base64 < $KEYSTORE_PATH | tr -d '\n' | tee base64.txt",
         "prepare": "ts-patch install -s",
         "prepare.ios.sentry": "NS_SENTRY=1 PLAY_STORE_BUILD=1 ns prepare ios --release --env.adhoc_sentry",
         "run.ios.production": "PLAY_STORE_BUILD=1 ns run ios --release --env.production --env.adhoc",
