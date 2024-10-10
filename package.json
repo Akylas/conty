@@ -122,6 +122,7 @@
         "merge-options": "^3.0.4",
         "merge-properties-files": "^1.1.6",
         "mini-css-extract-plugin": "^2.9.1",
+        "patch-package": "^8.0.0",
         "postcss": "^8.4.47",
         "postcss-combine-duplicated-selectors": "^10.0.3",
         "postcss-loader": "^8.1.1",
