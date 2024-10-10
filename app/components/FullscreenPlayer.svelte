@@ -3,7 +3,7 @@
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Pager } from '@nativescript-community/ui-pager';
     import { Color, EventData, Image, Page, Screen, View } from '@nativescript/core';
-    import { debounce, throttle } from '@nativescript/core/utils';
+    import { debounce } from '@nativescript/core/utils';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
     import { NativeViewElementNode } from 'svelte-native/dom';
@@ -28,7 +28,7 @@
     import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { showError } from '~/utils/showError';
-    import { closeModal, goBack } from '~/utils/svelte/ui';
+    import { closeModal } from '~/utils/svelte/ui';
     import { openLink, playStory, showBottomsheetOptionSelect } from '~/utils/ui';
     import { colors, coverSharedTransitionTag, windowInset } from '~/variables';
 
@@ -76,6 +76,7 @@
         return playingInfo ? (playingInfo.duration || 1) * progress : 0;
     }
     let storyHandler: StoryHandler;
+
     onMount(() => {});
     onDestroy(() => {
         stopPlayerInterval();
@@ -114,7 +115,7 @@
         } else if (story) {
             onStoryStart({ story });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
-        } else {
+        } else if (!closed) {
             close();
         }
     });
@@ -177,13 +178,14 @@
         DEV_LOG && console.log('Fullscreen', 'onStoryStart', !!story, currentImage, JSON.stringify(playingInfo));
     }
 
+    let closed = false;
     function close() {
+        if (closed) {
+            return;
+        }
         try {
-            if (__IOS__) {
-                closeModal();
-            } else {
-                goBack();
-            }
+            closed = true;
+            closeModal();
         } catch (error) {
             showError(error);
         }

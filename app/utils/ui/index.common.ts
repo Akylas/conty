@@ -524,18 +524,27 @@ export async function showFullscreenPlayer() {
     };
     const component = (await import('~/components/FullscreenPlayer.svelte')).default;
     DEV_LOG && console.log('showFullscreenPlayer');
-    if (__IOS__) {
-        showModal({
-            page: component,
-            fullscreen: true,
-            transition: SharedTransition.custom(new ModalTransition(), config)
-        } as any);
-    } else {
-        navigate({
-            page: component,
-            transition: SharedTransition.custom(new PageTransition(), config)
-        });
-    }
+    // if (__IOS__) {
+    showModal({
+        page: component,
+        fullscreen: true,
+        ios: __IOS__
+            ? {
+                  transition: SharedTransition.custom(new ModalTransition(), config)
+              }
+            : undefined,
+        android: __ANDROID__
+            ? {
+                  style: Utils.android.resources.getId(':style/' + 'DialogAnimation')
+              }
+            : undefined
+    } as any);
+    // } else {
+    //     navigate({
+    //         page: component,
+    //         transition: SharedTransition.custom(new PageTransition(), config)
+    //     });
+    // }
     // navigate({
     //     page: component,
     //     transition: { name: 'fade' }
