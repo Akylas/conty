@@ -220,6 +220,14 @@ export interface Story {
     duration: number;
 }
 
+export interface PackExtra {
+    subPaths?: string[];
+    colors?: string[];
+    podcast?: boolean;
+    episodeCount?: number;
+    [k: string]: any;
+}
+
 export abstract class Pack<S extends Stage = Stage, A extends Action = Action> extends Observable implements IPack {
     importedDate: number;
     createdDate: number;
@@ -235,12 +243,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     version?: number;
     format?: string;
     age?: number;
-    extra?: {
-        colors?: string[];
-        podcast?: boolean;
-        episodeCount?: number;
-        [k: string]: any;
-    };
+    extra?: PackExtra;
     size: number;
     compressed: 1 | 0;
 
@@ -258,8 +261,18 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
         // return doc;
     }
 
+    _folderPath: Folder;
     get folderPath() {
-        return documentsService.dataFolder.getFolder(this.id);
+        // subPaths is for unzipped files containing subfolders
+        if (!this._folderPath) {
+            let folder = documentsService.dataFolder.getFolder(this.id);
+            const subPaths = this.extra?.subPaths;
+            if (subPaths?.length) {
+                folder = subPaths.reduce((acc, val) => acc.getFolder(val), folder);
+            }
+            this._folderPath = folder;
+        }
+        return this._folderPath;
     }
     get zipPath() {
         return documentsService.dataFolder.getFile(this.id + '.zip').path;
@@ -362,9 +375,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     }
 
     async removeFromDisk() {
-        // to remove we need to real path with content://
-        const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id);
-        return docData.remove();
+        return Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id).remove();
     }
 
     async save(data: Partial<Pack> = {}, updateModifiedDate = false, notify = true) {

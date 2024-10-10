@@ -3,7 +3,7 @@ import { time } from '@akylas/nativescript/profiling';
 import { ApplicationSettings, Color, type EventData, File, Folder, ImageSource, Observable, Utils, knownFolders, path } from '@nativescript/core';
 import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
-import { LUNII_DATA_FILE, PackMetadata, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
+import { LUNII_DATA_FILE, Pack, PackExtra, PackMetadata, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
 import { DocumentsService, PackDeletedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
@@ -15,7 +15,7 @@ const context: Worker = self as any;
 
 export interface ImportStateEventData extends EventData {
     state: 'finished' | 'running';
-    type: 'file_import' | 'data_import';
+    type: 'file_import' | 'data_import' | 'delete_packs';
 }
 export interface WorkerPostOptions {
     id?: number;
@@ -173,6 +173,9 @@ export default class ImportWorker extends Observable {
         if (!handled) {
             try {
                 const data = event.data;
+                if (this.queue.size === 0) {
+                    this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: data.type } as ImportStateEventData);
+                }
                 switch (data.type) {
                     case 'import_data':
                         await worker.handleStart(event);
@@ -194,12 +197,16 @@ export default class ImportWorker extends Observable {
                         await Promise.all(
                             ids.map(async (id) => {
                                 await documentsService.packRepository.delete({ id } as any);
-                                const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id);
+                                const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id, false);
+                                DEV_LOG && console.log('deleteDocument', docData.path);
                                 await docData.remove();
                                 // we notify on each delete so that UI updates fast
                                 documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id] } as PackDeletedEventData);
                             })
                         );
+                        if (this.queue.size === 0) {
+                            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
+                        }
                         break;
                     case 'stop':
                         worker.stop(data.messageData?.error, data.id);
@@ -214,26 +221,22 @@ export default class ImportWorker extends Observable {
 
     queue = new Queue();
     async importFromCurrentDataFolderQueue() {
-        if (this.queue.size === 0) {
-            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'data_import' } as ImportStateEventData);
-        }
         return this.queue.add(() => this.importFromCurrentDataFolderInternal());
     }
     async importFromFilesQueue(files: string[]) {
-        if (this.queue.size === 0) {
-            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'file_import' } as ImportStateEventData);
-        }
         return this.queue.add(() => this.importFromFilesInternal(files));
     }
     async importFromFileQueue(data) {
-        if (this.queue.size === 0) {
-            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'file_import' } as ImportStateEventData);
-        }
         return this.queue.add(() => this.importFromFileInternal(data));
     }
 
     isFolderValid(folderPath: string) {
-        const entities = Folder.fromPath(folderPath).getEntitiesSync();
+        let folderTotest = Folder.fromPath(folderPath);
+        let entities = folderTotest.getEntitiesSync();
+        while (entities.length === 1 && entities[0].isFolder === true) {
+            folderTotest = folderTotest.getFolder(entities[0].name, false);
+            entities = folderTotest.getEntitiesSync();
+        }
         return entities.findIndex((e) => e.name === LUNII_DATA_FILE || e.name === TELMI_DATA_FILE) !== -1;
     }
     async importFromCurrentDataFolderInternal() {
@@ -270,6 +273,7 @@ export default class ImportWorker extends Observable {
                     let inputFilePath = entity.path;
                     // DEV_LOG && console.log('updateContentFromDataFolder handling', id, compressed, JSON.stringify(existing));
                     if (!existing) {
+                        let extraData: PackExtra;
                         DEV_LOG && console.log('importing from data folder', entity.name, compressed, supportsCompressedData);
                         // we need to clean up the name because some char will break android ZipFile
                         const realId = Date.now() + '';
@@ -288,11 +292,12 @@ export default class ImportWorker extends Observable {
                             id = realId;
                             destinationFolderPath = this.dataFolder.getFolder(id, true).path;
                             DEV_LOG && console.log('importing from zip', id, inputFilePath, destinationFolderPath, Folder.exists(destinationFolderPath));
-                            // if (!Folder.exists(destinationFolderPath)) {
                             await unzip(inputFilePath, destinationFolderPath);
-                            await this.fixUnzippedStory(destinationFolderPath);
-
-                            // }
+                            const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                            if (subPaths) {
+                                extraData = extraData || {};
+                                extraData.subPaths = subPaths;
+                            }
                             DEV_LOG && console.log('deleting zip', inputFilePath);
                             await File.fromPath(inputFilePath).remove();
                         }
@@ -307,16 +312,24 @@ export default class ImportWorker extends Observable {
                                 continue;
                             }
                         }
-                        await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed);
+                        await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed, extraData ? { extra: extraData } : undefined);
                     } else if (compressed && !supportsCompressedData) {
                         // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
                         const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
                         DEV_LOG && console.log('we need to unzip existing entry in db', entity.path, destinationFolderPath);
                         // if (!Folder.exists(destinationFolderPath)) {
                         await unzip(entity.path, destinationFolderPath);
-                        await this.fixUnzippedStory(destinationFolderPath);
-                        (await documentsService.packRepository.get(id)).save({
-                            compressed: 0
+                        let extraData: PackExtra;
+                        const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                        if (subPaths) {
+                            extraData = extraData || {};
+                            extraData.subPaths = subPaths;
+                        }
+                        const pack = await documentsService.packRepository.get(id);
+
+                        pack.save({
+                            compressed: 0,
+                            extra: Object.assign({}, pack.extra, extraData)
                         });
                         // }
                         await File.fromPath(entity.path).remove();
@@ -336,11 +349,15 @@ export default class ImportWorker extends Observable {
         }
     }
 
-    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?) {
-        const telmiMetadataPath = Folder.fromPath(destinationFolderPath).getFile(TELMI_DATA_FILE, false)?.path;
+    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?: Partial<Pack>) {
+        let folder = Folder.fromPath(destinationFolderPath);
+        if (extraData?.extra?.subPaths) {
+            folder = extraData?.extra?.subPaths.reduce((acc, val) => acc.getFolder(val, false), folder);
+        }
+        const telmiMetadataPath = folder.getFile(TELMI_DATA_FILE, false)?.path;
         const isTelmi = !!telmiMetadataPath && File.exists(telmiMetadataPath);
         // DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, isTelmi);
-        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(destinationFolderPath, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(folder.path, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
         if (__IOS__ && !isTelmi) {
             // no compressed on iOS!
             let needsSaving = false;
@@ -350,11 +367,11 @@ export default class ImportWorker extends Observable {
                 const action = luniJSON.stageNodes[index];
                 if (action.image && action.image.endsWith('.bmp')) {
                     const newName = action.image.replace('.bmp', '.jpg');
-                    const existingFilePath = path.join(destinationFolderPath, 'assets', action.image);
+                    const existingFilePath = path.join(folder.path, 'assets', action.image);
                     // DEV_LOG && console.log('converting bmp', existingFilePath);
                     const uiimage = ContyImageUtils.loadPossible4Bitmap(existingFilePath);
                     if (uiimage) {
-                        new ImageSource().saveToFile(path.join(destinationFolderPath, 'assets', newName), 'jpg');
+                        new ImageSource().saveToFile(path.join(folder.path, 'assets', newName), 'jpg');
                         File.fromPath(existingFilePath).removeSync();
                         needsSaving = true;
                         action.image = newName;
@@ -362,11 +379,11 @@ export default class ImportWorker extends Observable {
                 }
             }
             if (needsSaving) {
-                File.fromPath(path.join(destinationFolderPath, LUNII_DATA_FILE)).writeTextSync(JSON.stringify(storyJSON));
+                File.fromPath(path.join(folder.path, LUNII_DATA_FILE)).writeTextSync(JSON.stringify(storyJSON));
             }
         }
         const thumbnailFileName = storyJSON.image || storyJSON.thumbnail || 'thumbnail.png';
-        const thumbnailPath = Folder.fromPath(destinationFolderPath).getFile(thumbnailFileName, false);
+        const thumbnailPath = folder.getFile(thumbnailFileName, false);
         let colors;
         DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath.path);
         if (__ANDROID__ && File.exists(thumbnailPath.path)) {
@@ -379,8 +396,8 @@ export default class ImportWorker extends Observable {
         }
 
         const { title, description, format, age, version, subtitle, keywords, image, thumbnail, stageNodes, actionNodes, ...extra } = storyJSON;
-        await documentsService.importStory(id, destinationFolderPath, supportsCompressedData, {
-            size: getFileOrFolderSize(destinationFolderPath),
+        await documentsService.importStory(id, supportsCompressedData, {
+            size: getFileOrFolderSize(folder.path),
             type: isTelmi ? 'telmi' : 'studio',
             title,
             description,
@@ -390,26 +407,37 @@ export default class ImportWorker extends Observable {
             subtitle,
             keywords,
             thumbnail: thumbnail || image,
+            ...(extraData ?? {}),
             extra: {
                 colors,
-                ...extra
-            },
-            ...(extraData ?? {})
+                ...extra,
+                ...(extraData?.extra || {})
+            }
         });
     }
 
-    async fixUnzippedStory(destinationFolderPath) {
-        const children = await Folder.fromPath(destinationFolderPath).getEntities();
-        const needsFixing = children.length === 1 && children[0].isFolder === true;
-        DEV_LOG && console.log('fixUnzippedStory', destinationFolderPath, needsFixing);
-        if (needsFixing) {
-            // it seem the zip was containing an inside folder
-            await copyFolderContent(children[0].path, destinationFolderPath);
-            await removeFolderContent(children[0].path, true);
+    async getUnzippedStorySubPaths(destinationFolderPath) {
+        const subPaths: string[] = [];
+        let folderTotest = Folder.fromPath(destinationFolderPath);
+        let entities = await folderTotest.getEntities();
+        while (entities.length === 1 && entities[0].isFolder === true) {
+            subPaths.push(entities[0].name);
+            folderTotest = folderTotest.getFolder(entities[0].name, false);
+            entities = await folderTotest.getEntities();
         }
+        DEV_LOG && console.log('getUnzippedStorySubPaths', destinationFolderPath, subPaths);
+        return subPaths.length ? subPaths : undefined;
+        // const children = await Folder.fromPath(destinationFolderPath).getEntities();
+        // const needsFixing = children.length === 1 && children[0].isFolder === true;
+        // DEV_LOG && console.log('fixUnzippedStory', destinationFolderPath, needsFixing);
+        // if (needsFixing) {
+        //     // it seem the zip was containing an inside folder
+        //     await copyFolderContent(children[0].path, destinationFolderPath);
+        //     await removeFolderContent(children[0].path, true);
+        // }
     }
 
-    async importFromFileInternal(data: { filePath: string; id: string; extraData }) {
+    async importFromFileInternal(data: { filePath: string; id: string; extraData?: Partial<Pack> }) {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             const inputFilePath = data.filePath;
@@ -430,7 +458,12 @@ export default class ImportWorker extends Observable {
                 //     File.fromPath(tempPath).removeSync();
                 // }
                 // }
-                await this.fixUnzippedStory(destinationFolderPath);
+                const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                if (subPaths) {
+                    data.extraData = data.extraData || {};
+                    data.extraData.extra = data.extraData.extra || {};
+                    data.extraData.extra.subPaths = subPaths;
+                }
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
             }
@@ -446,6 +479,7 @@ export default class ImportWorker extends Observable {
             for (let index = 0; index < files.length; index++) {
                 const inputFilePath = files[index];
                 let destinationFolderPath = inputFilePath;
+                let extraData: PackExtra;
                 const id = Date.now() + '';
                 destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
@@ -459,13 +493,17 @@ export default class ImportWorker extends Observable {
                     // if (!Folder.exists(destinationFolderPath)) {
                     await unzip(inputFilePath, destinationFolderPath);
                     DEV_LOG && console.log('unzip done');
-                    await this.fixUnzippedStory(destinationFolderPath);
+                    const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                    if (subPaths) {
+                        extraData = extraData || {};
+                        extraData.subPaths = subPaths;
+                    }
                     // }
                 } else {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
 
-                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData);
+                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, extraData ? { extra: extraData } : undefined);
             }
         } catch (error) {
             this.sendError(error);

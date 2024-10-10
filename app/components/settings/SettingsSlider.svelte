@@ -1,4 +1,4 @@
-<svelte:options accessors />
+<!-- <svelte:options accessors /> -->
 
 <script context="module" lang="ts">
     import { Paint } from '@nativescript-community/ui-canvas';

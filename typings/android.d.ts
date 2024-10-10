@@ -74,7 +74,7 @@ declare namespace com {
                 export class Companion {
                     static copyFile(context: android.content.Context, inputFilePath: string, destFolder: string, fileName: string, mimeType: string, overwrite: boolean);
                     static unzip(context: android.content.Context, src: string, src: string, callback?: FunctionCallback, progress?: ProgressCallback);
-                    static getFolderSize(file: java.io.File): number;
+                    static getFolderSize(context: android.content.Context, file: string): number;
                 }
             }
         }

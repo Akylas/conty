@@ -199,6 +199,7 @@ export class StoryHandler extends Handler {
 
     _setPlaybackState(state: PlayingState) {
         this.playerState = state;
+        this.currentPlayingInfo.state = state;
         this.notify({ eventName: PlaybackEvent, state, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
     }
     async playAudio({

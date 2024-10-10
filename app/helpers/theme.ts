@@ -26,7 +26,6 @@ export const currentTheme = writable('auto');
 export const currentColorTheme = writable('default');
 export const currentRealTheme = writable('auto');
 
-
 colorTheme = getString(SETTINGS_COLOR_THEME, DEFAULT_COLOR_THEME) as ColorThemes;
 DEV_LOG && console.log('theme', 'start');
 

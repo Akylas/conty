@@ -161,9 +161,11 @@ export class ImportService extends Observable {
         }
     }
     onImportState(event: ImportStateEventData) {
-        DEV_LOG && console.log('SyncService', 'onImportState', event.state);
-        if (event.state === 'running' && event.type === 'file_import') {
+        DEV_LOG && console.log('SyncService', 'onImportState',event.type,  event.state);
+        if (event.state === 'running' && event.type.indexOf('import') !== -1) {
             showSnackMessage({ text: lc('importing'), progress: -1 });
+        } else if (event.state === 'running' && event.type === 'delete_packs') {
+            showSnackMessage({ text: lc('deleting'), progress: -1 });
         } else {
             hideSnackMessage();
         }

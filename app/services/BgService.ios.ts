@@ -88,7 +88,7 @@ export class BgService extends BgServiceCommon {
                 MPNowPlayingInfoPropertyElapsedPlaybackTime
             ];
             const objects = [playingInfo.name, playingInfo.description, playingInfo.duration / 1000, this.playingState === 'playing' ? 1 : 0, this.storyHandler.playerCurrentTime / 1000];
-            DEV_LOG && console.log('updatePlayerNotification', this.playingState);
+            // DEV_LOG && console.log('updatePlayerNotification', this.playingState);
             if (playingInfo.cover) {
                 const cover = playingInfo.cover();
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;

@@ -36,7 +36,7 @@ export function hashCode(s) {
 export async function requestManagePermission() {
     return true;
 }
-export function getAndroidRealPath(src: string) {
+export function getRealPath(src: string) {
     return src;
 }
 

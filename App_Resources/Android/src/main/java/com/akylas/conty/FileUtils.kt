@@ -10,6 +10,7 @@ class FileUtils {
         fun onProgress(bytesDecompressed: Long, writeSpeed: Int, fileCount: Int)
     }
     companion object {
+        val CONTENT_PATH = "content://"
 
         fun copyFile(context: Context, inputFilePath: String, destFolder: String, fileName: String, mimeType: String, overwrite: Boolean): String {
             val outDocument =
@@ -32,7 +33,18 @@ class FileUtils {
             return outfile.uri.toString()
         }
 
-        fun getFolderSize(folder: File): Long {
+
+        fun getFolderSize(context: Context, folderStr: String): Long {
+            if (folderStr.startsWith(CONTENT_PATH)) {
+                val outDocument =
+                    DocumentFile.fromTreeUri(context, android.net.Uri.parse(folderStr))
+                        ?: throw Exception("could not create access folder $folderStr")
+                return getFolderSizeDocument(outDocument)
+            } else {
+                return getFolderSizeFile(File(folderStr))
+            }
+        }
+        fun getFolderSizeFile(folder: File): Long {
             if (folder.isFile) return folder.length()
 
             var totalSize: Long = 0
@@ -41,7 +53,22 @@ class FileUtils {
             for (file in files) {
                 totalSize += when {
                     file.isFile -> file.length()
-                    file.isDirectory -> getFolderSize(file)  // Recursively handle subfolders
+                    file.isDirectory -> getFolderSizeFile(file)  // Recursively handle subfolders
+                    else -> 0L
+                }
+            }
+            return totalSize
+        }
+        fun getFolderSizeDocument(folder: DocumentFile): Long {
+            if (folder.isFile()) return folder.length()
+
+            var totalSize: Long = 0
+            val files = folder.listFiles() ?: return 0
+
+            for (file in files) {
+                totalSize += when {
+                    file.isFile() -> file.length()
+                    file.isDirectory() -> getFolderSizeDocument(file)  // Recursively handle subfolders
                     else -> 0L
                 }
             }

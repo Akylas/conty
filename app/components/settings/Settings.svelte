@@ -1,5 +1,4 @@
 <script context="module" lang="ts">
-    import { request } from '@nativescript-community/perms';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
@@ -9,7 +8,6 @@
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { TextView } from '@nativescript-community/ui-material-textview';
     import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
-    import { Folder, path } from '@nativescript/core/file-system';
     import { SDK_VERSION } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
     import { Template } from 'svelte-native/components';
@@ -19,18 +17,18 @@
     import { getLocaleDisplayName, l, lc, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
     import { getColorThemeDisplayName, getThemeDisplayName, onColorThemeChanged, onThemeChanged, selectColorTheme, selectTheme } from '~/helpers/theme';
     import { RemoteContentProvider } from '~/models/Pack';
+    import { getBGServiceInstance } from '~/services/BgService';
     import { documentsService } from '~/services/documents';
-    import { getAndroidRealPath, requestManagePermission, restartApp } from '~/utils';
+    import { getRealPath, restartApp } from '~/utils';
     import { DEFAULT_INVERSE_IMAGES, DEFAULT_PODCAST_MODE, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_PODCAST_MODE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { SilentError } from '~/utils/error';
+    import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { Sentry } from '~/utils/sentry';
     import { share } from '~/utils/share';
     import { showError } from '~/utils/showError';
     import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
-    import { SilentError } from '~/utils/error';
-    import { copyFolderContent, removeFolderContent } from '~/utils/file';
-    import { getBGServiceInstance } from '~/services/BgService';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -603,10 +601,6 @@
                 //     refreshCollectionView();
                 //     break;
                 case 'data_location': {
-                    if (!(await requestManagePermission())) {
-                        throw new Error(lc('missing_manage_permission'));
-                    }
-                    await request('storage');
                     const result = await pickFolder({
                         permissions: {
                             read: true,
@@ -617,12 +611,19 @@
                     });
                     const resultPath = result.folders[0];
                     if (resultPath) {
-                        DEV_LOG && console.log('resultPath', resultPath);
-                        const dstFolder = resultPath;
-                        DEV_LOG && console.log('dstFolder', dstFolder);
+                        const dstFolder = getRealPath(resultPath);
                         const srcFolder = documentsService.dataFolder.path;
+                        DEV_LOG &&
+                            console.log(
+                                'move data location',
+                                JSON.stringify({
+                                    srcFolder,
+                                    resultPath,
+                                    dstFolder
+                                })
+                            );
                         let confirmed = true;
-                        if (srcFolder !== getAndroidRealPath(dstFolder)) {
+                        if (srcFolder !== getRealPath(resultPath, true)) {
                             confirmed = await confirm({
                                 title: lc('move_data'),
                                 message: lc('move_data_desc'),

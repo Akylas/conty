@@ -44,6 +44,7 @@
     import ActionBarSearch from './common/ActionBarSearch.svelte';
     import IconButton from './common/IconButton.svelte';
     import { transcode } from 'buffer';
+    import { getRealPath, requestManagePermission } from '~/utils';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -217,7 +218,7 @@
 
     let bottomOffset = 0;
     function onBottomOffsetAnimation({ animationArgs, offset }: EventData & { animationArgs: AnimationDefinition[]; offset }) {
-        DEV_LOG && console.log('onBottomOffsetAnimation', !!fabHolder, offset);
+        // DEV_LOG && console.log('onBottomOffsetAnimation', !!fabHolder, offset);
         bottomOffset = offset;
         if (fabHolder) {
             animationArgs.push({
@@ -280,7 +281,7 @@
                 if (confirmed) {
                     showLoading('loading');
                     DEV_LOG && console.log('importContentFromFiles', files);
-                    await importService.importContentFromFiles(files);
+                    await importService.importContentFromFiles(files.map((f) => getRealPath(f)));
                 }
             }
         } catch (error) {
@@ -325,6 +326,12 @@
                     }
                     ApplicationSettings.setBoolean('showFirstPresentation', false);
                 }
+
+                if (!(await requestManagePermission())) {
+                    throw new Error(lc('missing_manage_permission'));
+                }
+                await request('storage');
+
                 if (documentsService.started) {
                     refresh();
                 } else {

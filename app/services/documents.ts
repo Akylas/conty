@@ -4,7 +4,7 @@ import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, LuniiPack, Pack, Tag, TelmiPack } from '~/models/Pack';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
 import NSQLDatabase from './NSQLDatabase';
-import { getAndroidRealPath } from '~/utils';
+import { getRealPath } from '~/utils';
 import { isObject, isString } from '@akylas/nativescript/utils';
 
 const sql = SqlQuery.createFromTemplateString;
@@ -260,10 +260,10 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
             type,
             extra: isString(extra) ? JSON.parse(extra) : extra,
             compressed,
-            thumbnail: compressed ? thumbnail : path.join(this.documentsService.dataFolder.path, id, thumbnail),
             ...others
         });
-        // DEV_LOG && console.log('createModelFromAttributes', id, thumbnail, `"${colors}"`, typeof colors, JSON.parse(colors), typeof JSON.parse(colors));
+        // needs to be done after so that pack.folderPath get get correct using extra.subPaths
+        pack.thumbnail = compressed ? thumbnail : pack.folderPath.getFile(thumbnail, false).path;
         return pack;
     }
 }
@@ -326,7 +326,7 @@ export class DocumentsService extends Observable {
         this.rootDataFolder = rootDataFolder;
         this.realDataFolderPath = ApplicationSettings.getString('data_folder', path.join(rootDataFolder, 'data'));
         DEV_LOG && console.log('DocumentsService', 'start', this.id, !!db, this.realDataFolderPath);
-        this.dataFolder = Folder.fromPath(getAndroidRealPath(this.realDataFolderPath));
+        this.dataFolder = Folder.fromPath(getRealPath(this.realDataFolderPath, true));
         if (db) {
             this.db = new NSQLDatabase(db, {
                 // for now it breaks
@@ -365,8 +365,8 @@ export class DocumentsService extends Observable {
         return false;
     }
 
-    async importStory(id: string, folderOrZipPath: string, compressed: boolean, data: Partial<Pack> = {}) {
-        DEV_LOG && console.log('importStory ', id, folderOrZipPath, compressed, JSON.stringify(data));
+    async importStory(id: string, compressed: boolean, data: Partial<Pack> = {}) {
+        DEV_LOG && console.log('importStory ', id, compressed, JSON.stringify(data));
         return this.packRepository.createPack({
             id,
             compressed: compressed ? 1 : 0,

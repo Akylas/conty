@@ -233,12 +233,12 @@ export class BgService extends android.app.Service {
 
     async updatePlayerNotification() {
         try {
-            const pack = this.playingInfo?.pack;
             const playingInfo = this.playingInfo;
+            const { pack, ...other } = playingInfo;
             if (!pack || !playingInfo) {
                 return;
             }
-            DEV_LOG && console.log('updatePlayerNotification', JSON.stringify(playingInfo));
+            // DEV_LOG && console.log('updatePlayerNotification', JSON.stringify(other));
             await this.updateMediaSessionMetadata();
             const playbackstateBuilder = new PlaybackStateCompat.Builder();
             const context = Utils.android.getApplicationContext();
