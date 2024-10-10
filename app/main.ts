@@ -6,14 +6,13 @@ import { overrideSpanAndFormattedString } from '@nativescript-community/text';
 import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemenu/svelte';
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
 import { initialize } from '@nativescript-community/ui-image';
+import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
 import { install as installBottomSheets } from '@nativescript-community/ui-material-bottomsheet';
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
-import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
 import { Application, Trace } from '@nativescript/core';
 import { Frame, NavigatedData, Page } from '@nativescript/core/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
-import { start as startThemeHelper } from '~/helpers/theme';
 import { getBGServiceInstance } from '~/services/BgService';
 import { startSentry } from '~/utils/sentry';
 import PacksList from './components/App.svelte';
@@ -21,10 +20,9 @@ import { setDocumentsService } from './models/Pack';
 import { NestedScrollView } from './NestedScrollView';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
+import { importService } from './services/importservice';
 import { showError } from './utils/showError';
 import { navigate } from './utils/svelte/ui';
-import { importService } from './services/importservice';
-import { time } from '@nativescript/core/profiling';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -81,11 +79,13 @@ try {
     PagerElement.register();
     // DrawerElement.register();
 
-    // Trace.addCategories(Trace.categories.NativeLifecycle);
-    // Trace.addCategories(Trace.categories.Transition);
-    // Trace.addCategories(Trace.categories.Layout);
-    // Trace.addCategories(ChartTraceCategory);
-    // Trace.enable();
+    if (!PRODUCTION) {
+        // Trace.addCategories(Trace.categories.Navigation);
+        // Trace.addCategories(Trace.categories.Transition);
+        // Trace.addCategories(Trace.categories.Layout);
+        // Trace.addCategories(ChartTraceCategory);
+        // Trace.enable();
+    }
 
     themer.createShape('round', {
         cornerFamily: 'rounded' as any,
