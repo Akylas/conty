@@ -368,10 +368,12 @@ export default class ImportWorker extends Observable {
                 if (action.image && action.image.endsWith('.bmp')) {
                     const newName = action.image.replace('.bmp', '.jpg');
                     const existingFilePath = path.join(folder.path, 'assets', action.image);
-                    // DEV_LOG && console.log('converting bmp', existingFilePath);
                     const uiimage = ContyImageUtils.loadPossible4Bitmap(existingFilePath);
+                    // DEV_LOG && console.log('converting bmp', existingFilePath, uiimage);
                     if (uiimage) {
-                        new ImageSource().saveToFile(path.join(folder.path, 'assets', newName), 'jpg');
+                        // DEV_LOG && console.log('converting saving new image', path.join(folder.path, 'assets', newName));
+                        await new ImageSource(uiimage).saveToFileAsync(path.join(folder.path, 'assets', newName), 'jpg');
+                        // DEV_LOG && console.log('converting saving new image done', path.join(folder.path, 'assets', newName));
                         File.fromPath(existingFilePath).removeSync();
                         needsSaving = true;
                         action.image = newName;
