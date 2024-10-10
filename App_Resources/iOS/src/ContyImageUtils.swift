@@ -62,9 +62,9 @@ class ContyImageUtils : NSObject {
       
       func setPixelData(rgbIndex: Int){
         pixels[location] = 0;
-        pixels[location + 1] = colorPalette[rgbIndex * 4 + 0]
+        pixels[location + 3] = colorPalette[rgbIndex * 4 + 0]
         pixels[location + 2] = colorPalette[rgbIndex * 4 + 1]
-        pixels[location + 3] = colorPalette[rgbIndex * 4 + 2]
+        pixels[location + 1] = colorPalette[rgbIndex * 4 + 2]
         location+=4;
       }
       
