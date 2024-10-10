@@ -23,6 +23,8 @@ export const EVENT_STATE = 'state';
 export const BOTTOM_BUTTON_OFFSET = 100;
 export const BAR_AUDIO_PLAYER_HEIGHT = 79;
 
+
+const COLOR_MATRIX_FACTOR = __IOS__ ? 1 : 255
 export const IMAGE_COLORMATRIX = createColorMatrix('#ffffff');
 export const COLORMATRIX_BLACK_TRANSPARENT = [
     1,
@@ -44,24 +46,24 @@ export const COLORMATRIX_BLACK_TRANSPARENT = [
     30,
     30,
     0,
-    -255
+    -COLOR_MATRIX_FACTOR
 ]; // Alpha channel: Reduce alpha if the pixel is dark (near black)];
 export const COLORMATRIX_INVERSED_BLACK_TRANSPARENT = [
     -1,
     0,
     0,
     0,
-    255, // Red stays the same
+    COLOR_MATRIX_FACTOR, // Red stays the same
     0,
     -1,
     0,
     0,
-    255, // Green stays the same
+    COLOR_MATRIX_FACTOR, // Green stays the same
     0,
     0,
     -1,
     0,
-    255, // Blue stays the same
+    COLOR_MATRIX_FACTOR, // Blue stays the same
     0,
     0,
     0,
