@@ -48,6 +48,7 @@ export interface StoryStartEventData extends Optional<EventData<Observable>, 'ob
     story?: Story;
 }
 export interface StageEventData extends PackStartEventData {
+    currentStatesChanged?: boolean;
     playingInfo?: PlayingInfo;
     stages?: Stage[];
     selectedStageIndex?: number;

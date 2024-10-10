@@ -16,6 +16,7 @@
         PlayingInfo,
         PlayingState,
         Playlist,
+        StageEventData,
         StagesChangeEvent,
         StoryHandler,
         StoryStartEvent,
@@ -36,6 +37,11 @@
     const PAGER_PAGE_PADDING = 16;
 
     const IMAGE_ELEVATION = __ANDROID__ ? 0 : 0;
+
+    interface Item {
+        stage: Stage;
+        image: string;
+    }
 </script>
 
 <script lang="ts">
@@ -52,7 +58,7 @@
     const screenHeight = Screen.mainScreen.heightDIPs;
 
     let state: PlayingState = 'stopped';
-    let items: { stage: Stage; image: string }[] = [];
+    let items: Item[] = [];
     let selectedStageIndex = 0;
     let currentTime = 0;
     let currentStage: Stage;
@@ -233,7 +239,7 @@
             image: getImage(stage)
         };
     }
-    function onStageChanged(event) {
+    function onStageChanged(event: StageEventData) {
         try {
             // DEV_LOG && console.log('FullScreen', 'onStageChanged', event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
             if (event.currentStatesChanged) {
@@ -241,10 +247,13 @@
                 //     currentImage = getImage(event.stages[0]);
                 //     items = [];
                 // } else {
-                items = event.stages.map((stage) => ({
-                    stage,
-                    image: getImage(stage)
-                }));
+                items = event.stages.map(
+                    (stage) =>
+                        ({
+                            stage,
+                            image: getImage(stage)
+                        }) as Item
+                );
                 currentImage = null;
                 // }
                 // items = await Promise.all(
@@ -264,6 +273,7 @@
                     selectedStageIndex = event.selectedStageIndex;
                 }
             }
+            playingInfo = event.playingInfo;
             // if (pager?.nativeElement) {
             //     pager.nativeElement.selectedIndex = event.selectedStageIndex;
             //     pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, false);
@@ -535,7 +545,7 @@
                 horizontalAlignment="right"
                 text={!!pack ? 'mdi-check' : 'mdi-skip-next'}
                 verticalAlignment="center"
-                visibility={story && playingInfo?.canNext ? 'visible' : 'hidden'}
+                visibility={(story && playingInfo?.canNext) || (pack && playingInfo?.canOk) ? 'visible' : 'hidden'}
                 on:tap={onOkButton} />
         </stacklayout>
         <CActionBar
