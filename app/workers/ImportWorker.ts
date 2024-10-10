@@ -10,6 +10,7 @@ import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
 import Queue from './queue';
 import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 import { copyFolderContent, removeFolderContent } from '~/utils/file';
+import { doInBatch } from '~/utils/batch';
 
 const context: Worker = self as any;
 
@@ -194,16 +195,28 @@ export default class ImportWorker extends Observable {
                         const ids = event.data.messageData as string[];
                         DEV_LOG && console.log('deleteDocuments', ids);
                         // await this.packRepository.delete(model);
-                        await Promise.all(
-                            ids.map(async (id) => {
+                        await doInBatch(
+                            ids,
+                            async (id) => {
                                 await documentsService.packRepository.delete({ id } as any);
                                 const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id, false);
                                 DEV_LOG && console.log('deleteDocument', docData.path);
                                 await docData.remove();
                                 // we notify on each delete so that UI updates fast
                                 documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id] } as PackDeletedEventData);
-                            })
+                            },
+                            1
                         );
+                        // await Promise.all(
+                        //     ids.map(async (id) => {
+                        //         await documentsService.packRepository.delete({ id } as any);
+                        //         const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id, false);
+                        //         DEV_LOG && console.log('deleteDocument', docData.path);
+                        //         await docData.remove();
+                        //         // we notify on each delete so that UI updates fast
+                        //         documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id] } as PackDeletedEventData);
+                        //     })
+                        // );
                         if (this.queue.size === 0) {
                             this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
                         }
