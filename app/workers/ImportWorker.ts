@@ -1,5 +1,5 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
-import { time } from '@akylas/nativescript/profiling';
+import { time } from '@nativescript/core/profiling';
 import { ApplicationSettings, Color, type EventData, File, Folder, ImageSource, Observable, Utils, knownFolders, path } from '@nativescript/core';
 import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';

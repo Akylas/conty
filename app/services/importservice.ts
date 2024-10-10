@@ -1,4 +1,4 @@
-import { time } from '@akylas/nativescript/profiling';
+import { time } from '@nativescript/core/profiling';
 import { EventData } from '@nativescript-community/ui-image';
 import { Observable } from '@nativescript/core';
 import { Pack } from '~/models/Pack';

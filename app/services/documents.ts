@@ -5,7 +5,7 @@ import { IPack, LuniiPack, Pack, Tag, TelmiPack } from '~/models/Pack';
 import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
 import NSQLDatabase from './NSQLDatabase';
 import { getRealPath } from '~/utils';
-import { isObject, isString } from '@akylas/nativescript/utils';
+import { isObject, isString } from '@nativescript/core/utils';
 
 const sql = SqlQuery.createFromTemplateString;
 

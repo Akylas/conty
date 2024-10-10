@@ -3,7 +3,7 @@ import { BgService as AndroidBgService } from '~/services/android/BgService';
 import { BgServiceBinder, IBgServiceBinder } from '~/services/android/BgServiceBinder';
 import { BgServiceCommon, BgServiceLoadedEvent } from '~/services/BgService.common';
 import { NotificationHelper } from './android/NotificationHelper';
-import { SDK_VERSION } from '@akylas/nativescript/utils';
+import { SDK_VERSION } from '@nativescript/core/utils';
 
 export { BgServiceLoadedEvent };
 

@@ -1,4 +1,4 @@
-import { isString } from '@akylas/nativescript/utils';
+import { isString } from '@nativescript/core/utils';
 import { lc } from '@nativescript-community/l';
 import { Folder, ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
