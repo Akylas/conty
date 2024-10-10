@@ -5,7 +5,7 @@ import { ANDROID_CONTENT } from './constants';
 export * from './index.common';
 
 function _checkManagePermission() {
-    return SDK_VERSION >= 30 || android.os.Environment.isExternalStorageManager();
+    return SDK_VERSION >= 30 && android.os.Environment.isExternalStorageManager();
 }
 
 let _hasManagePermission: boolean = _checkManagePermission();
@@ -38,7 +38,7 @@ export async function askForManagePermission() {
     });
 }
 export async function requestManagePermission() {
-    if (SDK_VERSION >= 30) {
+    if (!PLAY_STORE_BUILD && SDK_VERSION >= 30) {
         if (checkManagePermission()) {
             return true;
         }

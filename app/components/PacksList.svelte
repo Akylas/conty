@@ -259,8 +259,6 @@
         documentsService.off(EVENT_PACK_DELETED, onPacksDeleted);
     });
 
-    const canImportFile = !__ANDROID__ || !PLAY_STORE_BUILD || SDK_VERSION < 30;
-
     async function importPack(importPDFs = true) {
         DEV_LOG && console.log('importPack', importPDFs);
         try {
@@ -746,9 +744,7 @@
 
         <!-- <gridlayout prop:bottomSheet rows={`90,${BAR_AUDIO_PLAYER_HEIGHT}`} width="100%"> -->
         <stacklayout bind:this={fabHolder} horizontalAlignment="right" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={1} verticalAlignment="bottom">
-            {#if canImportFile}
-                <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
-            {/if}
+            <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
             <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
         </stacklayout>
         <!-- <BarAudioPlayerWidget padding={2} row={1} /> -->

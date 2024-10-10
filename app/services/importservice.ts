@@ -67,18 +67,8 @@ export class ImportService extends Observable {
                     DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData), JSON.stringify(eventData.pack));
                     if (eventData.target === 'documentsService') {
                         if (eventData.pack) {
-                            eventData.pack = Pack.fromJSON(eventData.pack);
+                            eventData.pack = await documentsService.packRepository.get(eventData.pack.id);
                         }
-                        // if (eventData.documents) {
-                        //     eventData.documents = eventData.documents.map((d) => OCRDocument.fromJSON(d));
-                        // }
-                        // if (eventData.pages) {
-                        //     eventData.pages = eventData.pages.map((d) => OCRPage.fromJSON(d));
-                        // }
-                        // if (eventData.object) {
-                        //     eventData.object = OCRDocument.fromJSON(eventData.object);
-                        // }
-                        // DEV_LOG && console.info('worker notifying event', documentsService.id, eventData.eventName, documentsService.notify);
                         documentsService.notify({ ...eventData, object: eventData.object || documentsService });
                     } else {
                         this.notify({ ...eventData });
@@ -161,7 +151,7 @@ export class ImportService extends Observable {
         }
     }
     onImportState(event: ImportStateEventData) {
-        DEV_LOG && console.log('SyncService', 'onImportState',event.type,  event.state);
+        DEV_LOG && console.log('SyncService', 'onImportState', event.type, event.state);
         if (event.state === 'running' && event.type.indexOf('import') !== -1) {
             showSnackMessage({ text: lc('importing'), progress: -1 });
         } else if (event.state === 'running' && event.type === 'delete_packs') {
