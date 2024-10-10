@@ -304,8 +304,10 @@ platform :ios do
         release_notes: {
           'default' => params[:changelog]
         },
-        submission_information: { export_compliance_uses_encryption: false,
-                              add_id_info_uses_idfa: false }
+        submission_information: { 
+          export_compliance_uses_encryption: false,
+          add_id_info_uses_idfa: false 
+        }
       )
     else
       upload_to_testflight(
@@ -467,7 +469,11 @@ platform :android do
       end
     else
       # for now we build sentry releases for playstore to get bug reports
-      sh("npm", "run", "build.android.production.sentry")    
+      if (options[:sentry])
+        sh("npm", "run", "build.android.production.sentry")    
+      else 
+        sh("npm", "run", "build.android.production")
+      end
     end
   end
 
@@ -505,5 +511,3 @@ platform :android do
     build_flavor(platform:'android', flavor:'alpha', options: options)
   end
 end
-
-
