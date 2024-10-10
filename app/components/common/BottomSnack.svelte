@@ -1,3 +1,5 @@
+<svelte:options accessors={true} />
+
 <script context="module" lang="ts">
     import { conditionalEvent } from '~/utils/svelte/ui';
     import { colors, windowInset } from '~/variables';
@@ -10,7 +12,7 @@
 
     export let translateY = 100;
 
-    // $: DEV_LOG && console.log('progress', progress);
+    $: DEV_LOG && console.log('progress', progress);
     // technique for only specific properties to get updated on store change
     $: ({ colorOnSurface, colorSurfaceContainer } = $colors);
 </script>

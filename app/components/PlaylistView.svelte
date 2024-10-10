@@ -1,4 +1,4 @@
-<svelte:options accessors />
+<!-- <svelte:options accessors /> -->
 
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';

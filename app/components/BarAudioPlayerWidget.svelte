@@ -1,3 +1,5 @@
+<svelte:options accessors />
+
 <script context="module" lang="ts">
     import { Screen } from '@nativescript/core';
     import { onDestroy, onMount } from 'svelte';

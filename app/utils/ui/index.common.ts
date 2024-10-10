@@ -102,12 +102,14 @@ function getLoadingIndicator() {
 export function updateLoadingProgress(msg: Partial<ShowLoadingOptions>) {
     if (showingLoading()) {
         const loadingIndicator = getLoadingIndicator();
-        const props = {
-            progress: msg.progress
-        };
-        if (msg.text) {
-            props['text'] = msg.text;
-        }
+        const props = Object.assign(
+            {
+                title: loadingIndicator.instance.title,
+                progress: loadingIndicator.instance.progress,
+                text: loadingIndicator.instance.text
+            },
+            msg
+        );
         loadingIndicator.instance.$set(props);
     }
 }
@@ -383,12 +385,13 @@ function getSnackMessage(props?) {
 export function updateSnackMessage(msg: Partial<ShowSnackMessageOptions>) {
     if (snackMessage) {
         const snackMessage = getSnackMessage();
-        const props = {
-            progress: msg.progress
-        };
-        if (msg.text) {
-            props['text'] = msg.text;
-        }
+        const props = Object.assign(
+            {
+                progress: snackMessage.viewInstance.progress,
+                text: snackMessage.viewInstance.text
+            },
+            msg
+        );
         snackMessage.viewInstance.$set(props);
     }
 }
