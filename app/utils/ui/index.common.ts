@@ -477,7 +477,7 @@ export async function hideBarPlayer() {
         const animationArgs: AnimationDefinition[] = [
             {
                 target: barPlayer.element.nativeView,
-                translate: { x: 0, y: BAR_AUDIO_PLAYER_HEIGHT + 5 + get(windowInset).bottom },
+                translate: { x: 0, y: BAR_AUDIO_PLAYER_HEIGHT + (__IOS__ ? 50 : 5) + get(windowInset).bottom },
                 duration: animationDuration
             }
         ];
