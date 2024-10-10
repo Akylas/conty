@@ -5,7 +5,7 @@ on:
     inputs:
       release_type:
         type: choice
-        default: code
+        default: patch
         description: What kind of version upgrade
         options: 
         - none
@@ -21,7 +21,7 @@ on:
       android:
         description: 'Release for Android'
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:

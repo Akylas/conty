@@ -1,18 +1,4 @@
 {
-    "terminal.integrated.env.osx": {
-        "SENTRY_PREFIX": "app:///",
-        "SENTRY_PROJECT": "conty",
-        "SENTRY_ORG": "akylas",
-        "SENTRY_URL": "https://bugs.akylas.fr",
-        "SOURCEMAP_REL_DIR": "../../sourcemaps"
-    },
-    "terminal.integrated.env.linux": {
-        "SENTRY_PREFIX": "app:///",
-        "SENTRY_PROJECT": "conty",
-        "SENTRY_ORG": "akylas",
-        "SENTRY_URL": "https://bugs.akylas.fr",
-        "SOURCEMAP_REL_DIR": "../../sourcemaps"
-    },
     "files.exclude": {
         "schema": true
     },
