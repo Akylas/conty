@@ -60,9 +60,15 @@ jobs:
           ndk-version: r25c
           local-cache: true
       
+      
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
+
+
+      - name: source .env.ci
+        run: |
+          source .env.ci
       
       - name: Decode Keystore
         env:
