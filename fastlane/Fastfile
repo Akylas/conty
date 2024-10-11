@@ -175,7 +175,7 @@ lane :build_flavor do |params|
 
   # commit version changes
   if (ENV["GITHUB_ACTIONS"] == 'true')
-    puts "git_commit in:"  + Dir.getwd + " " + Dir[Dir.getwd] + "/*".join(', ')
+    puts "git_commit in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
     git_commit(path: ["./*.plist", "./*.gradle"], message: "chore: new build", allow_nothing_to_commit: true)
   end
 
