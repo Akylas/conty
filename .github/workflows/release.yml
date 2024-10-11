@@ -34,6 +34,10 @@ jobs:
         with:
           fetch-depth: ''
           submodules: true
+        
+      - name: la1
+        run: ls -la
+
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -149,6 +153,10 @@ jobs:
           ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
           ./node_modules/.bin/get-version android version
       
+        
+      - name: la2
+        run: ls -la
+
       - name: publish beta
         run: |
            bundle exec fastlane android beta
@@ -169,10 +177,6 @@ jobs:
         with:
           fetch-depth: ''
           submodules: true
-
-        
-      - name: la1
-        run: ls -la
 
       - uses: maxim-lobanov/setup-xcode@v1
 
