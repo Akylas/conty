@@ -140,10 +140,8 @@ lane :build_flavor do |params|
   version = ""
   versionCode = ""
   
-  Dir.chdir("..") do
-    version  =  sh("./node_modules/.bin/get-version", platform, "version").gsub(/\n/,'')
-    versionCode  =  sh("./node_modules/.bin/get-version", platform, "code").gsub(/\n/,'')
-  end
+  version  =  sh("./node_modules/.bin/get-version", platform, "version").gsub(/\n/,'')
+  versionCode  =  sh("./node_modules/.bin/get-version", platform, "code").gsub(/\n/,'')
   
   # there we add the platform to the dist paramater. The idea is to have different dist for ios android
   # this is because we generate different sources for android and ios so we have different sourceMaps
