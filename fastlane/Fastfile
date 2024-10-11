@@ -27,6 +27,7 @@ fastlaneOptions = packageJSON['fastlane'] || Hash.new
 # puts "packageJSON:"  + JSON.generate(packageJSON)
 puts "fastlaneOptions:"  + JSON.generate(fastlaneOptions)
 puts "working directory:"  + Dir.getwd
+puts "current files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
 
 app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 app_identifier = ENV["APP_ID"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
