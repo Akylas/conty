@@ -27,12 +27,11 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=a84842&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=d031f2&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.17.0"
     "@nativescript-community/fontmin": "npm:0.9.11"
     "@nativescript-community/set-version": "npm:1.0.4"
-    "@nativescript/core": "npm:8.8.2"
     "@nativescript/types-android": "npm:8.8.0"
     "@nativescript/types-ios": "npm:8.8.0"
     "@sentry/cli": "npm:2.37.0"
@@ -81,7 +80,7 @@ __metadata:
     typescript: "npm:5.6.3"
     typescript-eslint: "npm:^8.8.1"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/9f6f1bf99ca4d0376b9eec9d152bd696eabfe673c59e26e3484a9ce498b3451a1d4f1d3d0bac70a2533ad1ebe789545169c5202465c345481c016b9b0430a629
+  checksum: 10/5f565d4904f981f63ca25c29ad1ac9d69c0d4bb1d3e9a1d376058f0ee98b4c65f8ef3064842db81555473b997d59b4d7b13020d558a1497e4a97eacfb4160b40
   languageName: node
   linkType: hard
 
@@ -9009,6 +9008,7 @@ __metadata:
     "@nativescript-community/ui-share-file": "npm:1.3.3"
     "@nativescript-community/ui-webview": "npm:1.5.0"
     "@nativescript-community/universal-links": "npm:3.0.1"
+    "@nativescript/core": "npm:8.8.2"
     "@nativescript/email": "npm:^2.1.0"
     "@nativescript/zip": "npm:^6.0.0"
     dayjs: "npm:1.11.13"
