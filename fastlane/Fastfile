@@ -88,7 +88,9 @@ desc 'Setup'
 lane :setup do |params| 
   options = params[:options]
   if (ENV["GITHUB_ACTIONS"] == 'true')
+    puts "setup_ci files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
     setup_ci
+    puts "setup_ci1 files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
     # create_keychain(
     #   name: "action_keychain",
     #   password: "githubaction",
@@ -130,12 +132,14 @@ lane :build_and_publish do |params|
   flavor = params[:flavor]
   options = params[:options]
   Dir.chdir("..") do
+    puts "build_and_publish files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
     setup(options: options)
     build_flavor(platform:platform, flavor:flavor, options: options)
   end
 end
 
 lane :build_flavor do |params| 
+  puts "build_and_publish files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
   platform = params[:platform]
   flavor = params[:flavor]
   options = params[:options]
