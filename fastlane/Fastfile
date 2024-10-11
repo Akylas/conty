@@ -149,6 +149,8 @@ lane :build_flavor do |params|
   sentryDist =  versionCode + '.' + platform # optional distribution of the release usually the buildnumber
 
   sentry_version = "#{app_identifier}@#{version}+#{versionCode}"
+  puts "working directory:"  + ENV['PWD']
+  puts "getwd:"  + Dir.getwd()
   puts "platform:"  + platform
   puts "flavor:"  + flavor
   puts "version:"  + version
