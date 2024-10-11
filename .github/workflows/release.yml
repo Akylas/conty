@@ -67,8 +67,9 @@ jobs:
 
 
       - name: source .env.ci
-        run: |
-          source .env.ci
+        uses: c-py/action-dotenv-to-setenv@v5
+        with:
+          env-file: .env.ci
       
       - name: Decode Keystore
         env:
