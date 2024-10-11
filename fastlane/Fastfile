@@ -26,8 +26,6 @@ packageJSON = JSON.parse(File.read('../package.json'))
 fastlaneOptions = packageJSON['fastlane'] || Hash.new
 # puts "packageJSON:"  + JSON.generate(packageJSON)
 puts "fastlaneOptions:"  + JSON.generate(fastlaneOptions)
-puts "working directory:"  + Dir.getwd
-puts "current files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
 
 app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 app_identifier = ENV["APP_ID"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
@@ -88,13 +86,7 @@ desc 'Setup'
 lane :setup do |params| 
   options = params[:options]
   if (ENV["GITHUB_ACTIONS"] == 'true')
-    sh("ls -la")
-
-    puts "setup_ci files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(',\n')
     setup_ci
-    sh("ls -la")
-
-    puts "setup_ci1 files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(',\n')
     # create_keychain(
     #   name: "action_keychain",
     #   password: "githubaction",
@@ -136,15 +128,12 @@ lane :build_and_publish do |params|
   flavor = params[:flavor]
   options = params[:options]
   Dir.chdir("..") do
-    puts "build_and_publish files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(',\n')
-    sh("ls -la")
     setup(options: options)
     build_flavor(platform:platform, flavor:flavor, options: options)
   end
 end
 
 lane :build_flavor do |params| 
-  puts "build_and_publish files in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(',\n')
   platform = params[:platform]
   flavor = params[:flavor]
   options = params[:options]
@@ -160,8 +149,7 @@ lane :build_flavor do |params|
   sentryDist =  versionCode + '.' + platform # optional distribution of the release usually the buildnumber
 
   sentry_version = "#{app_identifier}@#{version}+#{versionCode}"
-  puts "working directory:"  + ENV['PWD']
-  puts "getwd:"  + Dir.getwd
+  puts "working directory:"  + Dir.getwd
   puts "platform:"  + platform
   puts "flavor:"  + flavor
   puts "version:"  + version
@@ -185,10 +173,7 @@ lane :build_flavor do |params|
 
   # commit version changes
   if (ENV["GITHUB_ACTIONS"] == 'true')
-    sh("ls -la")
-
-    puts "git_commit in:"  + Dir.getwd + " " + Dir[Dir.getwd+ "/*"].join(', ')
-    sh("git add ./*.plist" "./*.gradle; git commit -m 'chore: new build' --allow-empty")
+    sh("git add *.plist *.gradle; git commit -m 'chore: new build' --allow-empty")
     # git_commit(path: ["./*.plist", "./*.gradle"], message: "chore: new build", allow_nothing_to_commit: true)
   end
 
