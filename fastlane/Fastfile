@@ -174,7 +174,10 @@ lane :build_flavor do |params|
   end
 
   # commit version changes
-  git_commit(path: ["./*.plist", "./*.gradle"], message: "chore: new build", allow_nothing_to_commit: true)
+  if (ENV["GITHUB_ACTIONS"] == 'true')
+    puts "git_commit in:"  + Dir.getwd + " " + Dir[Dir.getwd]
+    git_commit(path: ["./*.plist", "./*.gradle"], message: "chore: new build", allow_nothing_to_commit: true)
+  end
 
   if (options[:sentry] != false)
     sh("npm", "run", "sentry-set-commits", "#{sentry_version}")
