@@ -65,11 +65,11 @@ jobs:
         with:
           secrets: ${{ toJSON(secrets) }}
 
-
-      - name: source .env.ci
-        uses: c-py/action-dotenv-to-setenv@v5
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2.3.0
         with:
-          env-file: .env.ci
+          path: .env.ci
+          load-mode: strict
       
       - name: Decode Keystore
         env:
@@ -183,6 +183,12 @@ jobs:
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
+
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2.3.0
+        with:
+          path: .env.ci
+          load-mode: strict
 
       - name: Install NativeScript
         run: |
