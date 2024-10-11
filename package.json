@@ -99,7 +99,8 @@
         "@akylas/nativescript-webpack": "5.0.22",
         "@nativescript/core": "8.8.2",
         "merge-properties-files": "^1.1.6",
-        "mini-css-extract-plugin": "^2.9.1"
+        "mini-css-extract-plugin": "^2.9.1",
+        "svelte-loader": "3.2.4"
     },
     "resolutions": {
         "@akylas/nativescript": "portal:../NativeScript/dist/packages/core"
