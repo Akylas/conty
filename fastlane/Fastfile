@@ -26,7 +26,7 @@ packageJSON = JSON.parse(File.read('../package.json'))
 fastlaneOptions = packageJSON['fastlane'] || Hash.new
 # puts "packageJSON:"  + JSON.generate(packageJSON)
 puts "fastlaneOptions:"  + JSON.generate(fastlaneOptions)
-puts "working directory:"  + Dir.getwd(0)
+puts "working directory:"  + Dir.getwd
 
 app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 app_identifier = ENV["APP_ID"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
@@ -151,7 +151,7 @@ lane :build_flavor do |params|
 
   sentry_version = "#{app_identifier}@#{version}+#{versionCode}"
   puts "working directory:"  + ENV['PWD']
-  puts "getwd:"  + Dir.getwd()
+  puts "getwd:"  + Dir.getwd
   puts "platform:"  + platform
   puts "flavor:"  + flavor
   puts "version:"  + version
