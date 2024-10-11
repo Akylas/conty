@@ -68,7 +68,7 @@ jobs:
       - name: Load .env file
         uses: xom9ikk/dotenv@v2.3.0
         with:
-          path: .env.ci
+          mode: ci
           load-mode: strict
       
       - name: Decode Keystore
@@ -187,7 +187,7 @@ jobs:
       - name: Load .env file
         uses: xom9ikk/dotenv@v2.3.0
         with:
-          path: .env.ci
+          mode: ci
           load-mode: strict
 
       - name: Install NativeScript
