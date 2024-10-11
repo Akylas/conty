@@ -32,6 +32,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
+          fetch-depth: ''
           submodules: true
 
       - name: Setup JDK
@@ -166,6 +167,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
+          fetch-depth: ''
           submodules: true
 
       - uses: maxim-lobanov/setup-xcode@v1
