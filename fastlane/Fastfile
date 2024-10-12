@@ -196,7 +196,7 @@ lane :build_flavor do |params|
     sentry_upload
   end
 
-  tag = "tag_prefix#{flavor}/#{version}/#{versionCode}";
+  tag = "#{tag_prefix}#{platform}/#{flavor}/#{version}/#{versionCode}";
   changelog = get_changelog(platform:platform, flavor:flavor)
   if (flavor != 'github' && platform == 'android')
     write_changelog(version:versionCode, changelog: flavor != 'github' ? changelog : get_changelog(platform:platform, flavor:'store'));
