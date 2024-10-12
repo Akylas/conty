@@ -1,0 +1,4 @@
+Bug fixes:
+- prevent error while stopping a story from the notification while locked
+- faster everything on android >= 11 by using the manage permission (which allows faster file access)
+- fullscreen players buttons update quicker and added missing ok button
