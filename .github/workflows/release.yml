@@ -27,12 +27,25 @@ on:
 jobs:
   release-android:
     if: github.event.inputs.android == 'true'
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          filter: tree:0
           submodules: true
+      
+      - uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          name: Martin Guillon
+          email: dev@akylas.fr
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3' # Not needed with a `.ruby-version` or `.tool-versions`
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -60,9 +73,21 @@ jobs:
           ndk-version: r25c
           local-cache: true
       
+      
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
+
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2.3.0
+        with:
+          mode: ci
+          load-mode: strict
+
+      - name: Run shell prepare script
+        if: ${{ hashFiles('scripts/ci.prepare.sh') != '' }}
+        run: |
+          sh scripts/ci.prepare.sh
       
       - name: Decode Keystore
         env:
@@ -80,7 +105,7 @@ jobs:
           ns error-reporting disable
       
       - name: install jq
-        run: brew install jq
+        run: sudo apt-get install jq
       
       - name: Enable CorePack
         run: |
@@ -90,19 +115,6 @@ jobs:
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn config get globalFolder)"
-
-      - uses: actions/cache@v4
-        name: Handle Gem Cache
-        id: gem-cache # use this to check for `cache-hit` (`steps.gem-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: vendor
-          key: ${{ runner.os }}-gem-vendor-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gem-
-
-      - name: install gems
-        if: steps.gem-cache.outputs.cache-hit != 'true'
-        run: bundle install
 
       - name: Remove package.json resolutions
         run: echo "`jq 'delpaths([["resolutions"]])' package.json`" > package.json
@@ -140,14 +152,18 @@ jobs:
           echo "change version to ${{ github.event.inputs.release_type }}"
           ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
           ./node_modules/.bin/get-version android version
-      
+
+      - name: tag test
+        run: |
+          git describe --tags --match="android/beta*" HEAD
+
       - name: publish beta
         run: |
-           bundle exec fastlane android beta
+           bundle exec fastlane android beta --verbose
 
       - name: publish github
         run: |
-           bundle exec fastlane android github
+           bundle exec fastlane android github --verbose
 
   release-ios:
     needs: [release-android]
@@ -157,11 +173,24 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          filter: tree:0
           submodules: true
+      
+      - uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          name: Martin Guillon
+          email: dev@akylas.fr
 
       - uses: maxim-lobanov/setup-xcode@v1
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3' # Not needed with a `.ruby-version` or `.tool-versions`
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -176,6 +205,12 @@ jobs:
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
+
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2.3.0
+        with:
+          mode: ci
+          load-mode: strict
 
       - name: Install NativeScript
         run: |
@@ -195,19 +230,6 @@ jobs:
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn config get globalFolder)"
-
-      - uses: actions/cache@v4
-        name: Handle Gem Cache
-        id: gem-cache # use this to check for `cache-hit` (`steps.gem-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: vendor
-          key: ${{ runner.os }}-gem-vendor-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gem-
-
-      - name: install gems
-        if: steps.gem-cache.outputs.cache-hit != 'true'
-        run: bundle install
 
       - name: Remove package.json resolutions
         run: echo "`jq 'delpaths([["resolutions"]])' package.json`" > package.json
@@ -245,7 +267,7 @@ jobs:
           echo "change version to ${{ github.event.inputs.release_type }}"
           ./node_modules/.bin/set-version ios ${{ github.event.inputs.release_type }}
           ./node_modules/.bin/get-version ios version
-      
+
       - name: publish
         run: |
-          bundle exec fastlane ios alpha
+          bundle exec fastlane ios alpha --verbose
