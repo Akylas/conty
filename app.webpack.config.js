@@ -591,7 +591,7 @@ module.exports = (env, params = {}) => {
                         create: true,
                         cleanArtifacts: true
                     },
-                    // debug: true,
+                    debug: true,
                     sourcemaps: {
                         // assets: './**/*.nonexistent'
                         rewriteSources: (source, map) => source.replace('webpack:///', 'webpack://'),
