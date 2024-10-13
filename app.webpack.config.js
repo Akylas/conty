@@ -580,6 +580,12 @@ module.exports = (env, params = {}) => {
                     url: process.env.SENTRY_URL,
                     project: process.env.SENTRY_PROJECT,
                     authToken: process.env.SENTRY_AUTH_TOKEN,
+                    bundleSizeOptimizations: {
+                        excludeDebugStatements: true,
+                        excludeReplayShadowDom: true,
+                        excludeReplayIframe: true,
+                        excludeReplayWorker: true,
+                    },
                     release: {
                         name: `${appId}@${appVersion}+${buildNumber}`,
                         dist: `${buildNumber}.${platform}`,
