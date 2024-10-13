@@ -494,14 +494,14 @@ platform :android do
     puts "build options:"  + JSON.generate(options.to_json)
     case params[:flavor]
     when 'fdroid','github'
-      if (options[:sentry])
+      if (options[:sentry] != false)
         sh("npm", "run", "build.android.production.fdroid.sentry")
       else 
         sh("npm", "run", "build.android.production.fdroid")
       end
     else
       # for now we build sentry releases for playstore to get bug reports
-      if (options[:sentry])
+      if (options[:sentry] != false)
         sh("npm", "run", "build.android.production.playstore.sentry")
       else 
         sh("npm", "run", "build.android.production.playstore")
