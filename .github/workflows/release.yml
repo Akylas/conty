@@ -153,10 +153,6 @@ jobs:
           ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
           ./node_modules/.bin/get-version android version
 
-      - name: tag test
-        run: |
-          git describe --tags --match="android/beta*" HEAD
-
       - name: publish beta
         run: |
            bundle exec fastlane android beta --verbose
