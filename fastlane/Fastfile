@@ -16,6 +16,14 @@ def writeFileIfNotExist(filePath, string)
   end
 end
 
+def deleteFolder(filePath) {
+  if (Dir.exist?(filePath))
+    puts "deleting: #{filePath}"
+    FileUtils.remove_dir(filePath)
+    puts "deleted: #{filePath} exists: #{Dir.exist?(filePath))}"
+  end
+}
+
 fastlane_version '2.135.2'
 opt_out_usage
 
@@ -120,10 +128,7 @@ desc 'Prepare the application.'
 lane :prepare do |params| 
   platform = params[:platform]
   options = params[:options]
-  if (Dir.exist?(File.join(project_root_path, app_build_path, platform)))
-    puts "deleting: "  + "#{app_build_path}/#{platform}"
-    FileUtils.remove_dir(File.join(project_root_path, app_build_path, platform))
-  end
+  deleteFolder(File.join(project_root_path, app_build_path, platform))
   Dir.chdir(project_root_path) do
     if (platform == 'ios')
       if (options[:sentry] != false)
@@ -420,10 +425,7 @@ platform :ios do
           provisioningProfiles: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
         }
       )
-
-      puts {api_key => api_key}
-
-      # end
+      {"api_key" => api_key}
   end
 
   desc 'Ship iOS build to Testflight.'
@@ -488,20 +490,14 @@ platform :android do
 
   desc 'Build the Android application.'
   lane :build do |params|
-    if (Dir.exist?(File.join(project_root_path, app_build_path, "android")))
-      puts "deleting: "  + "#{app_build_path}/android"
-      FileUtils.remove_dir(File.join(project_root_path, app_build_path, "android"))
-    end
-    if (Dir.exist?(File.join(project_root_path, app_build_path, "tempPlugin")))
-      puts "deleting: "  + "#{app_build_path}/tempPlugin"
-      FileUtils.remove_dir(File.join(project_root_path, app_build_path, "tempPlugin"))
-    end
+    deleteFolder(File.join(project_root_path, app_build_path, "android"))
+    deleteFolder(File.join(project_root_path, app_build_path, "tempPlugin"))
     options = params[:options]
     puts "build flavor:"  + params[:flavor]
     puts "build options:"  + JSON.generate(options.to_json)
     case params[:flavor]
     when 'fdroid','github'
-      if (options[:sentry] != false)
+      if (options[:sentry] == true)
         sh("npm", "run", "build.android.production.fdroid.sentry")
       else 
         sh("npm", "run", "build.android.production.fdroid")
