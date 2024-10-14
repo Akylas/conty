@@ -1,5 +1,5 @@
 import { Canvas, Paint } from '@nativescript-community/ui-canvas';
-import { ImageSource, Utils } from '@nativescript/core';
+import { ApplicationSettings, ImageSource, Utils } from '@nativescript/core';
 import { showError } from '@shared/utils/showError';
 import {
     PackStartEvent,
@@ -18,6 +18,7 @@ import { BgServiceBinder } from '~/services/android/BgServiceBinder';
 import { BgServiceCommon } from '../BgService.common';
 import { MediaSessionCompatCallback } from './MediaSessionCompatCallback';
 import { FLAG_IMMUTABLE, NotificationHelper } from './NotificationHelper';
+import { DEFAULT_SHOW_SHUTDOWN_IN_NOTIF, SETTINGS_SHOW_SHUTDOWN_IN_NOTIF } from '~/utils/constants';
 
 const PlaybackStateCompat = android.support.v4.media.session.PlaybackStateCompat;
 
@@ -32,11 +33,11 @@ export function getInstance() {
 const TAG = '[BgServiceAndroid]';
 const ic_play_id = Utils.android.resources.getId(':drawable/' + 'media_ic_play');
 const ic_pause_id = Utils.android.resources.getId(':drawable/' + 'media_ic_pause');
-const ic_stop_id = Utils.android.resources.getId(':drawable/' + 'media_ic_end');
 const ic_home_id = Utils.android.resources.getId(':drawable/' + 'media_ic_home');
 const ic_previous_id = Utils.android.resources.getId(':drawable/' + 'media_ic_left');
 const ic_next_id = Utils.android.resources.getId(':drawable/' + 'media_ic_right');
 const ic_close_id = Utils.android.resources.getId(':drawable/' + 'media_ic_close');
+const ic_shutdown_id = Utils.android.resources.getId(':drawable/' + 'media_ic_shutdown');
 const ic_check_id = Utils.android.resources.getId(':drawable/' + 'media_ic_check');
 
 function modifyBitmap(original, colorMatrix: number[]) {
@@ -285,6 +286,12 @@ export class BgService extends android.app.Service {
             }
             actionIndex++;
             this.addAction(context, 'stop', lc('stop'), ic_close_id, notifBuilder, playbackstateBuilder);
+
+            const showShutdown = ApplicationSettings.getBoolean(SETTINGS_SHOW_SHUTDOWN_IN_NOTIF, DEFAULT_SHOW_SHUTDOWN_IN_NOTIF);
+            if (showShutdown) {
+                actionIndex++;
+                this.addAction(context, 'shutdown', lc('shutdown'), ic_shutdown_id, notifBuilder, playbackstateBuilder);
+            }
             playbackstateBuilder.setState(playbackState, currentTime, 1);
             this.getMediaSessionCompat().setPlaybackState(playbackstateBuilder.build());
 

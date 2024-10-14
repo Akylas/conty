@@ -5,6 +5,7 @@ import { SDK_VERSION } from '@nativescript/core/utils';
 export const ALERT_OPTION_MAX_HEIGHT = Screen.mainScreen.heightDIPs * 0.47;
 export const ANDROID_CONTENT = 'content://';
 export const DEFAULT_INVERSE_IMAGES = false;
+export const DEFAULT_SHOW_SHUTDOWN_IN_NOTIF = false;
 
 export const SETTINGS_LANGUAGE = 'language';
 export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
@@ -12,6 +13,8 @@ export const SETTINGS_COLOR_THEME = 'color_theme';
 export const SETTINGS_INVERSE_IMAGES = 'inverse_images';
 export const SETTINGS_PODCAST_MODE = 'podcast_mode';
 export const SETTINGS_CURRENT_PLAYING = 'current_playing';
+export const SETTINGS_SHOW_SHUTDOWN_IN_NOTIF = 'shutdown_notif_button';
+
 export const DEFAULT_COLOR_THEME = 'default';
 export const DEFAULT_PODCAST_MODE = false;
 

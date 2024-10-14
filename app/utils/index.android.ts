@@ -169,3 +169,6 @@ export async function getAudioDuration(audioFile) {
     const durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
     return parseInt(durationStr, 10);
 }
+export function closeApp() {
+    Application.android.startActivity.finish();
+}

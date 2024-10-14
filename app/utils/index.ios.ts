@@ -111,3 +111,5 @@ export async function getAudioDuration(audioFile) {
         });
     });
 }
+
+export function closeApp() {}
