@@ -54,7 +54,7 @@ export function getRealPath(src: string, force = false) {
     if (!src.startsWith(ANDROID_CONTENT)) {
         return src;
     }
-    return com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), android.net.Uri.parse(src));
+    return com.nativescript.documentpicker.FilePath.getPathFromString(Utils.android.getApplicationContext(), src);
 }
 export function cleanFilename(str: string) {
     return com.akylas.conty.Utils.Companion.cleanFilenameString(str)

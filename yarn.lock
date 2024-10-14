@@ -27,7 +27,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=051934&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=c1906e&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.17.0"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,13 +74,12 @@ __metadata:
     svelte-loader: "npm:3.2.4"
     svelte-native-preprocessor: "npm:~1.0.0"
     svelte-preprocess: "npm:5.1.4"
-    svelte-preprocess-esbuild: "npm:^3.0.1"
     terser-webpack-plugin: "npm:^5.3.10"
     ts-patch: "npm:^3.2.1"
     typescript: "npm:5.6.3"
     typescript-eslint: "npm:^8.8.1"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/3ed0759e3b531fa9e2b7edf319f5b38bf0e1d05892de295ed54815a6ab7ad675746a9f731155851b32a727d9a2aa682d992446814c834211082d0d3f5a25d461
+  checksum: 10/740bbf7494ccb7638b0db15ae46928eab636a8af79ecad0effeabcf0d1ca9bf3528c5e71ddbc717708944bb99bf45d486daa659cdd0c7175561984e9ad2461f0
   languageName: node
   linkType: hard
 
@@ -1150,12 +1149,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-document-picker@npm:1.1.25":
-  version: 1.1.25
-  resolution: "@nativescript-community/ui-document-picker@npm:1.1.25"
+"@nativescript-community/ui-document-picker@npm:1.1.26":
+  version: 1.1.26
+  resolution: "@nativescript-community/ui-document-picker@npm:1.1.26"
   dependencies:
     "@nativescript-community/perms": "npm:^2.3.0"
-  checksum: 10/e9c2fce54387966e00d1d26f2dfd2a058718110183d2b93d956edabe19e2b58a94335d0fe71b538694f0f9795b4b7655c5becda5774d0d0dbdbc422d9729171f
+  checksum: 10/c0d14a7d9eab831a49e3d77a8f4d710064e2514854d376be3974573fb4c87328c4c84e950a5545cec8938a249076e8af311416988103653fe4e526570ce60768
   languageName: node
   linkType: hard
 
@@ -8984,7 +8983,7 @@ __metadata:
     "@nativescript-community/ui-checkbox": "npm:2.0.12"
     "@nativescript-community/ui-collectionview": "npm:5.3.43"
     "@nativescript-community/ui-collectionview-swipemenu": "npm:5.3.43"
-    "@nativescript-community/ui-document-picker": "npm:1.1.25"
+    "@nativescript-community/ui-document-picker": "npm:1.1.26"
     "@nativescript-community/ui-drawer": "npm:0.1.28"
     "@nativescript-community/ui-image": "npm:4.5.3"
     "@nativescript-community/ui-image-colorfilter": "npm:^4.5.3"
@@ -9825,16 +9824,6 @@ __metadata:
     "@nativescript/core": ^8.5.9
     svelte: ^4.2.8
   checksum: 10/eac2973bbe484f866249fe79b06b5f90d34eb273d88549d453e96dde4202c6e92010a3a1facd1b3d869c5704a73742d83d596d10db5b00f399a6658a41266e17
-  languageName: node
-  linkType: hard
-
-"svelte-preprocess-esbuild@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "svelte-preprocess-esbuild@npm:3.0.1"
-  peerDependencies:
-    esbuild: ">=0.14.0"
-    svelte: ">=3.5.0"
-  checksum: 10/91ce1018390beaac742258df6414f182af90aca19b8d6e99675a8a900079f4dacf0d8be9aa633e898e1cb6544ac23b1696df4ee8f5aba0666eedea0ed021f4f9
   languageName: node
   linkType: hard
 
