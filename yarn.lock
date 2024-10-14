@@ -8964,7 +8964,7 @@ __metadata:
     "@mdi/font": "npm:7.4.47"
     "@nativescript-community/additween": "npm:4.0.9"
     "@nativescript-community/arraybuffers": "npm:1.1.5"
-    "@nativescript-community/audio": "npm:6.4.7"
+    "@nativescript-community/audio": "npm:6.4.8"
     "@nativescript-community/css-theme": "npm:1.2.14"
     "@nativescript-community/extendedinfo": "npm:1.3.1"
     "@nativescript-community/gesturehandler": "npm:2.0.32"
