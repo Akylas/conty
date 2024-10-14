@@ -4,7 +4,7 @@ import { Color } from '@nativescript/core/color';
 import { addActionCallback, removeNotificationCallbacks } from '~/android/ActionReceiver';
 import { colors } from '~/variables';
 import { get } from 'svelte/store';
-import { globalObservable } from '~/utils/svelte/ui';
+import { globalObservable } from '@shared/utils/svelte/ui';
 import { CommonNotification, ProgressOptions } from './ProgressNotifications';
 
 export function show(options: ProgressOptions): CommonNotification {

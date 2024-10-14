@@ -79,6 +79,7 @@
     "ok": "OK",
     "packs": "packs",
     "pause": "pause",
+    "permission_error": "missing permission",
     "play": "play",
     "play_pause": "play/pause",
     "please_refresh": "please refresh to see packs",
@@ -121,5 +122,6 @@
         "title": "theme"
     },
     "third_parties": "third party libraries",
+    "timeout_error": "the request timed out. Please check your internet connection and try again",
     "welcome": "welcome"
 }

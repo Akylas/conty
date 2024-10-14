@@ -1,5 +1,6 @@
 import { Canvas, Paint } from '@nativescript-community/ui-canvas';
 import { ImageSource, Utils } from '@nativescript/core';
+import { showError } from '@shared/utils/showError';
 import {
     PackStartEvent,
     PackStartEventData,
@@ -8,15 +9,12 @@ import {
     PlaybackEventData,
     PlaybackTimeEvent,
     PlayingInfo,
-    PlayingState,
     StoryHandler,
     StoryStartEvent,
     StoryStopEvent
 } from '~/handlers/StoryHandler';
 import { lc } from '~/helpers/locale';
-import { Pack, Stage } from '~/models/Pack';
 import { BgServiceBinder } from '~/services/android/BgServiceBinder';
-import { showError } from '~/utils/showError';
 import { BgServiceCommon } from '../BgService.common';
 import { MediaSessionCompatCallback } from './MediaSessionCompatCallback';
 import { FLAG_IMMUTABLE, NotificationHelper } from './NotificationHelper';
@@ -69,6 +67,7 @@ export class BgService extends android.app.Service {
         super.onStartCommand(intent, flags, startId);
         console.log('onStartCommand', intent);
         if (!instance) {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             instance = this;
         }
         if (intent != null) {
@@ -84,6 +83,7 @@ export class BgService extends android.app.Service {
     }
     onCreate() {
         if (!instance) {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             instance = this;
         }
         DEV_LOG && console.log(TAG, 'onCreate');

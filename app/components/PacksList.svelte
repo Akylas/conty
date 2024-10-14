@@ -22,8 +22,8 @@
     import { downloadStories } from '~/services/api';
     import { PackAddedEventData, PackDeletedEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
     import { BOTTOM_BUTTON_OFFSET, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_UPDATED } from '~/utils/constants';
-    import { showError } from '~/utils/showError';
-    import { fade, showModal } from '~/utils/svelte/ui';
+    import { showError } from '@shared/utils/showError';
+    import { fade, showModal } from '@shared/utils/svelte/ui';
     import { hideBarPlayer, hideLoading, onBackButton, playPack, playStory, showBarPlayer, showBottomsheetOptionSelect, showLoading, showPopoverMenu, showSettings } from '~/utils/ui';
     import { colors, fontScale, fonts, onPodcastModeChanged, podcastMode, windowInset } from '~/variables';
 
@@ -676,6 +676,12 @@
                 fontSize: 18,
                 showFilter,
                 title: thePack.title,
+                titleProps: {
+                    maxLines: 2,
+                    lineBreak: 'end',
+                    maxFontSize: 18,
+                    autoFontSize: true
+                },
                 options: stories.map((story) => ({
                     type: 'image',
                     image: story.thumbnail,

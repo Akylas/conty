@@ -10,19 +10,20 @@ import { installMixins as installColorFilters } from '@nativescript-community/ui
 import { install as installBottomSheets } from '@nativescript-community/ui-material-bottomsheet';
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
-import { Application, Trace } from '@nativescript/core';
+import { Application } from '@nativescript/core';
 import { Frame, NavigatedData, Page } from '@nativescript/core/ui';
+import { startSentry } from '@shared/utils/sentry';
+import { showError } from '@shared/utils/showError';
+import { navigate } from '@shared/utils/svelte/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
 import { getBGServiceInstance } from '~/services/BgService';
-import { startSentry } from '~/utils/sentry';
 import PacksList from './components/App.svelte';
 import { setDocumentsService } from './models/Pack';
-import { NestedScrollView } from './NestedScrollView';
+import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
-import { showError } from './utils/showError';
-import { navigate } from './utils/svelte/ui';
+import { init as sharedInit } from '@shared/index';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -155,30 +156,7 @@ try {
             console.error(error, error.stack);
         }
     });
-
-    if (!PRODUCTION && DEV_LOG) {
-        Page.on('navigatingTo', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'to', event.object, event.isBackNavigation);
-        });
-        Page.on('showingModally', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'MODAL', event.object, event.isBackNavigation);
-        });
-        Frame.on('showingModally', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'MODAL', event.object, event.isBackNavigation);
-        });
-        Frame.on('closingModally', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'CLOSING MODAL', event.object, event.isBackNavigation);
-        });
-        Page.on('closingModally', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'CLOSING MODAL', event.object, event.isBackNavigation);
-        });
-        GestureRootView.on('shownInBottomSheet', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'BOTTOMSHEET', event.object, event.isBackNavigation);
-        });
-        GestureRootView.on('closedBottomSheet', (event: NavigatedData) => {
-            DEV_LOG && console.info('NAVIGATION', 'CLOSING BOTTOMSHEET', event.object, event.isBackNavigation);
-        });
-    }
+    sharedInit();
 
     let rootFrame;
     let pageInstance;

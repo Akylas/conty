@@ -19,8 +19,8 @@
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
     import { timeout } from '~/utils';
-    import { showError } from '~/utils/showError';
-    import { closeModal, fade } from '~/utils/svelte/ui';
+    import { showError } from '@shared/utils/showError';
+    import { closeModal, fade } from '@shared/utils/svelte/ui';
     import { onBackButton, showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';

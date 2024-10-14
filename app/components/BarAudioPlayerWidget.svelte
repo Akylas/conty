@@ -21,7 +21,7 @@
     import { Pack, Stage, Story } from '~/models/Pack';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { BAR_AUDIO_PLAYER_HEIGHT } from '~/utils/constants';
-    import { showError } from '~/utils/showError';
+    import { showError } from '@shared/utils/showError';
     import { showFullscreenPlayer } from '~/utils/ui';
     import { coverSharedTransitionTag, windowInset } from '~/variables';
     const screenWidth = Screen.mainScreen.widthDIPs;

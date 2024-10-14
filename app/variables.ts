@@ -8,7 +8,7 @@ import { DEFAULT_COLOR_THEME, DEFAULT_PODCAST_MODE, SETTINGS_COLOR_THEME, SETTIN
 import { start as startThemeHelper, useDynamicColors } from '~/helpers/theme';
 import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 import { prefs } from './services/preferences';
-import { createGlobalEventListener, globalObservable } from './utils/svelte/ui';
+import { createGlobalEventListener, globalObservable } from '@shared/utils/svelte/ui';
 
 export const colors = writable({
     colorPrimary: '',

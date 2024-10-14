@@ -10,7 +10,7 @@ import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
 import Queue from './queue';
 import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 import { copyFolderContent, removeFolderContent } from '~/utils/file';
-import { doInBatch } from '~/utils/batch';
+import { doInBatch } from '@shared/utils/batch';
 
 const context: Worker = self as any;
 

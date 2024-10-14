@@ -28,8 +28,8 @@
     import { Pack, Stage, Story } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
-    import { showError } from '~/utils/showError';
-    import { closeModal } from '~/utils/svelte/ui';
+    import { showError } from '@shared/utils/showError';
+    import { closeModal } from '@shared/utils/svelte/ui';
     import { openLink, playStory, showBottomsheetOptionSelect } from '~/utils/ui';
     import { colors, coverSharedTransitionTag, windowInset } from '~/variables';
 
@@ -510,11 +510,13 @@
 
         <!-- </GridLayout> -->
         <label
+            autoFontSize={true}
             color={colorOnSecondaryContainer}
             fontSize={20}
             fontWeight="bold"
             height={50}
             margin="0 10 0 10"
+            maxFontSize={20}
             maxLines={2}
             row={2}
             text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || story?.name || ' '}

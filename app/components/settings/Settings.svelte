@@ -21,11 +21,11 @@
     import { documentsService } from '~/services/documents';
     import { getRealPath, restartApp } from '~/utils';
     import { DEFAULT_INVERSE_IMAGES, DEFAULT_PODCAST_MODE, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_PODCAST_MODE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
-    import { SilentError } from '~/utils/error';
+    import { SilentError } from '@shared/utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
-    import { Sentry } from '~/utils/sentry';
-    import { share } from '~/utils/share';
-    import { showError } from '~/utils/showError';
+    import { Sentry } from '@shared/utils/sentry';
+    import { share } from '@shared/utils/share';
+    import { showError } from '@shared/utils/showError';
     import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';

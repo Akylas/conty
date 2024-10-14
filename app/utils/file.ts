@@ -1,5 +1,5 @@
 import { File, Folder } from '@nativescript/core';
-import { doInBatch } from './batch';
+import { doInBatch } from '@shared/utils/batch';
 
 export async function copyFolderContent(src: string, dst: string) {
     // TODO: native!

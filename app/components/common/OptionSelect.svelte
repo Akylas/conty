@@ -35,6 +35,7 @@
     export let fontWeight = 'bold';
     export let options: OptionType[] | ObservableArray<OptionType>;
     export let onClose = null;
+    export let titleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
     export let selectedIndex = -1;
     export let height: number | string = null;
     export let fontSize = 16;
@@ -220,6 +221,7 @@
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
                     title={item.name}
+                    {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <checkbox
                         id="checkbox"
@@ -244,6 +246,7 @@
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
                     title={item.name}
+                    {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <mdbutton class="icon-btn" col={1} text={item.rightIcon} variant="text" on:tap={(event) => onRightTap(item, event)} />
                 </svelte:component>
@@ -263,6 +266,7 @@
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
                     title={item.name}
+                    {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <image borderRadius={4} col={0} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
                 </svelte:component>
@@ -280,6 +284,7 @@
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
                     title={item.name}
+                    {titleProps}
                     on:rightTap={(event) => onRightTap(item, event)}
                     on:tap={(event) => onTap(item, event)}>
                 </svelte:component>

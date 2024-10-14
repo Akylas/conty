@@ -9,6 +9,9 @@ export function checkManagePermission() {
 export async function askForManagePermission() {
     return true;
 }
+export function hasManagePermission() {
+    return true;
+}
 
 // @NativeClass
 // class SaveAlbumCompletion extends NSObject {

@@ -1,172 +1,27 @@
-import { InAppBrowser } from '@akylas/nativescript-inappbrowser';
 import { lc } from '@nativescript-community/l';
-import { AlertDialog, MDCAlertControlerOptions, action, alert } from '@nativescript-community/ui-material-dialogs';
-import { SnackBarOptions, showSnack as mdShowSnack } from '@nativescript-community/ui-material-snackbar';
+import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+import { MDCAlertControlerOptions, alert } from '@nativescript-community/ui-material-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import {
-    AlertOptions,
-    Animation,
-    AnimationDefinition,
-    Application,
-    GridLayout,
-    ModalTransition,
-    PageTransition,
-    Screen,
-    SharedTransition,
-    SharedTransitionConfig,
-    Utils,
-    View,
-    ViewBase
-} from '@nativescript/core';
+import { AlertOptions, Animation, AnimationDefinition, Application, GridLayout, ModalTransition, Screen, SharedTransition, SharedTransitionConfig, Utils, View } from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
+import { showError } from '@shared/utils/showError';
+import { navigate, showModal } from '@shared/utils/svelte/ui';
+import { ComponentInstanceInfo, hideLoading, resolveComponentElement } from '@shared/utils/ui';
 import { ComponentProps } from 'svelte';
-import { NativeViewElementNode, ShowModalOptions, createElement } from 'svelte-native/dom';
 import { get } from 'svelte/store';
-import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
-import type LoadingIndicator__SvelteComponent_ from '~/components/common/LoadingIndicator.svelte';
-import LoadingIndicator from '~/components/common/LoadingIndicator.svelte';
-import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
-import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
-import { navigate, showModal } from '../svelte/ui';
-import { showError } from '../showError';
-import BottomSnack from '~/components/common/BottomSnack.svelte';
-import { getBGServiceInstance } from '~/services/BgService';
-import { Pack, Story } from '~/models/Pack';
-import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
 import type BarAudioPlayer__SvelteComponent_ from '~/components/BarAudioPlayerWidget.svelte';
+import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
+import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
+import BottomSnack from '~/components/common/BottomSnack.svelte';
+import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
+import { Pack, Story } from '~/models/Pack';
+import { getBGServiceInstance } from '~/services/BgService';
+import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
-import { duration } from 'dayjs';
 
-export function timeout(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export * from '@shared/utils/ui';
 
-export async function openLink(url) {
-    try {
-        const { colorPrimary } = get(colors);
-        const available = await InAppBrowser.isAvailable();
-        if (available) {
-            const result = await InAppBrowser.open(url, {
-                // iOS Properties
-                dismissButtonStyle: 'close',
-                preferredBarTintColor: colorPrimary,
-                preferredControlTintColor: 'white',
-                readerMode: false,
-                animated: true,
-                enableBarCollapsing: false,
-                // Android Properties
-                showTitle: true,
-                toolbarColor: colorPrimary,
-                secondaryToolbarColor: 'white',
-                enableUrlBarHiding: true,
-                enableDefaultShare: true,
-                forceCloseOnRedirection: false
-            });
-            return result;
-        } else {
-            Utils.openUrl(url);
-        }
-    } catch (error) {
-        alert({
-            title: 'Error',
-            message: error.message,
-            okButtonText: 'Ok'
-        });
-    }
-}
-
-export interface ShowLoadingOptions {
-    title?: string;
-    text: string;
-    progress?: number;
-    onButtonTap?: () => void;
-}
-
-let loadingIndicator: AlertDialog & { instance?: LoadingIndicator__SvelteComponent_ };
-let showLoadingStartTime: number = null;
-function getLoadingIndicator() {
-    if (!loadingIndicator) {
-        const componentInstanceInfo = resolveComponentElement(LoadingIndicator, {});
-        const view: View = componentInstanceInfo.element.nativeView;
-        // const stack = new StackLayout()
-        loadingIndicator = new AlertDialog({
-            view,
-            cancelable: false
-        });
-        loadingIndicator.instance = componentInstanceInfo.viewInstance as LoadingIndicator__SvelteComponent_;
-    }
-    return loadingIndicator;
-}
-export function updateLoadingProgress(msg: Partial<ShowLoadingOptions>) {
-    if (showingLoading()) {
-        const loadingIndicator = getLoadingIndicator();
-        const props = Object.assign(
-            {
-                title: loadingIndicator.instance.title,
-                progress: loadingIndicator.instance.progress,
-                text: loadingIndicator.instance.text
-            },
-            msg
-        );
-        loadingIndicator.instance.$set(props);
-    }
-}
-export async function showLoading(msg?: string | ShowLoadingOptions) {
-    try {
-        const text = (msg as any)?.text || (typeof msg === 'string' && msg) || lc('loading');
-        const indicator = getLoadingIndicator();
-        indicator.instance.onButtonTap = msg?.['onButtonTap'];
-        const props = {
-            showButton: !!msg?.['onButtonTap'],
-            text,
-            title: (msg as any)?.title,
-            progress: null
-        };
-        if (msg && typeof msg !== 'string' && msg?.hasOwnProperty('progress')) {
-            props.progress = msg.progress;
-        } else {
-            props.progress = null;
-        }
-        indicator.instance.$set(props);
-        if (showLoadingStartTime === null) {
-            showLoadingStartTime = Date.now();
-            indicator.show();
-        }
-    } catch (error) {
-        showError(error, { silent: true });
-    }
-}
-export function showingLoading() {
-    return showLoadingStartTime !== null;
-}
-export async function hideLoading() {
-    if (!loadingIndicator) {
-        return;
-    }
-    const delta = showLoadingStartTime ? Date.now() - showLoadingStartTime : -1;
-    if (__IOS__ && delta >= 0 && delta < 1000) {
-        await timeout(1000 - delta);
-        // setTimeout(() => hideLoading(), 1000 - delta);
-        // return;
-    }
-    showLoadingStartTime = null;
-    if (loadingIndicator) {
-        loadingIndicator.hide();
-    }
-}
-
-export interface ComponentInstanceInfo<T extends ViewBase = View, U = SvelteComponent> {
-    element: NativeViewElementNode<T>;
-    viewInstance: U;
-}
-export function resolveComponentElement<T>(viewSpec: typeof SvelteComponent<T>, props?: T): ComponentInstanceInfo {
-    const dummy = createElement('fragment', window.document as any);
-    const viewInstance = new viewSpec({ target: dummy, props });
-    const element = dummy.firstElement() as NativeViewElementNode<View>;
-    return { element, viewInstance };
-}
 export async function showAlertOptionSelect<T>(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<AlertOptions & MDCAlertControlerOptions>) {
     const component = (await import('~/components/common/OptionSelect.svelte')).default;
     let componentInstanceInfo: ComponentInstanceInfo<GridLayout, OptionSelect__SvelteComponent_>;
@@ -334,11 +189,6 @@ export async function showSliderPopover({
 
         // trackingScrollView: 'collectionView'
     });
-}
-export async function showSnack(options: SnackBarOptions) {
-    try {
-        return mdShowSnack(options);
-    } catch (error) {}
 }
 
 export async function showSettings(props?) {

@@ -11,8 +11,8 @@ import { filesize } from 'filesize';
 import { RemoteContent } from '~/models/Pack';
 import { hashCode, unzip } from '~/utils';
 import { ANDROID_CONTENT } from '~/utils/constants';
-import { HTTPError, NoNetworkError, TimeoutError } from '~/utils/error';
-import { showError } from '~/utils/showError';
+import { HTTPError, NoNetworkError, TimeoutError } from '@shared/utils/error';
+import { showError } from '@shared/utils/showError';
 import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import { documentsService } from './documents';
 import * as ProgressNotifications from '~/services/ProgressNotifications';
@@ -182,7 +182,7 @@ async function handleRequestRetry(requestParams: HttpRequestOptions, retry = 0) 
 
 export function wrapNativeHttpException(error, requestParams: HttpRequestOptions) {
     return wrapNativeException(error, (message) => {
-        if (/(SocketTimeout|SocketException|UnknownHost)/.test(message)) {
+        if (/(SocketTimeout|ConnectException|SocketException|UnknownHost)/.test(message)) {
             return new TimeoutError();
         } else {
             return new HTTPError({

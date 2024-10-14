@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { Canvas, CanvasView, Paint } from '@nativescript-community/ui-canvas';
-    import { createEventDispatcher } from '~/utils/svelte/ui';
-    import { conditionalEvent } from '~/utils/svelte/ui';
+    import { createEventDispatcher } from '@shared/utils/svelte/ui';
+    import { conditionalEvent } from '@shared/utils/svelte/ui';
     import { colors, fontScale } from '~/variables';
     const linePaint = new Paint();
     linePaint.strokeWidth = 1;
@@ -108,6 +108,7 @@
         {text}
         textWrap={true}
         verticalTextAlignment="center"
+        {...$$restProps?.titleProps}
         use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}
         {...$$restProps.titleProps || {}}>
         <cspan text={title} />

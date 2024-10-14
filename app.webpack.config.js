@@ -166,7 +166,6 @@ module.exports = (env, params = {}) => {
         // config.parallelism = 1;
         // config.stats = { preset: 'minimal', chunkModules: true, modules: true, usedExports: true };
     }
-
     const supportedLocales = readdirSync(join(projectRoot, appPath, 'i18n'))
         .filter((s) => s.endsWith('.json'))
         .map((s) => s.replace('.json', ''));
@@ -197,6 +196,7 @@ module.exports = (env, params = {}) => {
         });
     }
     Object.assign(config.resolve.alias, {
+        '@shared': resolve(__dirname, 'tools/app'),
         'kiss-orm': '@akylas/kiss-orm'
     });
     let appVersion;
@@ -584,7 +584,7 @@ module.exports = (env, params = {}) => {
                         excludeDebugStatements: true,
                         excludeReplayShadowDom: true,
                         excludeReplayIframe: true,
-                        excludeReplayWorker: true,
+                        excludeReplayWorker: true
                     },
                     release: {
                         name: `${appId}@${appVersion}+${buildNumber}`,

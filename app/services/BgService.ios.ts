@@ -13,7 +13,7 @@ import {
     StoryStopEvent
 } from '~/handlers/StoryHandler';
 import { Stage } from '~/models/Pack';
-import { showError } from '~/utils/showError';
+import { showError } from '@shared/utils/showError';
 import { Application, ImageSource } from '@nativescript/core';
 
 export { BgServiceLoadedEvent };
