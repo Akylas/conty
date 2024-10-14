@@ -156,10 +156,10 @@ lane :build_flavor do |params|
   options = params[:options]
   version = ""
   versionCode = ""
-  Dir.chdir(project_root_path) do
-    version  =  sh("./node_modules/.bin/get-version", platform, "version").gsub(/\n/,'')
-    versionCode  =  sh("./node_modules/.bin/get-version", platform, "code").gsub(/\n/,'')
-  end
+  # Dir.chdir(project_root_path) do
+  #   version  =  sh("./node_modules/.bin/get-version", platform, "version").gsub(/\n/,'')
+  #   versionCode  =  sh("./node_modules/.bin/get-version", platform, "code").gsub(/\n/,'')
+  # end
   
   # there we add the platform to the dist paramater. The idea is to have different dist for ios android
   # this is because we generate different sources for android and ios so we have different sourceMaps
@@ -185,6 +185,8 @@ lane :build_flavor do |params|
   svelteCheck
 
   build_output = build(flavor: flavor, options: options)
+
+  next
 
   if (ENV["GITHUB_ACTIONS"] != 'true')
     # push anything standing
@@ -361,7 +363,7 @@ platform :ios do
           changelog:params[:changelog],
           distribute_external: true,
           groups: [params[:flavor]],
-          api_key: [build_output[:api_key]],
+          api_key: build_output[:api_key],
           # skip_waiting_for_build_processing: true
           notify_external_testers: true
         )

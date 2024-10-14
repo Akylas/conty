@@ -149,12 +149,12 @@ jobs:
         env: 
           YARN_ENABLE_IMMUTABLE_INSTALLS: false
 
-      - name: update Version
-        if: github.event.inputs.release_type != 'none'
-        run: |
-          echo "change version to ${{ github.event.inputs.release_type }}"
-          ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
-          ./node_modules/.bin/get-version android version
+      # - name: update Version
+      #   if: github.event.inputs.release_type != 'none'
+      #   run: |
+      #     echo "change version to ${{ github.event.inputs.release_type }}"
+      #     ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
+      #     ./node_modules/.bin/get-version android version
 
       - name: publish beta
         run: |
