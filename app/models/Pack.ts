@@ -265,17 +265,18 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     get folderPath() {
         // subPaths is for unzipped files containing subfolders
         if (!this._folderPath) {
-            let folder = documentsService.dataFolder.getFolder(this.id);
-            const subPaths = this.extra?.subPaths;
-            if (subPaths?.length) {
-                folder = subPaths.reduce((acc, val) => acc.getFolder(val), folder);
-            }
-            this._folderPath = folder;
+            return Folder.fromPath(path.join(documentsService.dataFolder.path, this.id, ...(this.extra?.subPaths || [])), false);
+            // let folder = documentsService.dataFolder.getFolder(this.id, false);
+            // const subPaths = this.extra?.subPaths;
+            // if (subPaths?.length) {
+            //     folder = subPaths.reduce((acc, val) => acc.getFolder(val, false), folder);
+            // }
+            // this._folderPath = folder;
         }
         return this._folderPath;
     }
     get zipPath() {
-        return documentsService.dataFolder.getFile(this.id + '.zip').path;
+        return path.join(documentsService.dataFolder.path, this.id + '.zip');
     }
 
     get dataFileName() {
@@ -283,12 +284,22 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     }
     imagePath = 'assets';
     audioPath = 'assets';
+
+    getFilePath(subfolder, file: string): string {
+        // DEV_LOG && console.log('getFilePath', hasManagePermission(), subfolder, file);
+        // if (__ANDROID__ && !hasManagePermission()) {
+        //     return this.folderPath.getFolder(subfolder, false).getFile(file, false).path;
+        // } else {
+        return path.join(this.folderPath.path, subfolder, file);
+        // }
+    }
+
     getAudio(audio: string): string {
         if (audio) {
             if (this.compressed) {
                 return 'zip://' + this.zipPath + `@${this.audioPath}/` + audio;
             } else {
-                return this.folderPath.getFolder(this.audioPath).getFile(audio).path;
+                return this.getFilePath(this.audioPath, audio);
             }
         }
     }
@@ -346,7 +357,8 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
             //     }));
             //     return promise;
             // } else {
-            return path.join(this.folderPath.path, assetPath, asset);
+            return this.getFilePath(assetPath, asset);
+
             // }
         }
     }
@@ -375,7 +387,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     }
 
     async removeFromDisk() {
-        return Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id).remove();
+        return Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id, false).remove();
     }
 
     async save(data: Partial<Pack> = {}, updateModifiedDate = false, notify = true) {

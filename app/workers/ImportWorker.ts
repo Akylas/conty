@@ -199,7 +199,7 @@ export default class ImportWorker extends Observable {
                             ids,
                             async (id) => {
                                 await documentsService.packRepository.delete({ id } as any);
-                                const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id, false);
+                                const docData = Folder.fromPath(path.join(documentsService.realDataFolderPath, id));
                                 DEV_LOG && console.log('deleteDocument', docData.path);
                                 await docData.remove();
                                 // we notify on each delete so that UI updates fast
@@ -316,8 +316,8 @@ export default class ImportWorker extends Observable {
                         }
                         if (!supportsCompressedData) {
                             DEV_LOG && console.log('sizetest', destinationFolderPath, Folder.exists(destinationFolderPath), Folder.fromPath(destinationFolderPath).getEntitiesSync());
-                            const test1Path = Folder.fromPath(destinationFolderPath).getFile(LUNII_DATA_FILE, false)?.path;
-                            const test2Path = Folder.fromPath(destinationFolderPath).getFile(TELMI_DATA_FILE, false)?.path;
+                            const test1Path = path.join(destinationFolderPath, LUNII_DATA_FILE);
+                            const test2Path = path.join(destinationFolderPath, TELMI_DATA_FILE);
                             const sizeTest = (test1Path && File.exists(test1Path) && File.fromPath(test1Path).size) || (test2Path && File.exists(test2Path) && File.fromPath(test2Path).size);
                             if (!sizeTest) {
                                 // broken folder, let s remove it
@@ -363,14 +363,16 @@ export default class ImportWorker extends Observable {
     }
 
     async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?: Partial<Pack>) {
-        let folder = Folder.fromPath(destinationFolderPath);
+        // let folder = Folder.fromPath(destinationFolderPath);
+        let folderPath = destinationFolderPath;
         if (extraData?.extra?.subPaths) {
-            folder = extraData?.extra?.subPaths.reduce((acc, val) => acc.getFolder(val, false), folder);
+            folderPath = path.join(folderPath, ...extraData?.extra?.subPaths);
+            // folderPath = extraData?.extra?.subPaths.reduce((acc, val) => acc.getFolder(val, false), folder);
         }
-        const telmiMetadataPath = folder.getFile(TELMI_DATA_FILE, false)?.path;
+        const telmiMetadataPath = path.join(folderPath, TELMI_DATA_FILE);
         const isTelmi = !!telmiMetadataPath && File.exists(telmiMetadataPath);
         // DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, isTelmi);
-        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(folder.path, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
+        const storyJSON = JSON.parse(await getFileTextContentFromPackFile(folderPath, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
         if (__IOS__ && !isTelmi) {
             // no compressed on iOS!
             let needsSaving = false;
@@ -380,12 +382,12 @@ export default class ImportWorker extends Observable {
                 const action = luniJSON.stageNodes[index];
                 if (action.image && action.image.endsWith('.bmp')) {
                     const newName = action.image.replace('.bmp', '.jpg');
-                    const existingFilePath = path.join(folder.path, 'assets', action.image);
+                    const existingFilePath = path.join(folderPath, 'assets', action.image);
                     const uiimage = ContyImageUtils.loadPossible4Bitmap(existingFilePath);
                     // DEV_LOG && console.log('converting bmp', existingFilePath, uiimage);
                     if (uiimage) {
                         // DEV_LOG && console.log('converting saving new image', path.join(folder.path, 'assets', newName));
-                        await new ImageSource(uiimage).saveToFileAsync(path.join(folder.path, 'assets', newName), 'jpg');
+                        await new ImageSource(uiimage).saveToFileAsync(path.join(folderPath, 'assets', newName), 'jpg');
                         // DEV_LOG && console.log('converting saving new image done', path.join(folder.path, 'assets', newName));
                         File.fromPath(existingFilePath).removeSync();
                         needsSaving = true;
@@ -394,16 +396,17 @@ export default class ImportWorker extends Observable {
                 }
             }
             if (needsSaving) {
-                File.fromPath(path.join(folder.path, LUNII_DATA_FILE)).writeTextSync(JSON.stringify(storyJSON));
+                File.fromPath(path.join(folderPath, LUNII_DATA_FILE)).writeTextSync(JSON.stringify(storyJSON));
             }
         }
         const thumbnailFileName = storyJSON.image || storyJSON.thumbnail || 'thumbnail.png';
-        const thumbnailPath = folder.getFile(thumbnailFileName, false);
+        DEV_LOG && console.log('thumbnailFileName', folderPath, thumbnailFileName);
+        const thumbnailPath = path.join(folderPath, thumbnailFileName);
         let colors;
-        DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath.path);
-        if (__ANDROID__ && File.exists(thumbnailPath.path)) {
+        DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath);
+        if (__ANDROID__ && File.exists(thumbnailPath)) {
             const start = Date.now();
-            const image = loadImageSync(thumbnailPath.path, { resizeThreshold: 20 });
+            const image = loadImageSync(thumbnailPath, { resizeThreshold: 20 });
             DEV_LOG && console.log('image', image.android);
             // image.saveToFile(knownFolders.externalDocuments().getFile(thumbnailFileName).path, 'png');
             colors = JSON.parse(com.akylas.conty.Colors.Companion.getDominantColorsSync(image.android, 3));
@@ -412,7 +415,7 @@ export default class ImportWorker extends Observable {
 
         const { title, description, format, age, version, subtitle, keywords, image, thumbnail, stageNodes, actionNodes, ...extra } = storyJSON;
         await documentsService.importStory(id, supportsCompressedData, {
-            size: getFileOrFolderSize(folder.path),
+            size: getFileOrFolderSize(folderPath),
             type: isTelmi ? 'telmi' : 'studio',
             title,
             description,

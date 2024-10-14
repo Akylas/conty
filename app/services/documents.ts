@@ -31,7 +31,7 @@ export async function getFileTextContentFromPackFile(folderPath, asset, compress
             }
         });
     } else {
-        return Folder.fromPath(folderPath).getFile(asset, false).readText();
+        return File.fromPath(path.join(folderPath, asset)).readText();
         // return File.fromPath(path.join(folderPath, asset)).readText();
     }
 }
@@ -252,7 +252,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         return result;
     }
 
-    async createModelFromAttributes(attributes: Required<any> | Pack): Promise<Pack> {
+    async createModelFromAttributes(attributes): Promise<Pack> {
         const { id, type, thumbnail, compressed, extra, ...others } = attributes;
         const pack = type === 'telmi' ? new TelmiPack(id) : new LuniiPack(id);
         Object.assign(pack, {
@@ -263,7 +263,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
             ...others
         });
         // needs to be done after so that pack.folderPath get get correct using extra.subPaths
-        pack.thumbnail = compressed ? thumbnail : pack.folderPath.getFile(thumbnail, false).path;
+        pack.thumbnail = compressed ? thumbnail : path.join(pack.folderPath.path, thumbnail);
         return pack;
     }
 }
@@ -325,8 +325,9 @@ export class DocumentsService extends Observable {
         }
         this.rootDataFolder = rootDataFolder;
         this.realDataFolderPath = ApplicationSettings.getString('data_folder', path.join(rootDataFolder, 'data'));
-        DEV_LOG && console.log('DocumentsService', 'start', this.id, !!db, this.realDataFolderPath);
-        this.dataFolder = Folder.fromPath(getRealPath(this.realDataFolderPath, true));
+        const nonContentPath = getRealPath(this.realDataFolderPath, false);
+        DEV_LOG && console.log('DocumentsService', 'start', this.id, !!db, this.realDataFolderPath, nonContentPath);
+        this.dataFolder = Folder.fromPath(nonContentPath, false);
         if (db) {
             this.db = new NSQLDatabase(db, {
                 // for now it breaks
