@@ -54,44 +54,7 @@ export function getRealPath(src: string, force = false) {
     if (!src.startsWith(ANDROID_CONTENT)) {
         return src;
     }
-    try {
-        const uri = android.net.Uri.parse(src);
-        const result = com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), uri);
-        DEV_LOG && console.log('getRealPath1', result);
-        if (result?.length) {
-            return result;
-        }
-    } catch (error) {
-        console.error(error, error.stack);
-    }
-    DEV_LOG && console.log('getRealPath2');
-    let filePath = '';
-
-    // ExternalStorageProvider
-    // const uri  = android.net.Uri.parse(android.net.Uri.decode(src));
-    const docId = android.net.Uri.decode(src);
-    console.log('docId', docId);
-    const split = docId.split(':');
-    const type = split[split.length - 2];
-
-    if ('primary' === type) {
-        return android.os.Environment.getExternalStorageDirectory().getPath() + '/' + split[split.length - 1];
-    } else {
-        // if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-        //getExternalMediaDirs() added in API 21
-        const external = Utils.android.getApplicationContext().getExternalMediaDirs();
-        DEV_LOG && console.log('external', external, external.length);
-        if (external.length > 1) {
-            filePath = external[1].getAbsolutePath();
-            DEV_LOG && console.log('filePath', filePath);
-            filePath = filePath.substring(0, filePath.indexOf('Android')) + split[split.length - 1];
-        }
-        // } else {
-        //     filePath = "/storage/" + type + "/" + split[1];
-        // }
-        return filePath;
-    }
-    return src;
+    return com.nativescript.documentpicker.FilePath.getPath(Utils.android.getApplicationContext(), android.net.Uri.parse(src));
 }
 export function cleanFilename(str: string) {
     return com.akylas.conty.Utils.Companion.cleanFilenameString(str)
