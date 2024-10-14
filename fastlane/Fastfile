@@ -16,13 +16,13 @@ def writeFileIfNotExist(filePath, string)
   end
 end
 
-def deleteFolder(filePath) {
+def deleteFolder(filePath)
   if (Dir.exist?(filePath))
     puts "deleting: #{filePath}"
-    FileUtils.remove_dir(filePath)
-    puts "deleted: #{filePath} exists: #{Dir.exist?(filePath))}"
+    FileUtils.rm_rf(filePath, :secure=>true)
+    puts "deleted: #{filePath} exists: #{Dir.exist?(filePath)}"
   end
-}
+end
 
 fastlane_version '2.135.2'
 opt_out_usage
