@@ -345,7 +345,7 @@ export class StoryHandler extends Handler {
         if (this.playingPack && this.currentStageImage) {
             return this.playingPack.getImage(this.currentStageImage) || this.playingPack.getThumbnail();
         }
-        return this.playingStory?.thumbnail || this.playingPack.getThumbnail();
+        return this.playingStory?.thumbnail || this.playingPack?.getThumbnail();
     }
     getStageName(pack: Pack, stage: Stage) {
         if (pack && stage) {
