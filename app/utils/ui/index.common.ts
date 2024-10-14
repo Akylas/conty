@@ -3,7 +3,20 @@ import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-ma
 import { MDCAlertControlerOptions, alert } from '@nativescript-community/ui-material-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import { AlertOptions, Animation, AnimationDefinition, Application, GridLayout, ModalTransition, Screen, SharedTransition, SharedTransitionConfig, Utils, View } from '@nativescript/core';
+import {
+    AlertOptions,
+    Animation,
+    AnimationDefinition,
+    Application,
+    ApplicationSettings,
+    GridLayout,
+    ModalTransition,
+    Screen,
+    SharedTransition,
+    SharedTransitionConfig,
+    Utils,
+    View
+} from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
 import { showError } from '@shared/utils/showError';
 import { navigate, showModal } from '@shared/utils/svelte/ui';
@@ -298,12 +311,11 @@ function getAudioPlayer(props?: BarPlayerOptions) {
     return barPlayer;
 }
 export async function showBarPlayer(props?: BarPlayerOptions) {
-    // DEV_LOG && console.log('showSnackMessage', JSON.stringify(props));
+    DEV_LOG && console.log('showBarPlayer', barPlayerVisible, !!barPlayer);
     if (barPlayerVisible) {
         // updateSnackMessage(props);
     } else {
         const barPlayer = getAudioPlayer(props);
-        DEV_LOG && console.log('showBarPlayer1', snackMessageVisible);
         const animationArgs = [
             {
                 target: barPlayer.element.nativeView,
@@ -313,13 +325,17 @@ export async function showBarPlayer(props?: BarPlayerOptions) {
         ];
         barPlayerVisible = true;
         sendAnimationEvent(animationArgs);
-        DEV_LOG && console.log('showBarPlayer', snackMessageVisible);
-        if (snackMessageVisible) {
-            await Promise.all([new Animation(animationArgs).play(), animateSnackMessage(-(BAR_AUDIO_PLAYER_HEIGHT + 10))]);
-        } else {
-            await new Animation(animationArgs).play();
+        try {
+            if (snackMessageVisible) {
+                await Promise.all([new Animation(animationArgs).play(), animateSnackMessage(-(BAR_AUDIO_PLAYER_HEIGHT + 10))]);
+            } else {
+                await new Animation(animationArgs).play();
+            }
+        } catch (error) {
+            console.error(error, error.stack);
+        } finally {
+            updateAudioPlayer({ translateY: 0, ...props });
         }
-        updateAudioPlayer({ translateY: 0, ...props });
     }
 }
 export async function hideBarPlayer() {
@@ -419,3 +435,17 @@ export async function playStory(story: Story, showFullscreen = true, updatePlayl
         showFullscreenPlayer();
     }
 }
+
+Application.on('exit', () => {
+    DEV_LOG && console.log('app exit cleaning barPlayer/snackMessage');
+    if (barPlayer) {
+        barPlayer.element.nativeElement._tearDownUI();
+        barPlayer.viewInstance.$destroy();
+        barPlayer = null;
+    }
+    if (snackMessage) {
+        snackMessage.element.nativeElement._tearDownUI();
+        snackMessage.viewInstance.$destroy();
+        snackMessage = null;
+    }
+});

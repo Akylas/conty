@@ -95,6 +95,8 @@ export class BgService extends android.app.Service {
     }
     onDestroy() {
         DEV_LOG && console.log(TAG, 'onDestroy');
+        this.mMediaSessionCompat = null;
+        instance = null;
     }
 
     onBind(intent: android.content.Intent) {
@@ -105,9 +107,9 @@ export class BgService extends android.app.Service {
         return result;
     }
     onUnbind(intent: android.content.Intent) {
-        DEV_LOG && console.log(TAG, 'onUnbind');
         this.bounded = false;
         const storyHandler = this.storyHandler;
+        DEV_LOG && console.log(TAG, storyHandler.id, 'onUnbind');
         storyHandler.off(PlaybackEvent, this.onPlayerState, this);
         storyHandler.off(PlaybackTimeEvent, this.onPlayerTimeChanged, this);
         // storyHandler.off('stateChange', this.onStateChange, this);
@@ -115,6 +117,7 @@ export class BgService extends android.app.Service {
         storyHandler.off(StoryStartEvent, this.onPackStart, this);
         storyHandler.off(PackStopEvent, this.onPackStop, this);
         storyHandler.off(StoryStopEvent, this.onPackStop, this);
+        this.storyHandler = null;
         return true;
     }
     onRebind(intent: android.content.Intent) {
@@ -123,8 +126,8 @@ export class BgService extends android.app.Service {
 
     onBounded(commonService: BgServiceCommon) {
         try {
-            DEV_LOG && console.log(TAG, 'onBounded');
             this.storyHandler = new StoryHandler(commonService);
+            DEV_LOG && console.log(TAG, 'onBounded', this.storyHandler.id);
             this.storyHandler.on(PlaybackEvent, this.onPlayerState, this);
             this.storyHandler.on(PlaybackTimeEvent, this.onPlayerTimeChanged, this);
             // this.storyHandler.on('stateChange', this.onStateChange, this);
@@ -324,7 +327,7 @@ export class BgService extends android.app.Service {
     //     this.updatePlayerNotification(event.currentStage, event.stages, this.playingState);
     // }
     onPlayerState(event: PlaybackEventData) {
-        // DEV_LOG && console.log('onPlayerState', event.state);
+        DEV_LOG && console.log('onPlayerState', event.state);
         this.playingInfo = event.playingInfo;
         // this.playingState = event.state;
         // this.playingInfo = this.bluetoothHandler.playingInfo;

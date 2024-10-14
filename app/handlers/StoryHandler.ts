@@ -93,7 +93,9 @@ prefs.on(`key:${SETTINGS_INVERSE_IMAGES}`, () => {
 });
 
 const TAG = '[Story]';
+let ID = 0;
 export class StoryHandler extends Handler {
+    id = ID++;
     appExited = false;
     positionState: { [k: string]: any } = {};
     playingPack: Pack;
@@ -179,9 +181,9 @@ export class StoryHandler extends Handler {
     }
 
     async stop() {
-        DEV_LOG && console.log(TAG, 'stop');
+        DEV_LOG && console.log(TAG + this.id, 'stop');
         await this.stopPlaying({ clearCurrentSaved: false });
-        DEV_LOG && console.log(TAG, 'stop done');
+        DEV_LOG && console.log(TAG + this.id, 'stop done');
     }
     saveSettings: Function;
     async start() {
@@ -254,7 +256,7 @@ export class StoryHandler extends Handler {
                     }
                 }
             }
-            DEV_LOG && console.log(TAG, 'start');
+            DEV_LOG && console.log(TAG + this.id, 'start');
         } catch (err) {
             console.error('dbHandler', 'start error', err, err.stack);
             return Promise.reject(err);
@@ -313,7 +315,7 @@ export class StoryHandler extends Handler {
         throwErrorUp?: boolean;
         updatePlayingInfo?: boolean;
     }) {
-        DEV_LOG && console.info('playAudio', fileName, dataSource, seek, autoPlay);
+        DEV_LOG && console.info(TAG + this.id, 'playAudio', fileName, dataSource, seek, autoPlay);
         try {
             await new Promise<void>(async (resolve, reject) => {
                 try {
@@ -365,7 +367,7 @@ export class StoryHandler extends Handler {
     }
     currentStoryAudioIndex = 0;
     async playAudios({ audios, autoPlay = true, seek, updatePlayingInfo = true, onDone }: { audios: string[]; seek?: number; autoPlay?: boolean; updatePlayingInfo?: boolean; onDone?: Function }) {
-        TEST_LOG && console.log('playAudios', updatePlayingInfo, autoPlay, seek);
+        TEST_LOG && console.log(TAG + this.id, 'playAudios', updatePlayingInfo, autoPlay, seek);
         try {
             // we use throwErrorUp to ensure the loops stop and we dont play other audios
             for (let index = 0; index < audios.length; index++) {
@@ -393,7 +395,7 @@ export class StoryHandler extends Handler {
             // this.lyric?.pause();
             this.isPlayingPaused = true;
             this.pausedStoryPlayTime = this.mPlayer.currentTime;
-            DEV_LOG && console.log(TAG, 'pausePlayback', this.pausedStoryPlayTime);
+            DEV_LOG && console.log(TAG + this.id, 'pausePlayback', this.pausedStoryPlayTime);
             this._setPlaybackState('paused');
         }
     }
@@ -412,7 +414,7 @@ export class StoryHandler extends Handler {
             this.mPlayer.resume();
             // this.lyric?.play(this.pausedStoryPlayTime);
             this.isPlayingPaused = false;
-            DEV_LOG && console.log(TAG, 'resumeStory', this.pausedStoryPlayTime);
+            DEV_LOG && console.log(TAG + this.id, 'resumeStory', this.pausedStoryPlayTime);
             this.pausedStoryPlayTime = 0;
             this._setPlaybackState('playing');
         }
@@ -479,7 +481,8 @@ export class StoryHandler extends Handler {
     selectNextStage() {
         this.setSelectedStage((this.selectedStageIndex + 1) % this.currentStages.length);
     }
-    handleAction(action: string) {
+    async handleAction(action: string) {
+        DEV_LOG && console.log(TAG + this.id, 'handleAction', action);
         switch (action) {
             case 'play':
             case 'pause':
@@ -509,7 +512,7 @@ export class StoryHandler extends Handler {
                 }
                 break;
             case 'shutdown':
-                this.stopPlaying({ clearCurrentSaved: false });
+                await this.stopPlaying({ clearCurrentSaved: false });
                 closeApp();
                 break;
         }
@@ -536,7 +539,7 @@ export class StoryHandler extends Handler {
         const oldSelected = this.currentStageSelected();
         this.oldStageUuid = oldSelected.uuid;
         const oldSelectedIndex = this.selectedStageIndex;
-        DEV_LOG && console.log('onStageOk', oldSelectedIndex, oldSelected.uuid, pack.hasOkTransition(oldSelected), pack.hasHomeTransition(oldSelected));
+        DEV_LOG && console.log(TAG + this.id, 'onStageOk', oldSelectedIndex, oldSelected.uuid, pack.hasOkTransition(oldSelected), pack.hasHomeTransition(oldSelected));
         if (!pack.hasOkTransition(oldSelected)) {
             // should be packed ended
             this.stopPlaying({ updatePlaylist: true });
@@ -598,7 +601,7 @@ export class StoryHandler extends Handler {
             this.saveSettings();
             const stage = this.currentStageSelected();
             // this.notify({ eventName: 'runStage', stage, selectedStageIndex: this.selectedStageIndex, stages: this.currentStages });
-            DEV_LOG && console.info('runStage', JSON.stringify(stage), this.currentStages.length);
+            DEV_LOG && console.info(TAG + this.id, 'runStage', JSON.stringify(stage), this.currentStages.length);
             if (stage.audio) {
                 const compressed = this.playingPack.compressed;
                 const fileName = this.playingPack.getAudio(stage.audio);
@@ -638,7 +641,7 @@ export class StoryHandler extends Handler {
             index: number;
         };
     }) {
-        TEST_LOG && console.log('playPack', pack.id, pack.title, this.isPlaying, autoPlay, seek, startData);
+        TEST_LOG && console.log(TAG + this.id, 'playPack', pack.id, pack.title, this.isPlaying, autoPlay, seek, startData);
         if (this.isPlaying) {
             await this.stopPlaying({ closeFullscreenPlayer: false });
             // return new Promise<void>((resolve) => {
@@ -653,6 +656,7 @@ export class StoryHandler extends Handler {
         }
         try {
             this.isPlaying = true;
+            TEST_LOG && console.log(TAG + this.id, 'playPack1', this.isPlaying);
             this.playingPack = pack;
             await pack.initData();
             // this.actions = data.actions;
@@ -682,7 +686,7 @@ export class StoryHandler extends Handler {
         }
     }
     async playStory({ story, autoPlay = true, seek, updatePlaylist = true }: { story: Story; updatePlaylist?: boolean; autoPlay?: boolean; seek?: number }) {
-        TEST_LOG && console.log('playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
+        TEST_LOG && console.log(TAG + this.id, 'playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
         if (!story.pack) {
             story.pack = await documentsService.packRepository.get(story.packId);
         }
@@ -700,6 +704,7 @@ export class StoryHandler extends Handler {
         }
         try {
             this.isPlaying = true;
+            TEST_LOG && console.log(TAG + this.id, 'playStory1', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
@@ -736,17 +741,21 @@ export class StoryHandler extends Handler {
         }
     }
     async stopPlaying({ fade = false, closeFullscreenPlayer = true, updatePlaylist = false, clearCurrentSaved = true } = {}) {
+        TEST_LOG && console.log(TAG + this.id, 'stopPlaying', this.isPlaying, fade, closeFullscreenPlayer, updatePlaylist, clearCurrentSaved);
         if (!this.isPlaying) {
             return;
         }
-        TEST_LOG && console.log('stopPlaying', fade, this.isPlaying);
-
+        if (this.saveSettingsInterval) {
+            clearInterval(this.saveSettingsInterval);
+            this.saveSettingsInterval = null;
+        }
         const onDone = async () => {
             try {
                 this.notify({ eventName: PlaybackEvent, state: 'stopped', playingInfo: null, closeFullscreenPlayer, ...this.stageChangeEventData() } as PlaybackEventData);
                 this.selectedStageIndex = 0;
                 this.currentStages = [];
                 this.isPlayingPaused = false;
+                DEV_LOG && console.log(TAG + this.id, 'stopPlaying Done');
                 this.isPlaying = false;
                 this.oldStageUuid = null;
                 this.currentPlayingInfo = null;
@@ -778,7 +787,7 @@ export class StoryHandler extends Handler {
                 showError(error);
             }
 
-            TEST_LOG && console.warn('stopPlaying');
+            TEST_LOG && console.warn(TAG + this.id, 'stopPlaying');
             // if (this.lyric) {
             //     this.lyric.pause();
             //     this.lyric = null;
@@ -822,7 +831,7 @@ export class StoryHandler extends Handler {
 
     saveSettingsInternal = (clear = true) => {
         const currentAudioTime = Math.floor(this.playerCurrentTime / 1000);
-        DEV_LOG && console.log('saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
+        DEV_LOG && console.log(TAG + this.id, 'saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
         if (this.playingPack) {
             ApplicationSettings.setString(
                 SETTINGS_CURRENT_PLAYING,

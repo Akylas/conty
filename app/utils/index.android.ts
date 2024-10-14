@@ -133,5 +133,5 @@ export async function getAudioDuration(audioFile) {
     return parseInt(durationStr, 10);
 }
 export function closeApp() {
-    Application.android.startActivity.finish();
+    Application.android.startActivity?.finish();
 }

@@ -96,6 +96,7 @@ export abstract class BgServiceCommon extends Observable {
         if (!this._loaded) {
             this._loaded = true;
 
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             mSharedInstance = this;
             onServiceLoadedListeners.forEach((l) => l(this.storyHandler));
             onSetupListeners.forEach((l) => l(this.storyHandler));
@@ -176,13 +177,13 @@ export abstract class BgServiceCommon extends Observable {
     handleAppExit() {
         this.appExited = true;
         DEV_LOG && console.log('handleAppExit', this.storyHandler.isPlaying);
-        if (this.storyHandler.isPlaying) {
+        if (this.storyHandler.isPlaying && this.storyHandler.playerState === 'playing') {
             this.storyHandler.appExited = true;
             Application.on('shouldStopBgService', () => {
                 this.stop();
             });
-            return;
+        } else {
+            this.stop();
         }
-        this.stop();
     }
 }

@@ -182,7 +182,7 @@ async function handleRequestRetry(requestParams: HttpRequestOptions, retry = 0) 
 
 export function wrapNativeHttpException(error, requestParams: HttpRequestOptions) {
     return wrapNativeException(error, (message) => {
-        if (/(SocketTimeout|ConnectException|SocketException|UnknownHost)/.test(message)) {
+        if (/(SocketTimeout|ConnectException|SocketException|SSLException|UnknownHost)/.test(message)) {
             return new TimeoutError();
         } else {
             return new HTTPError({

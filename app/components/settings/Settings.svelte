@@ -246,6 +246,7 @@
                                   type: 'switch',
                                   id: SETTINGS_SHOW_SHUTDOWN_IN_NOTIF,
                                   title: lc('notif_shutdown_button'),
+                                  description: lc('notif_shutdown_button_desc'),
                                   value: ApplicationSettings.getBoolean(SETTINGS_SHOW_SHUTDOWN_IN_NOTIF, DEFAULT_SHOW_SHUTDOWN_IN_NOTIF)
                               }
                               //   {
