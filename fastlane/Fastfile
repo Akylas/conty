@@ -178,7 +178,9 @@ lane :build_flavor do |params|
   # end
 
   svelteCheck
-  build(flavor: flavor, options: options)
+
+  build_output = build(flavor: flavor, options: options)
+
   if (ENV["GITHUB_ACTIONS"] != 'true')
     # push anything standing
     push_to_git_remote(tags:false)
@@ -231,7 +233,7 @@ lane :build_flavor do |params|
   #     )
   #   end
   when 'alpha','beta','production'
-    upload_store(changelog:changelog, version: version, versionCode: versionCode, flavor:flavor, options:options)
+    upload_store(changelog:changelog, version: version, versionCode: versionCode, flavor:flavor, options:options, build_output:build_output)
   end
   
   if !git_tag_exists(tag: tag)
@@ -348,10 +350,12 @@ platform :ios do
         }
       )
     else
+      build_output = params[:build_output]
       upload_to_testflight(
           changelog:params[:changelog],
           distribute_external: true,
           groups: [params[:flavor]],
+          api_key: [build_output[:api_key]],
           # skip_waiting_for_build_processing: true
           notify_external_testers: true
         )
@@ -404,17 +408,19 @@ platform :ios do
       #     workspace: "./platforms/ios/#{$ios_scheme}.xcworkspace"
       #   )
       # else
-        build_ios_app(
-          export_xcargs: '-allowProvisioningUpdates',
-          xcargs: "-allowProvisioningUpdates",
-          output_directory:"dist",
-          scheme: $ios_scheme,
-          workspace: File.join(project_root_path, app_build_path, "ios", "#{$ios_scheme}.xcworkspace"),
-          export_method: "app-store",
-          export_options: {
-            provisioningProfiles: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
-          }
-        )
+      build_ios_app(
+        export_xcargs: '-allowProvisioningUpdates',
+        xcargs: "-allowProvisioningUpdates",
+        output_directory:"dist",
+        scheme: $ios_scheme,
+        workspace: File.join(project_root_path, app_build_path, "ios", "#{$ios_scheme}.xcworkspace"),
+        export_method: "app-store",
+        export_options: {
+          provisioningProfiles: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+        }
+      )
+
+      puts {:api_key => api_key}
 
       # end
   end
