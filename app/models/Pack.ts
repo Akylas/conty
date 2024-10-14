@@ -1,6 +1,6 @@
-import { isString } from '@nativescript/core/utils';
 import { lc } from '@nativescript-community/l';
-import { Folder, ImageCache, ImageSource, Observable, Utils, path } from '@nativescript/core';
+import { Folder, ImageSource, Observable, Utils, path } from '@nativescript/core';
+import { isString } from '@nativescript/core/utils';
 import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getAudioDuration } from '~/utils';
 import { EVENT_PACK_UPDATED } from '~/utils/constants';
@@ -529,7 +529,10 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
     async findAllStories(podcastMode = false) {
         await this.initData();
         const currentStage = this.stages.find((s) => s.squareOne === true);
-        const storiesStages = podcastMode ? this.findAllPodcastEpisodes().map((s) => [s]) : this.findStoriesFromStage(currentStage, []);
+        DEV_LOG && console.log('findAllStories', podcastMode, this.extra);
+        const truePodcastMode = podcastMode && this.extra.podcast === true;
+        const storiesStages = truePodcastMode ? this.findAllPodcastEpisodes().map((s) => [s]) : this.findStoriesFromStage(currentStage, []);
+        DEV_LOG && console.log('storiesStages', storiesStages.length);
         const result = await Promise.all(
             storiesStages.map(async (s, index) => {
                 const images = [];
@@ -542,9 +545,17 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                 //         s.map((s2) => s2.uuid)
                 //     );
                 const stages = s.reduce((acc, stage) => {
-                    if (podcastMode || this.stageIsStory(stage)) {
+                    if (truePodcastMode || this.stageIsStory(stage)) {
                         audioFiles.push(this.getAudio(stage.audio));
                         durations.push(stage.duration);
+                        if (truePodcastMode) {
+                            if (stage.image) {
+                                images.push(stage.image);
+                            }
+                            if (stage.name) {
+                                names.push(this.cleanupStageName(stage));
+                            }
+                        }
                         acc.push(stage);
                     } else if (this.stageIsOptionStage(stage)) {
                         if (stage.image) {
@@ -588,7 +599,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                 } as Story;
             })
         );
-        // DEV_LOG && console.log('findAllStories', storiesStages.length, JSON.stringify(result.map((s) => ({ images: s.images, audioFiles: s.audioFiles, name: s.name }))));
+        DEV_LOG && console.log('findAllStories', storiesStages.length, JSON.stringify(result.map((s) => ({ images: s.images, audioFiles: s.audioFiles, name: s.name }))));
         return result.filter((s) => !!s);
     }
     homeStageFrom(stage?: LuniiStage): LuniiStage[] {
