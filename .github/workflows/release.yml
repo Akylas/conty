@@ -25,8 +25,11 @@ on:
         type: boolean
 
 jobs:
+  # strategy:
+    # use to ensure both dont run in parallel (to prevent issues with git tags/commit/push)
+    # max-parallel: 1
   release-android:
-    if: ${{ !cancelled() && (success() || failure()) && github.event.inputs.android == 'true' }}
+    if: ${{ github.event.inputs.android == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -166,8 +169,7 @@ jobs:
           SENTRY_LOG_LEVEL: debug
 
   release-ios:
-    needs: [release-android]
-    if: ${{ !cancelled() && (success() || failure()) && github.event.inputs.ios == 'true' && (needs.release-android.result == 'success' || needs.release-android.result == 'skipped') }} 
+    if: ${{ github.event.inputs.ios == 'true' }} 
     runs-on: macos-latest
     steps:
       - name: Checkout repository
