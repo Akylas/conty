@@ -420,7 +420,7 @@ platform :ios do
         }
       )
 
-      puts {:api_key => api_key}
+      puts {api_key => api_key}
 
       # end
   end
