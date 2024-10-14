@@ -365,7 +365,7 @@ export class StoryHandler extends Handler {
         return this.pack.findStoryImage(s);
     }
     setSelectedStage(index: number) {
-        if (this.selectedStageIndex !== index) {
+        if (this.selectedStageIndex !== index && this.selectedStageIndex < this.currentStages.length - 1) {
             this.selectedStageIndex = index;
             this.notifyStageChange(false);
             this.runStage();
