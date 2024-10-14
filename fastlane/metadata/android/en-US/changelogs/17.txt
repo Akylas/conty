@@ -1,0 +1,7 @@
+Features:
+- resume where you left of on app close/resume!
+- shutdown app optional button in notification
+
+Bug fixes:
+- 10x faster SAF access
+- find all pack stories fix
