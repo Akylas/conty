@@ -45,6 +45,7 @@
     import IconButton from './common/IconButton.svelte';
     import { transcode } from 'buffer';
     import { getRealPath, requestManagePermission } from '~/utils';
+    import ListItemAutoSizeFull from './common/ListItemAutoSizeFull.svelte';
 
     // technique for only specific properties to get updated on store change
     const { mdi } = $fonts;
@@ -411,6 +412,18 @@
             showError(error);
         }
     }
+    async function podcastButton(item: Item) {
+        try {
+            if ($podcastMode && item.pack.extra.podcast === true) {
+                await playPack(item.pack);
+            } else {
+                await showAllPodcastStories(item);
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
+
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             if (nbSelected > 0) {
@@ -676,11 +689,16 @@
                 fontSize: 18,
                 showFilter,
                 title: thePack.title,
+                component: ListItemAutoSizeFull,
                 titleProps: {
                     maxLines: 2,
-                    lineBreak: 'end',
-                    maxFontSize: 18,
-                    autoFontSize: true
+                    lineBreak: 'end'
+                    // maxFontSize: 18,
+                    // autoFontSize: true
+                },
+                titleHolderProps: {
+                    paddingTop: 0,
+                    paddingBottom: 0
                 },
                 options: stories.map((story) => ({
                     type: 'image',
@@ -742,7 +760,7 @@
                         text="mdi-podcast"
                         verticalAlignment="bottom"
                         visibility={item.pack.extra?.podcast ? 'visible' : 'hidden'}
-                        on:tap={() => showAllPodcastStories(item)} />
+                        on:tap={() => podcastButton(item)} />
                 </canvasview>
             </Template>
         </collectionView>

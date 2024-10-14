@@ -103,7 +103,8 @@
         "svelte-loader": "3.2.4"
     },
     "resolutions": {
-        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core"
+        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
+        "@nativescript-community/audio": "portal:../audio/packages/audio"
     },
     "packageManager": "yarn@4.3.1"
 }

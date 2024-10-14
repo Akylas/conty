@@ -20,7 +20,16 @@
     import { getBGServiceInstance } from '~/services/BgService';
     import { documentsService } from '~/services/documents';
     import { getRealPath, restartApp } from '~/utils';
-    import { DEFAULT_INVERSE_IMAGES, DEFAULT_PODCAST_MODE, SETTINGS_INVERSE_IMAGES, SETTINGS_LANGUAGE, SETTINGS_PODCAST_MODE, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import {
+        DEFAULT_INVERSE_IMAGES,
+        DEFAULT_PODCAST_MODE,
+        DEFAULT_SHOW_SHUTDOWN_IN_NOTIF,
+        SETTINGS_INVERSE_IMAGES,
+        SETTINGS_LANGUAGE,
+        SETTINGS_PODCAST_MODE,
+        SETTINGS_REMOTE_SOURCES,
+        SETTINGS_SHOW_SHUTDOWN_IN_NOTIF
+    } from '~/utils/constants';
     import { SilentError } from '@shared/utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { Sentry } from '@shared/utils/sentry';
@@ -234,12 +243,18 @@
                     __ANDROID__
                         ? [
                               {
-                                  id: 'battery_optimisation',
-                                  title: lc('battery_optimization'),
-                                  description: lc('battery_optimization_desc'),
-                                  rightValue: getBGServiceInstance().isBatteryOptimized() ? lc('enabled') : lc('disabled')
-                                  //   rightBtnIcon: 'mdi-chevron-right'
+                                  type: 'switch',
+                                  id: SETTINGS_SHOW_SHUTDOWN_IN_NOTIF,
+                                  title: lc('notif_shutdown_button'),
+                                  value: ApplicationSettings.getBoolean(SETTINGS_SHOW_SHUTDOWN_IN_NOTIF, DEFAULT_SHOW_SHUTDOWN_IN_NOTIF)
                               }
+                              //   {
+                              //       id: 'battery_optimisation',
+                              //       title: lc('battery_optimization'),
+                              //       description: lc('battery_optimization_desc'),
+                              //       rightValue: getBGServiceInstance().isBatteryOptimized() ? lc('enabled') : lc('disabled')
+                              //       //   rightBtnIcon: 'mdi-chevron-right'
+                              //   }
                               //   {
                               //       id: 'accessibility_service',
                               //       title: lc('accessibility_service'),

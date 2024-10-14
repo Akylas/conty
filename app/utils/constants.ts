@@ -11,6 +11,7 @@ export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
 export const SETTINGS_COLOR_THEME = 'color_theme';
 export const SETTINGS_INVERSE_IMAGES = 'inverse_images';
 export const SETTINGS_PODCAST_MODE = 'podcast_mode';
+export const SETTINGS_CURRENT_PLAYING = 'current_playing';
 export const DEFAULT_COLOR_THEME = 'default';
 export const DEFAULT_PODCAST_MODE = false;
 

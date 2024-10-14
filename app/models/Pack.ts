@@ -209,7 +209,8 @@ export const ignoreStageNameRegex = new RegExp('\\s*(story|stage)[\\s-_]*(node|t
 
 export interface Story {
     id: string;
-    pack: Pack;
+    pack?: Pack;
+    packId: string;
     name: string;
     episode?: number;
     thumbnail?: string;
@@ -434,6 +435,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     abstract canPause(s: S): boolean;
     abstract findAllStories(podcastMode?: boolean): Promise<Story[]>;
     abstract hasStories(): boolean;
+    abstract findStage(uuid: string): S;
 }
 
 export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
@@ -453,6 +455,10 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
     }
     startData() {
         return { index: 0, stages: [this.stages.find((s) => s.squareOne === true)] };
+    }
+
+    findStage(uuid: string) {
+        return this.stages.find((s) => s.uuid === uuid);
     }
     okTransitionIndex(s: LuniiStage): number {
         return s?.okTransition?.optionIndex;
@@ -587,6 +593,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
                 return {
                     id: this.id + '_' + index,
                     pack: this,
+                    packId: this.id,
                     thumbnail,
                     episode: podcastMode ? stages[0].episode : undefined,
                     stages,
@@ -846,6 +853,9 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
         const startAction = this.startAction;
         return { index: startAction.index, stages: this.actions[startAction.action].map((s) => this.stages[s.stage]) };
     }
+    findStage(uuid: string) {
+        return this.stages[uuid];
+    }
     findStoriesFromStage(s: TelmiStage, storyPath: TelmiStage[]): TelmiStage[][] {
         const nextStages = this.nextStageFrom(s) || [];
 
@@ -921,6 +931,7 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
                 return {
                     id: this.id + '_' + index,
                     pack: this,
+                    packId: this.id,
                     stages,
                     name,
                     audioFiles,

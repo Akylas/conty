@@ -27,7 +27,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=d031f2&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=051934&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.17.0"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -80,7 +80,7 @@ __metadata:
     typescript: "npm:5.6.3"
     typescript-eslint: "npm:^8.8.1"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/5f565d4904f981f63ca25c29ad1ac9d69c0d4bb1d3e9a1d376058f0ee98b4c65f8ef3064842db81555473b997d59b4d7b13020d558a1497e4a97eacfb4160b40
+  checksum: 10/3ed0759e3b531fa9e2b7edf319f5b38bf0e1d05892de295ed54815a6ab7ad675746a9f731155851b32a727d9a2aa682d992446814c834211082d0d3f5a25d461
   languageName: node
   linkType: hard
 
@@ -926,14 +926,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/audio@npm:6.4.7":
-  version: 6.4.7
-  resolution: "@nativescript-community/audio@npm:6.4.7"
+"@nativescript-community/audio@portal:../audio/packages/audio::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/audio@portal:../audio/packages/audio::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@nativescript-community/perms": "npm:^2.2.2"
-  checksum: 10/872c98768882c0bf714e0d01fa89f1a014924697cd95f9d07ef133800e15ac9324162cedbbd67b2c4e053c7293cefc1be11391129c49c602ba446f8910e2d4c2
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@nativescript-community/class-mixins@npm:^1.0.0":
   version: 1.0.0
@@ -9016,6 +9015,7 @@ __metadata:
     make-error: "npm:1.3.6"
     merge-properties-files: "npm:^1.1.6"
     mini-css-extract-plugin: "npm:^2.9.1"
+    svelte-loader: "npm:3.2.4"
     svelte-native: "npm:1.0.27"
   languageName: unknown
   linkType: soft

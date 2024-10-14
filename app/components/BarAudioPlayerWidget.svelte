@@ -207,6 +207,8 @@
                 progress = 0;
                 currentTime = 0;
                 showReplay = true;
+            } else if (state === 'paused') {
+                onPlayerProgressInterval();
             }
         }
     }

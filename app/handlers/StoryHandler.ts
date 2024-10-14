@@ -6,8 +6,11 @@ import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { showError } from '@shared/utils/showError';
 import { Pack, Stage, Story } from '~/models/Pack';
 import { prefs } from '~/services/preferences';
-import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
+import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_CURRENT_PLAYING, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
 import { Handler } from './Handler';
+import { clearInterval, debounce } from '@nativescript/core/utils';
+import { closeApp } from '~/utils';
+import { documentsService } from '~/services/documents';
 
 export type PlayingState = 'stopped' | 'playing' | 'paused';
 
@@ -77,6 +80,7 @@ export interface PlayingInfo {
 
 export interface PlaylistItem {
     pack?: Pack;
+    packId?: Pack;
     story?: Story;
 }
 export type Playlist = ObservableArray<PlaylistItem>;
@@ -103,6 +107,7 @@ export class StoryHandler extends Handler {
     isPlaying = false;
     isPlayingPaused = false;
     mCanStopStoryPlayback = false;
+    oldStageUuid: string;
 
     playlist: Playlist = new ObservableArray();
 
@@ -175,11 +180,80 @@ export class StoryHandler extends Handler {
 
     async stop() {
         DEV_LOG && console.log(TAG, 'stop');
-        await this.stopPlaying();
+        await this.stopPlaying({ clearCurrentSaved: false });
         DEV_LOG && console.log(TAG, 'stop done');
     }
+    saveSettings: Function;
     async start() {
         try {
+            this.saveSettings = debounce(this.saveSettingsInternal, 500);
+            const saved = ApplicationSettings.getString(SETTINGS_CURRENT_PLAYING);
+            if (saved) {
+                // ApplicationSettings.remove(SETTINGS_CURRENT_PLAYING);
+                const data = JSON.parse(saved) as any[];
+                const dataLength = data.length;
+                if (dataLength) {
+                    let firstData;
+                    const updatePlaylist = () => {
+                        this.playlist.push(
+                            firstData,
+                            ...(dataLength > 1
+                                ? data.slice(1).map((c) => {
+                                      switch (current.type) {
+                                          case 'pack': {
+                                              return {
+                                                  packId: c.packId
+                                              };
+                                          }
+                                          case 'story': {
+                                              const { type, ...story } = c;
+                                              return {
+                                                  story
+                                              };
+                                          }
+                                      }
+                                  })
+                                : [])
+                        );
+                    };
+                    const current = data[0];
+                    if (dataLength > 1) {
+                    }
+                    switch (current.type) {
+                        case 'pack': {
+                            const pack = await documentsService.packRepository.get(current.packId);
+                            firstData = { pack };
+                            updatePlaylist();
+                            await pack.initData();
+                            this.playPack({
+                                pack,
+                                startData: {
+                                    index: current.selectedStageIndex,
+                                    stages: [pack.findStage(current.stageUuid)]
+                                },
+                                seek: current.currentAudioTime,
+                                autoPlay: false,
+                                updatePlaylist: false
+                            });
+                            break;
+                        }
+                        case 'story': {
+                            const { type, currentAudioTime, ...story } = current;
+                            firstData = { story };
+                            updatePlaylist();
+                            this.playStory({
+                                story,
+                                seek: current.currentAudioTime,
+                                autoPlay: false,
+                                updatePlaylist: false
+                            });
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
             DEV_LOG && console.log(TAG, 'start');
         } catch (err) {
             console.error('dbHandler', 'start error', err, err.stack);
@@ -198,31 +272,56 @@ export class StoryHandler extends Handler {
     playingAudioPromise: Promise<any> = null;
 
     _setPlaybackState(state: PlayingState) {
+        switch (state) {
+            case 'playing':
+                if (this.saveSettingsInterval) {
+                    clearInterval(this.saveSettingsInterval);
+                }
+                this.saveSettingsInterval = setInterval(() => {
+                    this.saveSettings();
+                }, 10000);
+                break;
+
+            default:
+                if (this.saveSettingsInterval) {
+                    clearInterval(this.saveSettingsInterval);
+                    this.saveSettingsInterval = null;
+                }
+                break;
+        }
+        this.saveSettings();
         this.playerState = state;
         this.currentPlayingInfo.state = state;
         this.notify({ eventName: PlaybackEvent, state, playingInfo: this.currentPlayingInfo, ...this.stageChangeEventData() } as PlaybackEventData);
     }
+
+    saveSettingsInterval;
     async playAudio({
+        autoPlay = true,
         fileName,
         dataSource,
+        seek,
         loop = false,
         throwErrorUp = true,
         updatePlayingInfo = true
     }: {
         fileName: string;
         dataSource?: any;
+        seek?: number;
+        autoPlay?: boolean;
         loop?: boolean;
         throwErrorUp?: boolean;
         updatePlayingInfo?: boolean;
     }) {
-        // DEV_LOG && console.info('playAudio', fileName, dataSource);
+        DEV_LOG && console.info('playAudio', fileName, dataSource, seek, autoPlay);
         try {
             await new Promise<void>(async (resolve, reject) => {
                 try {
                     let resolved = false;
                     this.clearPlayer();
                     await this.mPlayer.playFromFile({
-                        autoPlay: true,
+                        autoPlay,
+                        seek,
                         audioFile: fileName,
                         dataSource,
                         loop,
@@ -256,7 +355,7 @@ export class StoryHandler extends Handler {
                     if (updatePlayingInfo) {
                         this.currentPlayingInfo = this.playingInfo();
                     }
-                    this._setPlaybackState('playing');
+                    this._setPlaybackState(autoPlay ? 'playing' : 'paused');
                 } catch (error) {
                     reject(error);
                 }
@@ -265,8 +364,8 @@ export class StoryHandler extends Handler {
         }
     }
     currentStoryAudioIndex = 0;
-    async playAudios(audios: string[], updatePlayingInfo = true, onDone?) {
-        TEST_LOG && console.log('playAaudios', updatePlayingInfo);
+    async playAudios({ audios, autoPlay = true, seek, updatePlayingInfo = true, onDone }: { audios: string[]; seek?: number; autoPlay?: boolean; updatePlayingInfo?: boolean; onDone?: Function }) {
+        TEST_LOG && console.log('playAudios', updatePlayingInfo, autoPlay, seek);
         try {
             // we use throwErrorUp to ensure the loops stop and we dont play other audios
             for (let index = 0; index < audios.length; index++) {
@@ -274,7 +373,11 @@ export class StoryHandler extends Handler {
                     break;
                 }
                 this.currentStoryAudioIndex = index;
-                await this.playAudio({ fileName: audios[index], loop: false, throwErrorUp: true, updatePlayingInfo });
+                if (index === 0) {
+                    await this.playAudio({ fileName: audios[index], loop: false, throwErrorUp: true, updatePlayingInfo, seek, autoPlay });
+                } else {
+                    await this.playAudio({ fileName: audios[index], loop: false, throwErrorUp: true, updatePlayingInfo });
+                }
             }
             onDone?.();
         } catch (error) {
@@ -405,6 +508,10 @@ export class StoryHandler extends Handler {
                     this.selectNextStage();
                 }
                 break;
+            case 'shutdown':
+                this.stopPlaying({ clearCurrentSaved: false });
+                closeApp();
+                break;
         }
     }
     stageChangeEventData() {
@@ -423,11 +530,13 @@ export class StoryHandler extends Handler {
             showError(error);
         }
     }
-    async onStageOk() {
+
+    async onStageOk(autoPlay = true, seek?: number) {
         const pack = this.pack;
         const oldSelected = this.currentStageSelected();
+        this.oldStageUuid = oldSelected.uuid;
         const oldSelectedIndex = this.selectedStageIndex;
-        // DEV_LOG && console.log('onStageOk', oldSelectedIndex, oldSelected.uuid);
+        DEV_LOG && console.log('onStageOk', oldSelectedIndex, oldSelected.uuid, pack.hasOkTransition(oldSelected), pack.hasHomeTransition(oldSelected));
         if (!pack.hasOkTransition(oldSelected)) {
             // should be packed ended
             this.stopPlaying({ updatePlaylist: true });
@@ -453,7 +562,7 @@ export class StoryHandler extends Handler {
             pack.buildMissingHome(currentStageSelected);
         }
         await this.notifyStageChange();
-        this.runStage();
+        this.runStage(autoPlay, seek);
     }
     setStage(stage: Stage) {
         this.currentStages = [stage];
@@ -480,12 +589,13 @@ export class StoryHandler extends Handler {
         this.notifyStageChange();
         this.runStage();
     }
-    async runStage() {
+    async runStage(autoPlay = true, seek?: number) {
         try {
             const pack = this.playingPack;
             if (!pack) {
                 return;
             }
+            this.saveSettings();
             const stage = this.currentStageSelected();
             // this.notify({ eventName: 'runStage', stage, selectedStageIndex: this.selectedStageIndex, stages: this.currentStages });
             DEV_LOG && console.info('runStage', JSON.stringify(stage), this.currentStages.length);
@@ -493,7 +603,7 @@ export class StoryHandler extends Handler {
                 const compressed = this.playingPack.compressed;
                 const fileName = this.playingPack.getAudio(stage.audio);
                 const dataSource = compressed && __ANDROID__ ? new com.akylas.conty.ZipMediaDataSource(this.playingPack.zipPath, fileName.split('@').pop()) : undefined;
-                await this.playAudio({ fileName, dataSource });
+                await this.playAudio({ fileName, dataSource, autoPlay, seek });
                 if (pack.stageIsStory(stage) && this.appExited) {
                     this.stopPlaying();
                     return;
@@ -512,8 +622,23 @@ export class StoryHandler extends Handler {
             }
         }
     }
-    async playPack(pack: Pack, updatePlaylist = true) {
-        TEST_LOG && console.log('playPack', pack.id, pack.title, this.isPlaying);
+    async playPack({
+        pack,
+        updatePlaylist = true,
+        autoPlay = true,
+        seek,
+        startData
+    }: {
+        pack: Pack;
+        updatePlaylist?: boolean;
+        autoPlay?: boolean;
+        seek?: number;
+        startData?: {
+            stages: Stage[];
+            index: number;
+        };
+    }) {
+        TEST_LOG && console.log('playPack', pack.id, pack.title, this.isPlaying, autoPlay, seek, startData);
         if (this.isPlaying) {
             await this.stopPlaying({ closeFullscreenPlayer: false });
             // return new Promise<void>((resolve) => {
@@ -535,7 +660,7 @@ export class StoryHandler extends Handler {
             // DEV_LOG && console.log('this.actionNodes', JSON.stringify(this.actionNodes));
             // DEV_LOG && console.log('this.stageNodes', JSON.stringify(this.stageNodes));
             // DEV_LOG && console.log('playPack data', this.actionNodes.length, this.stageNodes.length);
-            const startData = pack.startData();
+            startData = startData || pack.startData();
             this.selectedStageIndex = startData.index;
             this.currentStages = startData.stages;
             this.notify({ eventName: PackStartEvent, ...this.stageChangeEventData() } as PackStartEventData);
@@ -543,7 +668,7 @@ export class StoryHandler extends Handler {
             // this.notify({ eventName: StagesChangeEvent, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex });
             // this.notify({ eventName: PlaybackEvent, data: 'play' });
             // we call onStageOk directly to
-            this.onStageOk();
+            this.onStageOk(autoPlay, seek);
             // mark story as played
 
             // this.playedStory(index + '', markAsPlayedOnMap);
@@ -556,9 +681,11 @@ export class StoryHandler extends Handler {
             // this.pausedStoryPlayTime = 0;
         }
     }
-    async playStory(story: Story, updatePlaylist = true) {
+    async playStory({ story, autoPlay = true, seek, updatePlaylist = true }: { story: Story; updatePlaylist?: boolean; autoPlay?: boolean; seek?: number }) {
         TEST_LOG && console.log('playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
-
+        if (!story.pack) {
+            story.pack = await documentsService.packRepository.get(story.packId);
+        }
         if (this.isPlaying) {
             await this.stopPlaying({ closeFullscreenPlayer: false });
             // return new Promise<void>((resolve) => {
@@ -576,8 +703,14 @@ export class StoryHandler extends Handler {
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
-            this.playAudios(story.audioFiles, false, () => {
-                this.stopPlaying({ updatePlaylist: true });
+            this.playAudios({
+                audios: story.audioFiles,
+                updatePlayingInfo: false,
+                autoPlay,
+                seek,
+                onDone: () => {
+                    this.stopPlaying({ updatePlaylist: true });
+                }
             });
         } catch (error) {
             showError(error);
@@ -587,20 +720,22 @@ export class StoryHandler extends Handler {
     getPlayingPack() {
         return this.playingPack || this.playingStory?.pack;
     }
-    handleOnPlayingEndPlaylist() {
+    async handleOnPlayingEndPlaylist() {
         if (this.playlist.length > 0) {
             this.playlist.shift();
             if (this.playlist.length > 0) {
                 const toPlay = this.playlist.getItem(0);
                 if (toPlay.pack) {
-                    this.playPack(toPlay.pack, false);
+                    this.playPack({ pack: toPlay.pack, updatePlaylist: false });
+                } else if (toPlay.packId) {
+                    this.playPack({ pack: await documentsService.packRepository.get(toPlay.packId), updatePlaylist: false });
                 } else if (toPlay.story) {
-                    this.playStory(toPlay.story, false);
+                    this.playStory({ story: toPlay.story, updatePlaylist: false });
                 }
             }
         }
     }
-    async stopPlaying({ fade = false, closeFullscreenPlayer = true, updatePlaylist = false } = {}) {
+    async stopPlaying({ fade = false, closeFullscreenPlayer = true, updatePlaylist = false, clearCurrentSaved = true } = {}) {
         if (!this.isPlaying) {
             return;
         }
@@ -613,6 +748,7 @@ export class StoryHandler extends Handler {
                 this.currentStages = [];
                 this.isPlayingPaused = false;
                 this.isPlaying = false;
+                this.oldStageUuid = null;
                 this.currentPlayingInfo = null;
                 const currentPlayingPack = this.playingPack;
                 const currentPlayingStory = this.playingStory;
@@ -637,6 +773,7 @@ export class StoryHandler extends Handler {
                     }
                     currentPlayingStory.pack.close();
                 }
+                this.saveSettingsInternal(clearCurrentSaved);
             } catch (error) {
                 showError(error);
             }
@@ -682,4 +819,55 @@ export class StoryHandler extends Handler {
     canOverrideButtons() {
         return this.isPlaying && this.currentStages.length > 1;
     }
+
+    saveSettingsInternal = (clear = true) => {
+        const currentAudioTime = Math.floor(this.playerCurrentTime / 1000);
+        DEV_LOG && console.log('saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
+        if (this.playingPack) {
+            ApplicationSettings.setString(
+                SETTINGS_CURRENT_PLAYING,
+                JSON.stringify([
+                    {
+                        type: 'pack',
+                        packId: this.playingPack.id,
+                        stageUuid: this.oldStageUuid,
+                        selectedStageIndex: this.selectedStageIndex,
+                        currentAudioTime
+                    }
+                ])
+            );
+        } else if (this.playingStory) {
+            const data = this.playlist.map((p, index) => {
+                if (index === 0) {
+                    if (p.pack) {
+                        return {
+                            type: 'pack',
+                            packId: p.pack.id,
+                            stageUuid: this.oldStageUuid,
+                            selectedStageIndex: this.selectedStageIndex,
+                            currentAudioTime
+                        };
+                    } else {
+                        const { pack, ...data } = p.story;
+                        return {
+                            type: 'story',
+                            packId: pack.id,
+                            ...data,
+                            currentAudioTime
+                        };
+                    }
+                } else {
+                    const { pack, packId, ...data } = p.story;
+                    return {
+                        type: 'story',
+                        packId: packId || pack.id,
+                        ...data
+                    };
+                }
+            });
+            ApplicationSettings.setString(SETTINGS_CURRENT_PLAYING, JSON.stringify(data));
+        } else if (clear) {
+            ApplicationSettings.remove(SETTINGS_CURRENT_PLAYING);
+        }
+    };
 }

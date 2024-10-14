@@ -4,7 +4,7 @@
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { openFilePicker } from '@nativescript-community/ui-document-picker';
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { File, ObservableArray, Utils, View } from '@nativescript/core';
+    import { EventData, File, ObservableArray, Utils, View } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
     import { onDestroy } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -13,6 +13,7 @@
     import { lc } from '~/helpers/locale';
     import { actionBarButtonHeight, colors } from '~/variables';
     import ListItemAutoSize from './ListItemAutoSize.svelte';
+    import { TextField } from '@nativescript-community/ui-material-textfield';
     export interface OptionType {
         name: string;
         isPick?: boolean;
@@ -29,6 +30,7 @@
     export let backgroundColor = null;
     export let borderRadius = 8;
     export let rowHeight = null;
+    export let autofocus = false;
     export let width: string | number = '*';
     export let containerColumns: string = '*';
     export let autoSizeListItem: boolean = false;
@@ -36,6 +38,8 @@
     export let options: OptionType[] | ObservableArray<OptionType>;
     export let onClose = null;
     export let titleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
+    export let titleHolderProps: Partial<svelteNative.JSX.StackLayoutAttributes> = {};
+    export let subtitleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
     export let selectedIndex = -1;
     export let height: number | string = null;
     export let fontSize = 16;
@@ -44,9 +48,10 @@
     export let currentlyCheckedItem = null;
     export let onCheckBox: (item, value, e) => void = null;
     export let onRightIconTap: (item, e) => void = null;
+    export let component = autoSizeListItem ? ListItemAutoSize : ListItem;
     let filteredOptions: OptionType[] | ObservableArray<OptionType> = null;
     let filter: string = null;
-    // DEV_LOG && console.log('options', options);
+    DEV_LOG && console.log('titleProps', titleProps);
 
     // technique for only specific properties to get updated on store change
     $: ({ colorOutline } = $colors);
@@ -147,6 +152,16 @@
     onDestroy(() => {
         blurTextField();
     });
+    function onTextFieldLoaded(event: EventData) {
+        setTimeout(() => {
+            DEV_LOG && console.log('onTextFieldLoaded', autofocus);
+            if (autofocus) {
+                (event.object as TextField).requestFocus();
+            } else {
+                (event.object as TextField).clearFocus();
+            }
+        }, 0);
+    }
     function blurTextField() {
         Utils.dismissSoftInput();
     }
@@ -170,7 +185,6 @@
             }
         }
     }
-    const component = autoSizeListItem ? ListItemAutoSize : ListItem;
 </script>
 
 <gesturerootview columns={containerColumns} rows="auto">
@@ -189,6 +203,7 @@
                     text={filter}
                     variant="outline"
                     verticalTextAlignment="center"
+                    on:loaded={onTextFieldLoaded}
                     on:returnPress={blurTextField}
                     on:textChange={(e) => (filter = e['value'])} />
 
@@ -220,7 +235,9 @@
                     mainCol={1}
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
+                    {subtitleProps}
                     title={item.name}
+                    {titleHolderProps}
                     {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <checkbox
@@ -245,7 +262,9 @@
                     leftIcon={item.icon}
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
+                    {subtitleProps}
                     title={item.name}
+                    {titleHolderProps}
                     {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <mdbutton class="icon-btn" col={1} text={item.rightIcon} variant="text" on:tap={(event) => onRightTap(item, event)} />
@@ -265,7 +284,9 @@
                     rightValue={item.rightValue}
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
+                    {subtitleProps}
                     title={item.name}
+                    {titleHolderProps}
                     {titleProps}
                     on:tap={(event) => onTap(item, event)}>
                     <image borderRadius={4} col={0} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
@@ -283,7 +304,9 @@
                     rightIcon={item.rightIcon}
                     showBottomLine={showBorders}
                     subtitle={item.subtitle}
+                    {subtitleProps}
                     title={item.name}
+                    {titleHolderProps}
                     {titleProps}
                     on:rightTap={(event) => onRightTap(item, event)}
                     on:tap={(event) => onTap(item, event)}>

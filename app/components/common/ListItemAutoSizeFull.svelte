@@ -96,23 +96,28 @@
         verticalAlignment="middle"
         visibility={!!leftIcon ? 'visible' : 'collapse'}
         width={iconFontSize * 2} /> -->
-    <label
-        col={mainCol}
-        color={titleColor || color || colorOnSurface}
-        disableCss={true}
-        fontSize={fontSize * $fontScale}
-        {fontWeight}
-        {html}
-        paddingBottom={addedPadding}
-        paddingTop={addedPadding}
-        {text}
-        textWrap={true}
-        verticalTextAlignment="center"
-        {...$$restProps?.titleProps}
-        use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}>
-        <cspan text={title} />
-        <cspan color={subtitleColor || colorOnSurfaceVariant} fontSize={subtitleFontSize * $fontScale} text={subtitle ? '\n' + subtitle : null} />
-    </label>
+    <stacklayout col={mainCol} paddingBottom={addedPadding} paddingTop={addedPadding} verticalAlignment="center" {...$$restProps?.titleHolderProps}>
+        <label
+            color={titleColor || color || colorOnSurface}
+            disableCss={true}
+            fontSize={fontSize * $fontScale}
+            {fontWeight}
+            {html}
+            text={text || title}
+            textWrap={true}
+            {...$$restProps?.titleProps}
+            use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}>
+        </label>
+        <label
+            color={subtitleColor || colorOnSurfaceVariant}
+            disableCss={true}
+            fontSize={subtitleFontSize * $fontScale}
+            text={subtitle}
+            textWrap={true}
+            use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}
+            {...$$restProps.subtitleProps || {}}>
+        </label>
+    </stacklayout>
 
     <label
         col={1}
