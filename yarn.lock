@@ -8953,7 +8953,7 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@akylas/kiss-orm": "npm:2.1.7"
-    "@akylas/nativescript": "npm:8.8.5"
+    "@akylas/nativescript": "npm:8.8.7"
     "@akylas/nativescript-android-runtime": "npm:8.8.5"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.1.2"
@@ -9744,8 +9744,8 @@ __metadata:
   linkType: hard
 
 "svelte-check@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "svelte-check@npm:4.0.4"
+  version: 4.0.5
+  resolution: "svelte-check@npm:4.0.5"
   dependencies:
     "@jridgewell/trace-mapping": "npm:^0.3.25"
     chokidar: "npm:^4.0.1"
@@ -9757,7 +9757,7 @@ __metadata:
     typescript: ">=5.0.0"
   bin:
     svelte-check: bin/svelte-check
-  checksum: 10/b0b1bc4ce5d4020e3448a5c49d33981655baf68727ed21d39598451cb5a59b82d8b275ab3ab5da79e0a42f6964876f9ee776571eb39991db0b066fe57aa05362
+  checksum: 10/54ec6c4c0697c2a389e66a9fde48c8a332061bb4dce11fb3d3844fb17fcfc6b92fda0343cf127ec243a8b703e61cd80c45eda120aa3bd56cf346128bd76b5205
   languageName: node
   linkType: hard
 
@@ -10818,11 +10818,11 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.2.2":
-  version: 2.5.1
-  resolution: "yaml@npm:2.5.1"
+  version: 2.6.0
+  resolution: "yaml@npm:2.6.0"
   bin:
     yaml: bin.mjs
-  checksum: 10/0eecb679db75ea6a989ad97715a9fa5d946972945aa6aa7d2175bca66c213b5564502ccb1cdd04b1bf816ee38b5c43e4e2fda3ff6f5e09da24dabb51ae92c57d
+  checksum: 10/f4369f667c7626c216ea81b5840fe9b530cdae4cff2d84d166ec1239e54bf332dbfac4a71bf60d121f8e85e175364a4e280a520292269b6cf9d074368309adf9
   languageName: node
   linkType: hard
 

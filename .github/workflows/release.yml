@@ -26,7 +26,7 @@ on:
 
 jobs:
   release-android:
-    if: !cancelled() && (success() || failure()) && github.event.inputs.android == 'true'
+    if: ${{ !cancelled() && (success() || failure()) && github.event.inputs.android == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -167,10 +167,7 @@ jobs:
 
   release-ios:
     needs: [release-android]
-    if: |
-      !cancelled() && (success() || failure()) &&
-      github.event.inputs.ios == 'true' &&
-      (needs.release-android.result == 'success' || needs.release-android.result == 'skipped')
+    if: ${{ !cancelled() && (success() || failure()) && github.event.inputs.ios == 'true' && (needs.release-android.result == 'success' || needs.release-android.result == 'skipped') }} 
     runs-on: macos-latest
     steps:
       - name: Checkout repository
