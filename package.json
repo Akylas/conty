@@ -32,7 +32,8 @@
         "update": "node ./tools/update.mjs",
         "setup": "npm run submodules && npm run patchpackage",
         "submodules": "git submodule update --init",
-        "patchpackage": "./node_modules/.bin/patch-package"
+        "patchpackage": "./node_modules/.bin/patch-package",
+        "set_version":"node tools/scripts/set-version.mjs set-version"
     },
     "dependencies": {
         "@akylas/kiss-orm": "2.1.7",
