@@ -187,8 +187,6 @@ lane :build_flavor do |params|
 
   build_output = build(flavor: flavor, options: options)
 
-  next
-
   if (ENV["GITHUB_ACTIONS"] != 'true')
     # push anything standing
     push_to_git_remote(tags:false)
