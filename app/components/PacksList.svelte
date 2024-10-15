@@ -758,7 +758,7 @@
                         horizontalAlignment="right"
                         size={40}
                         text="mdi-podcast"
-                        verticalAlignment="bottom"
+                        verticalAlignment={viewStyle === 'card' ? 'top' : 'bottom'}
                         visibility={item.pack.extra?.podcast ? 'visible' : 'hidden'}
                         on:tap={() => podcastButton(item)} />
                 </canvasview>
