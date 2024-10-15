@@ -281,7 +281,7 @@
             {#if showNoPack || !currentRemoteSource || loading}
                 <flexlayout flexDirection="column" horizontalAlignment="center" paddingLeft={16} paddingRight={16} row={2} verticalAlignment="center" width="80%" transition:fade={{ duration: 200 }}>
                     <image flexShrink={2} src="res://icon_star" visibility={!loading ? 'visible' : 'collapse'} />
-                    <mdactivityindicator busy={loading} height={$actionBarButtonHeight} verticalAlignment="middle" visibility={loading ? 'visible' : 'collapse'} width={$actionBarButtonHeight} />
+                    <activityindicator busy={loading} height={$actionBarButtonHeight} verticalAlignment="middle" visibility={loading ? 'visible' : 'collapse'} width={$actionBarButtonHeight} />
                     <label
                         color={colorOnSurfaceVariant}
                         flexShrink={0}

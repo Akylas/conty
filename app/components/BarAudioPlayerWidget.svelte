@@ -275,6 +275,6 @@
             <mdbutton class="whiteSmallActionBarButton" col={5} text="mdi-close" variant="text" on:tap={stopPlayback} />
         </gridlayout>
 
-        <mdprogress colSpan={4} color="white" margin={0} maxValue=" 100" padding={0} value={progress} verticalAlignment="bottom" />
+        <progress colSpan={4} color="white" margin={0} maxValue=" 100" padding={0} value={progress} verticalAlignment="bottom" />
     </gridlayout>
 </gridlayout>
