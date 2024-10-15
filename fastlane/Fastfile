@@ -35,7 +35,7 @@ packageJSON = JSON.parse(File.read('../package.json'))
 fastlaneOptions = packageJSON['fastlane'] || Hash.new
 # puts "packageJSON:"  + JSON.generate(packageJSON)
 puts "fastlaneOptions:"  + JSON.generate(fastlaneOptions)
-puts "working directory:"  + Dir.getwd(0)
+puts "working directory:"  + Dir.getwd
 
 app_identifier = ENV["APP_ID"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 app_name = i18nEnJSON['app']['name']
@@ -186,6 +186,8 @@ lane :build_flavor do |params|
   svelteCheck
 
   build_output = build(flavor: flavor, options: options)
+
+  next
 
   if (ENV["GITHUB_ACTIONS"] != 'true')
     # push anything standing
