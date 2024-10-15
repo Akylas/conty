@@ -149,6 +149,13 @@ jobs:
         env: 
           YARN_ENABLE_IMMUTABLE_INSTALLS: false
 
+      - name: Test
+        run: |
+          ls -la
+          ls -la plugin_non_playstore
+          ls -la node_modules/@akylas
+          ls -la node_modules/@akylas/non-playstore
+
       # - name: update Version
       #   if: github.event.inputs.release_type != 'none'
       #   run: |
@@ -165,6 +172,11 @@ jobs:
       - name: publish github
         run: |
           bundle exec fastlane android github --verbose
+      
+      - name: After test
+        run: |
+          ls -la platforms/android
+          cat platforms/android/dependencies.json
 
   release-ios:
     if: ${{ github.event.inputs.ios == 'true' }} 
