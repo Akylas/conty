@@ -186,7 +186,7 @@ lane :build_flavor do |params|
 
   build_output = build(flavor: flavor, options: options)
 
-  # next
+  next
 
   if (ENV["GITHUB_ACTIONS"] != 'true')
     # push anything standing
