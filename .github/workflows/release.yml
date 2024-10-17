@@ -14,256 +14,42 @@ on:
         - minor
         - major
       ios:
-        description: 'Release for iOS'
+        description: 'iOS'
+        required: true
+        default: false
+        type: boolean
+      android:
+        description: 'Android'
         required: true
         default: true
         type: boolean
-      android:
-        description: 'Release for Android'
+      publish:
+        description: "Should we publish?"
         required: true
-        default: true
+        type: boolean
+        default: false
+      sentry:
+        description: "Should we use sentry?"
+        default: false
+        required: true
         type: boolean
 
 jobs:
-  # strategy:
-    # use to ensure both dont run in parallel (to prevent issues with git tags/commit/push)
-    # max-parallel: 1
   release-android:
-    if: ${{ github.event.inputs.android == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          filter: tree:0
-          submodules: true
-      
-      - uses: oleksiyrudenko/gha-git-credentials@v2-latest
-        with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
-          name: Martin Guillon
-          email: dev@akylas.fr
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3' # Not needed with a `.ruby-version` or `.tool-versions`
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          cache: gradle
-          java-version: 17
-          distribution: 'temurin'
-
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r25c
-          local-cache: true
-      
-      
-      - uses: oNaiPs/secrets-to-env-action@v1
-        with:
-          secrets: ${{ toJSON(secrets) }}
-
-      - name: Load .env file
-        uses: xom9ikk/dotenv@v2.3.0
-        with:
-          mode: ci
-          load-mode: strict
-
-      - name: Run shell prepare script
-        if: ${{ hashFiles('scripts/ci.prepare.sh') != '' }}
-        run: |
-          sh scripts/ci.prepare.sh
-      
-      - name: Decode Keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-        run: |
-          mkdir -p "$(dirname "$KEYSTORE_PATH")"
-          echo $KEYSTORE_BASE64 | base64 -d > $KEYSTORE_PATH
-
-      - name: Install NativeScript
-        run: |
-          python3 -m pip install --upgrade pip six
-          npm i -g @akylas/nativescript-cli --ignore-scripts --legacy-peer-deps
-          ns usage-reporting disable
-          ns error-reporting disable
-      
-      - name: install jq
-        run: sudo apt-get install jq
-      
-      - name: Enable CorePack
-        run: |
-          corepack enable 
-          yarn config get globalFolder # the yarn command will ensure the correct yarn version is downloaded and installed
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get globalFolder)"
-
-      - name: Remove package.json resolutions
-        run: echo "`jq 'delpaths([["resolutions"]])' package.json`" > package.json
-
-      - uses: actions/cache@v4
-        name: Handle node_modules Cache
-        id: yarn-node_modules # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-yarn-node_modules-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node_modules-
-
-      - uses: actions/cache@v4
-        if: steps.yarn-node_modules.outputs.cache-hit != 'true'
-        name: Handle Yarn cache
-        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-cache-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install deps
-        if: steps.yarn-node_modules.outputs.cache-hit != 'true'
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn install --silent
-        env: 
-          YARN_ENABLE_IMMUTABLE_INSTALLS: false
-
-      - name: update Version
-        if: github.event.inputs.release_type != 'none'
-        run: |
-          echo "change version to ${{ github.event.inputs.release_type }}"
-          ./node_modules/.bin/set-version android ${{ github.event.inputs.release_type }}
-          ./node_modules/.bin/get-version android version
-
-      - name: publish beta
-        run: |
-          bundle exec fastlane android beta
-      
-      - name: publish github
-        run: |
-          bundle exec fastlane android github
+    uses: Akylas/app-tools/.github/workflows/release_android.yml@main
+    if: github.event.inputs.android == 'true'
+    with:
+      release_type: ${{ github.event.inputs.release_type }}
+      publish: ${{ github.event.inputs.publish }}
+      sentry: ${{ github.event.inputs.sentry }}
+    secrets: inherit
 
   release-ios:
-    if: ${{ github.event.inputs.ios == 'true' }} 
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          filter: tree:0
-          submodules: true
-      
-      - uses: oleksiyrudenko/gha-git-credentials@v2-latest
-        with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
-          name: Martin Guillon
-          email: dev@akylas.fr
-
-      - uses: maxim-lobanov/setup-xcode@v1
-      
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3' # Not needed with a `.ruby-version` or `.tool-versions`
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.12
-      
-      - uses: oNaiPs/secrets-to-env-action@v1
-        with:
-          secrets: ${{ toJSON(secrets) }}
-
-      - name: Load .env file
-        uses: xom9ikk/dotenv@v2.3.0
-        with:
-          mode: ci
-          load-mode: strict
-
-      - name: Install NativeScript
-        run: |
-          python3 -m pip install --upgrade pip six
-          npm i -g @akylas/nativescript-cli --ignore-scripts --legacy-peer-deps
-          ns usage-reporting disable
-          ns error-reporting disable
-      
-      - name: install jq
-        run: brew install jq
-      
-      - name: Enable CorePack
-        run: |
-          corepack enable 
-          yarn config get globalFolder # the yarn command will ensure the correct yarn version is downloaded and installed
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get globalFolder)"
-
-      - name: Remove package.json resolutions
-        run: echo "`jq 'delpaths([["resolutions"]])' package.json`" > package.json
-
-      - uses: actions/cache@v4
-        name: Handle node_modules Cache
-        id: yarn-node_modules # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-yarn-node_modules-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node_modules-
-
-      - uses: actions/cache@v4
-        if: steps.yarn-node_modules.outputs.cache-hit != 'true'
-        name: Handle Yarn cache
-        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-cache-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install deps
-        if: steps.yarn-node_modules.outputs.cache-hit != 'true'
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn install --silent
-        env: 
-          YARN_ENABLE_IMMUTABLE_INSTALLS: false
-
-      - name: update Version
-        if: github.event.inputs.release_type != 'none'
-        run: |
-          echo "change version to ${{ github.event.inputs.release_type }}"
-          ./node_modules/.bin/set-version ios ${{ github.event.inputs.release_type }}
-          ./node_modules/.bin/get-version ios version
-
-      - name: publish
-        run: |
-          bundle exec fastlane ios alpha
+    uses: Akylas/app-tools/.github/workflows/release_ios.yml@main
+    if: github.event.inputs.ios == 'true'
+    with:
+      release_type: ${{ github.event.inputs.release_type }}
+      publish: ${{ github.event.inputs.publish }}
+      sentry: ${{ github.event.inputs.sentry }}
+    secrets: inherit
+    
