@@ -254,7 +254,7 @@
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
         </canvaslabel>
-        <gridlayout col={1} columns="auto,auto,auto,auto,auto,auto" horizontalAlignment="right" orientation="horizontal" verticalAlignment="center">
+        <gridlayout col={1} columns="auto,auto,auto,auto,auto,auto" horizontalAlignment="right" verticalAlignment="center">
             <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={pack?.canHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
             <mdbutton
                 class="whiteSmallActionBarButton"
