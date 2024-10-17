@@ -34,7 +34,7 @@
         "submodules": "git submodule update --init",
         "patchpackage": "./node_modules/.bin/patch-package",
         "set_version": "node tools/scripts/set-version.mjs set-version",
-        "prepare.ios": "PLAY_STORE_BUILD=1 ns prepare ios --release --env.adhoc --log trace"
+        "prepare.ios": "PLAY_STORE_BUILD=1 ns prepare ios --release --env.adhoc"
     },
     "dependencies": {
         "@akylas/kiss-orm": "2.1.11",
