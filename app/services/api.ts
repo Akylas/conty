@@ -1,21 +1,21 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import * as https from '@nativescript-community/https';
 import { l, lc } from '@nativescript-community/l';
-import { Application, ApplicationEventData, File, Folder, Utils, knownFolders, path } from '@nativescript/core';
+import { Application, ApplicationEventData, File, Folder, knownFolders, path } from '@nativescript/core';
 import { connectionType, getConnectionType, startMonitoring, stopMonitoring } from '@nativescript/core/connectivity';
 import { EventData, Observable } from '@nativescript/core/data/observable';
 import { getFile } from '@nativescript/core/http';
 import { throttle, wrapNativeException } from '@nativescript/core/utils';
+import { HTTPError, NoNetworkError, TimeoutError } from '@shared/utils/error';
+import { showError } from '@shared/utils/showError';
 import dayjs from 'dayjs';
 import { filesize } from 'filesize';
 import { RemoteContent } from '~/models/Pack';
-import { hashCode, unzip } from '~/utils';
+import * as ProgressNotifications from '~/services/ProgressNotifications';
+import { hashCode } from '~/utils';
 import { ANDROID_CONTENT } from '~/utils/constants';
-import { HTTPError, NoNetworkError, TimeoutError } from '@shared/utils/error';
-import { showError } from '@shared/utils/showError';
 import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import { documentsService } from './documents';
-import * as ProgressNotifications from '~/services/ProgressNotifications';
 import { importService } from './importservice';
 
 export type HTTPSOptions = https.HttpsRequestOptions;
@@ -266,7 +266,7 @@ export async function getHEAD<T>(arg: any) {
     return (await https.request<T>(typeof arg === 'string' ? { url: arg, method: 'HEAD' } : arg)).headers;
 }
 
-export async function downloadStories(story: RemoteContent) {
+export async function downloadStories(story: RemoteContent, folder?: string) {
     let progressNotificationId;
     let destinationFilePath;
     try {
@@ -391,7 +391,8 @@ export async function downloadStories(story: RemoteContent) {
                     description: story.description,
                     createdDate: dayjs(story.created_at).valueOf(),
                     modifiedDate: dayjs(story.updated_at).valueOf()
-                }
+                },
+                folder
             });
         }
     } catch (error) {

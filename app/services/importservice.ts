@@ -186,11 +186,12 @@ export class ImportService extends Observable {
         this.ensureWorker();
         await this.sendMessageToWorker('import_data', undefined, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
-    async importContentFromFiles(files: string[]) {
+    async importContentFromFiles(files: string[], folder?: string) {
+        DEV_LOG && console.log('importContentFromFiles', files, folder);
         this.ensureWorker();
-        await this.sendMessageToWorker('import_from_files', files, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_from_files', { files, folder }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
-    async importContentFromFile(data: { filePath: string; id?: string; extraData? }) {
+    async importContentFromFile(data: { filePath: string; id?: string; extraData?; folder?: string }) {
         DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
         this.ensureWorker();
         await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });

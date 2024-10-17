@@ -1,13 +1,39 @@
 import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
+import { isObject, isString } from '@nativescript/core/utils';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
-import { IPack, LuniiPack, Pack, Tag, TelmiPack } from '~/models/Pack';
-import { EVENT_PACK_ADDED, EVENT_PACK_DELETED } from '~/utils/constants';
-import NSQLDatabase from './NSQLDatabase';
+import { IPack, IPackFolder, LuniiPack, Pack, PackFolder, Tag, TelmiPack } from '~/models/Pack';
 import { getRealPath } from '~/utils';
-import { isObject, isString } from '@nativescript/core/utils';
+import { EVENT_PACK_ADDED } from '~/utils/constants';
+import NSQLDatabase from './NSQLDatabase';
 
-const sql = SqlQuery.createFromTemplateString;
+export const sql = SqlQuery.createFromTemplateString;
+export const FOLDERS_SEPARATOR = '&&&';
+export const FOLDER_COLOR_SEPARATOR = '&&';
+
+export interface PackAddedEventData extends EventData {
+    pack: Pack;
+    folder?: PackFolder;
+}
+export interface PackUpdatedEventData extends EventData {
+    pack: Pack;
+    updateModifiedDate: boolean;
+}
+export interface PackDeletedEventData extends EventData {
+    packIds: string[];
+}
+
+export interface PackMovedFolderEventData extends EventData {
+    object: Pack;
+    folder?: PackFolder;
+    oldFolder?: PackFolder;
+}
+
+export interface FolderUpdatedEventData extends EventData {
+    folder: PackFolder;
+}
+
+export type DocumentEvents = PackAddedEventData | PackUpdatedEventData | PackDeletedEventData;
 
 function cleanHTML(str: string) {
     return str?.replaceAll('&', '&amp;');
@@ -104,11 +130,46 @@ export class TagRepository extends BaseRepository<Tag, Tag> {
     }
 }
 
+export class FolderRepository extends BaseRepository<PackFolder, IPackFolder> {
+    constructor(database: NSQLDatabase) {
+        super({
+            database,
+            table: 'Folder',
+            primaryKey: 'id',
+            model: PackFolder
+        });
+    }
+
+    async createTables() {
+        await this.database.query(sql`
+        CREATE TABLE IF NOT EXISTS "Folder" (
+            id BIGINT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            color TEXT
+        );
+        `);
+        return this.applyMigrations();
+    }
+
+    findFolders() {
+        return this.search({
+            select: sql`f.*, 
+COUNT(pf.pack_id) AS count`,
+            from: sql`Folder f`,
+            postfix: sql`
+LEFT JOIN PacksFolders pf ON f.id = pf.folder_id
+LEFT JOIN Pack p ON pf.pack_id = p.id
+GROUP BY f.id;`
+        });
+    }
+}
+
 export class PackRepository extends BaseRepository<Pack, IPack> {
     constructor(
         private documentsService: DocumentsService,
         database: NSQLDatabase,
-        public tagsRepository: TagRepository
+        public tagsRepository: TagRepository,
+        public foldersRepository: FolderRepository
     ) {
         super({
             database,
@@ -148,7 +209,16 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
             FOREIGN KEY(pack_id) REFERENCES Pack(id) ON DELETE CASCADE,
             FOREIGN KEY(tag_id) REFERENCES Tag(id) ON DELETE CASCADE
         );
-    `)
+    `),
+            this.database.query(sql`
+CREATE TABLE IF NOT EXISTS "PacksFolders" (
+    pack_id TEXT,
+    folder_id TEXT,
+    PRIMARY KEY(pack_id, folder_id),
+    FOREIGN KEY(pack_id) REFERENCES Document(id) ON DELETE CASCADE,
+    FOREIGN KEY(folder_id) REFERENCES Folder(id) ON DELETE CASCADE
+);
+`)
         ]);
         return this.applyMigrations();
     }
@@ -162,9 +232,9 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
     });
 
     async createPack(data: Partial<Pack>) {
-        const { extra, id, description, ...others } = data;
+        const { description, extra, folders, id, ...others } = data;
         // pack.createdDate = pack.modifiedDate = Date.now();
-        DEV_LOG && console.log('createPack', id, JSON.stringify(others), extra);
+        DEV_LOG && console.log('createPack', id, folders, JSON.stringify(others), extra);
         const pack = await this.create(
             cleanUndefined({
                 id: id || Date.now() + '',
@@ -174,7 +244,13 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
                 // colors: Array.isArray(data.colors) ? JSON.stringify(data.colors) : data.colors
             })
         );
-        this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack } as PackAddedEventData);
+        if (folders) {
+            for (let index = 0; index < folders.length; index++) {
+                await pack.setFolder(folders[index], false);
+            }
+            pack.folders = folders;
+        }
+        this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack, folder: folders ? { name: folders[0] } : undefined } as PackAddedEventData);
 
         return pack;
     }
@@ -252,12 +328,51 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         return result;
     }
 
+    async findPacks({ filter, folder, omitThoseWithFolders = false, order = 'id DESC' }: { filter?: string; folder?: PackFolder; omitThoseWithFolders?: boolean; order?: string }) {
+        const args = {
+            select: new SqlQuery([
+                `p.*,
+            group_concat(f.name || CASE WHEN f.color IS NOT NULL THEN '${FOLDER_COLOR_SEPARATOR}' || f.color ELSE '' END, '${FOLDERS_SEPARATOR}') AS folders`
+            ]),
+            from: sql`Pack p`,
+            orderBy: new SqlQuery([`p.${order}`]),
+            groupBy: sql`p.id`
+        } as any;
+
+        const foldersPostfix = `LEFT JOIN 
+    PacksFolders pf ON p.id = pf.pack_id
+LEFT JOIN 
+    Folder f ON pf.folder_id = f.id`;
+        if (filter?.length || folder) {
+            if (filter?.length) {
+                const where = `p.name LIKE '%${filter}%' OR p.description LIKE '%${filter}%'`;
+                if (folder) {
+                    // args.postfix = sql` LEFT JOIN Page p ON p.pack_id = d.id `;
+                    args.where = new SqlQuery([`pf.folder_id = ${folder.id} AND (${where})`]);
+                } else {
+                    // args.postfix = sql` LEFT JOIN Page p ON p.pack_id = d.id `;
+                    args.where = new SqlQuery([where]);
+                }
+            } else {
+                args.where = new SqlQuery([`pf.folder_id = ${folder.id}`]);
+            }
+            args.postfix = new SqlQuery((args.postfix ? [args.postfix] : []).concat([foldersPostfix]));
+        } else if (omitThoseWithFolders) {
+            args.select = sql`p.*`;
+            args.from = sql`Pack p`;
+            args.where = sql`p.id NOT IN(SELECT pack_id FROM PacksFolders)`;
+            // args.postfix = foldersPostfix;
+        }
+        return this.search(args);
+    }
+
     async createModelFromAttributes(attributes): Promise<Pack> {
-        const { id, type, thumbnail, compressed, extra, ...others } = attributes;
+        const { compressed, extra, folders, id, thumbnail, type, ...others } = attributes;
         const pack = type === 'telmi' ? new TelmiPack(id) : new LuniiPack(id);
         Object.assign(pack, {
             id,
             type,
+            folders: typeof folders === 'string' ? folders.split('#$%') : folders,
             extra: isString(extra) ? JSON.parse(extra) : extra,
             compressed,
             ...others
@@ -267,20 +382,6 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
         return pack;
     }
 }
-
-export interface PackAddedEventData extends EventData {
-    pack: Pack;
-}
-export interface PackUpdatedEventData extends EventData {
-    pack: Pack;
-    updateModifiedDate: boolean;
-}
-export interface PackDeletedEventData extends EventData {
-    packIds: string[];
-}
-
-export type DocumentEvents = PackAddedEventData | PackUpdatedEventData | PackDeletedEventData;
-
 let ID = 0;
 export class DocumentsService extends Observable {
     imageCache: ImageCache;
@@ -296,6 +397,7 @@ export class DocumentsService extends Observable {
     db: NSQLDatabase;
     packRepository: PackRepository;
     tagRepository: TagRepository;
+    folderRepository: FolderRepository;
 
     constructor(withCache = true) {
         super();
@@ -346,9 +448,11 @@ export class DocumentsService extends Observable {
         }
 
         this.tagRepository = new TagRepository(this.db);
-        this.packRepository = new PackRepository(this, this.db, this.tagRepository);
+        this.folderRepository = new FolderRepository(this.db);
+        this.packRepository = new PackRepository(this, this.db, this.tagRepository, this.folderRepository);
         await this.packRepository.createTables();
         await this.tagRepository.createTables();
+        await this.folderRepository.createTables();
 
         this.notify({ eventName: 'started' });
         this.started = true;
@@ -366,15 +470,16 @@ export class DocumentsService extends Observable {
         return false;
     }
 
-    async importStory(id: string, compressed: boolean, data: Partial<Pack> = {}) {
-        DEV_LOG && console.log('importStory ', id, compressed, JSON.stringify(data));
+    async importStory(id: string, compressed: boolean, data: Partial<Pack> = {}, folder?: string) {
+        DEV_LOG && console.log('importStory ', id, compressed, folder, JSON.stringify(data));
         return this.packRepository.createPack({
             id,
             compressed: compressed ? 1 : 0,
             importedDate: Date.now(),
             // title: storyJSON.title,
             ...data,
-            thumbnail: data.thumbnail || 'thumbnail.png'
+            thumbnail: data.thumbnail || 'thumbnail.png',
+            ...(folder ? { folders: [folder] } : {})
         });
     }
 }

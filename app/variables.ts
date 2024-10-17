@@ -4,7 +4,7 @@ import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale
 import { get, writable } from 'svelte/store';
 import { ColorThemes, getRealTheme, theme } from './helpers/theme';
 import { SDK_VERSION, layout } from '@nativescript/core/utils';
-import { DEFAULT_COLOR_THEME, DEFAULT_PODCAST_MODE, SETTINGS_COLOR_THEME, SETTINGS_PODCAST_MODE } from './utils/constants';
+import { DEFAULT_COLOR_THEME, DEFAULT_DRAW_FOLDERS_BACKGROUND, DEFAULT_PODCAST_MODE, SETTINGS_COLOR_THEME, SETTINGS_DRAW_FOLDERS_BACKGROUND, SETTINGS_PODCAST_MODE } from './utils/constants';
 import { start as startThemeHelper, useDynamicColors } from '~/helpers/theme';
 import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 import { prefs } from './services/preferences';
@@ -69,6 +69,14 @@ prefs.on(`key:${SETTINGS_PODCAST_MODE}`, () => {
     globalObservable.notify({ eventName: SETTINGS_PODCAST_MODE, data: get(podcastMode) });
 });
 export const onPodcastModeChanged = createGlobalEventListener(SETTINGS_PODCAST_MODE);
+
+export const folderBackgroundColor = writable(DEFAULT_DRAW_FOLDERS_BACKGROUND);
+prefs.on(`key:${SETTINGS_DRAW_FOLDERS_BACKGROUND}`, () => {
+    const newValue = ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND);
+    folderBackgroundColor.set(newValue);
+    globalObservable.notify({ eventName: SETTINGS_DRAW_FOLDERS_BACKGROUND, data: newValue });
+});
+export const onFolderBackgroundColorChanged = createGlobalEventListener(SETTINGS_DRAW_FOLDERS_BACKGROUND);
 
 function updateSystemFontScale(value) {
     fontScale.set(value);

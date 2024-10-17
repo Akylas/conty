@@ -1,9 +1,9 @@
 import { lc } from '@nativescript-community/l';
 import { Folder, ImageSource, Observable, Utils, path } from '@nativescript/core';
 import { isString } from '@nativescript/core/utils';
-import { DocumentsService, PackUpdatedEventData, getFileTextContentFromPackFile } from '~/services/documents';
+import { DocumentsService, FOLDER_COLOR_SEPARATOR, FolderUpdatedEventData, PackMovedFolderEventData, PackUpdatedEventData, getFileTextContentFromPackFile, sql } from '~/services/documents';
 import { getAudioDuration } from '~/utils';
-import { EVENT_PACK_UPDATED } from '~/utils/constants';
+import { EVENT_FOLDER_UPDATED, EVENT_PACK_MOVED_FOLDER, EVENT_PACK_UPDATED } from '~/utils/constants';
 
 export const LUNII_DATA_FILE = 'story.json';
 export const TELMI_DATA_FILE = 'metadata.json';
@@ -32,6 +32,28 @@ export interface RemoteContent {
 export class Tag {
     public readonly id!: string;
     public title: string;
+}
+
+export interface IPackFolder {
+    id: string;
+    name: string;
+    color?: string;
+    size?: number;
+    count?: number;
+}
+export class PackFolder {
+    public readonly id!: string;
+    public name: string;
+    public color?: string;
+    size?: number;
+    count?: number;
+    async save(data: Partial<IPackFolder> = {}, notify = true) {
+        await documentsService.folderRepository.update(this, data);
+        Object.assign(this, data);
+        if (notify) {
+            documentsService.notify({ eventName: EVENT_FOLDER_UPDATED, object: documentsService, folder: this } as FolderUpdatedEventData);
+        }
+    }
 }
 export enum StageType {
     STAGE = 'stage',
@@ -235,6 +257,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     modifiedDate: number;
     title?: string;
     tags: string[];
+    folders: string[];
     thumbnail?: string;
     category?: string;
     type?: string;
@@ -406,6 +429,48 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
         return JSON.parse(this.toString());
     }
 
+    async setFolder(folderAndColorName?: string, notify = true) {
+        console.log('setFolder', folderAndColorName, this.folders);
+        const { folderRepository } = documentsService;
+        const { db } = documentsService;
+        let oldFolder;
+        if (this.folders?.length) {
+            const [name, color] = this.folders[0].split(FOLDER_COLOR_SEPARATOR);
+            oldFolder = { name, color };
+        }
+        let folder;
+        const [folderName, folderColor] = (folderAndColorName || '').split(FOLDER_COLOR_SEPARATOR);
+        if (folderName?.length) {
+            try {
+                folder = (await folderRepository.search({ where: sql`name=${folderName}` }))[0];
+            } catch (error) {
+                console.error('setFolder', error, error.stack);
+            }
+            if (!folder) {
+                folder = await folderRepository.create({ id: Date.now() + '', name: folderName, ...(folderColor ? { color: folderColor } : {}) });
+            }
+        }
+
+        if (folderName?.length) {
+            await db.query(sql` DELETE FROM PacksFolders where pack_id=${this.id} AND folder_id IS NOT ${folder.id}`);
+            const relation = await db.query(sql` SELECT * FROM PacksFolders WHERE "pack_id" = ${this.id} AND "folder_id" = ${folder.id}`);
+            if (relation.length === 0) {
+                await db.query(sql` INSERT INTO PacksFolders ( pack_id, folder_id ) VALUES(${this.id}, ${folder.id})`);
+            }
+            this.folders = [folderName];
+        } else {
+            await db.query(sql` DELETE FROM PacksFolders where pack_id=${this.id}`);
+            delete this.folders;
+        }
+        if (notify) {
+            documentsService.notify({ eventName: EVENT_PACK_MOVED_FOLDER, object: this, folder, oldFolder } as PackMovedFolderEventData);
+        }
+    }
+
+    async removeFromFolder() {
+        await documentsService.db.query(sql` DELETE FROM PacksFolders where pack_id=${this.id}`);
+    }
+
     isMissingHome(s: S): boolean {
         return this.canHome(s) && !this.hasHomeTransition(s);
     }
@@ -492,7 +557,7 @@ export class LuniiPack extends Pack<LuniiStage, LuniiAction> {
         }
     }
     static fromJSON(jsonObj: IPack) {
-        const { id, extra, ...others } = jsonObj;
+        const { extra, id, ...others } = jsonObj;
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
         const doc = new LuniiPack(id);
         Object.assign(doc, {
@@ -734,7 +799,7 @@ export class TelmiPack extends Pack<TelmiStage, TelmiAction> {
         return this.getImage(s?.image) || this.getThumbnail();
     }
     static fromJSON(jsonObj: IPack) {
-        const { id, extra, ...others } = jsonObj;
+        const { extra, id, ...others } = jsonObj;
         // DEV_LOG && console.log('OCRDocument', 'fromJSON', JSON.stringify(jsonObj));
         const doc = new TelmiPack(jsonObj.id);
         Object.assign(doc, {

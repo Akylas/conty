@@ -1,22 +1,9 @@
 import { lc } from '@nativescript-community/l';
 import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-import { MDCAlertControlerOptions, alert } from '@nativescript-community/ui-material-dialogs';
+import { MDCAlertControlerOptions, alert, confirm } from '@nativescript-community/ui-material-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import {
-    AlertOptions,
-    Animation,
-    AnimationDefinition,
-    Application,
-    ApplicationSettings,
-    GridLayout,
-    ModalTransition,
-    Screen,
-    SharedTransition,
-    SharedTransitionConfig,
-    Utils,
-    View
-} from '@nativescript/core';
+import { AlertOptions, Animation, AnimationDefinition, Application, GridLayout, ModalTransition, Screen, SharedTransition, SharedTransitionConfig, Utils, View } from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
 import { showError } from '@shared/utils/showError';
 import { navigate, showModal } from '@shared/utils/svelte/ui';
@@ -28,7 +15,7 @@ import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
 import BottomSnack from '~/components/common/BottomSnack.svelte';
 import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
-import { Pack, Story } from '~/models/Pack';
+import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
@@ -86,14 +73,14 @@ export async function showBottomsheetOptionSelect<T>(props?: ComponentProps<Opti
 }
 
 export async function showPopoverMenu<T = any>({
-    options,
     anchor,
+    closeOnClose = true,
+    horizPos,
     onClose,
     onLongPress,
+    options,
     props,
-    horizPos,
-    vertPos,
-    closeOnClose = true
+    vertPos
 }: { options; anchor; onClose?; onLongPress?; props?; closeOnClose? } & Partial<PopoverOptions>) {
     const { colorSurfaceContainer } = get(colors);
     const OptionSelect = (await import('~/components/common/OptionSelect.svelte')).default;
@@ -148,20 +135,20 @@ export function createView<T extends View>(claz: new () => T, props: Partial<Pic
     return view;
 }
 export async function showSliderPopover({
-    debounceDuration = 100,
-    min = 0,
-    max = 100,
-    step = 1,
-    horizPos = HorizontalPosition.ALIGN_LEFT,
     anchor,
-    vertPos = VerticalPosition.CENTER,
-    width = 0.8 * screenWidthDips,
-    value,
-    onChange,
-    title,
+    debounceDuration = 100,
+    formatter,
+    horizPos = HorizontalPosition.ALIGN_LEFT,
     icon,
+    max = 100,
+    min = 0,
+    onChange,
+    step = 1,
+    title,
+    value,
     valueFormatter,
-    formatter
+    vertPos = VerticalPosition.CENTER,
+    width = 0.8 * screenWidthDips
 }: {
     title?;
     debounceDuration?;
@@ -434,6 +421,37 @@ export async function playStory(story: Story, showFullscreen = true, updatePlayl
     if (showFullscreen && storyHandler.playingStory) {
         showFullscreenPlayer();
     }
+}
+
+export async function goToFolderView(folder: PackFolder, useTransition = true) {
+    const page = (await import('~/components/PacksList.svelte')).default;
+    return navigate({
+        page,
+        props: {
+            folder
+        }
+    });
+}
+export async function promptForFolder(defaultGroup: string, groups?: PackFolder[]): Promise<string> {
+    const TagView = (await import('~/components/common/FolderView.svelte')).default;
+    const componentInstanceInfo = resolveComponentElement(TagView, { groups, defaultGroup });
+    const modalView: View = componentInstanceInfo.element.nativeView;
+    const result = await confirm({
+        title: lc('move_folder'),
+        message: lc('move_folder_desc'),
+        view: modalView,
+        okButtonText: lc('move'),
+        cancelButtonText: lc('cancel')
+    });
+    const currentFolderText = componentInstanceInfo.viewInstance['currentFolderText'];
+    try {
+        modalView._tearDownUI();
+        componentInstanceInfo.viewInstance.$destroy(); // don't let an exception in destroy kill the promise callback
+    } catch (error) {}
+    if (result) {
+        return currentFolderText || 'none';
+    }
+    return null;
 }
 
 Application.on('exit', () => {

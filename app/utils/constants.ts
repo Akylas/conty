@@ -14,21 +14,24 @@ export const SETTINGS_INVERSE_IMAGES = 'inverse_images';
 export const SETTINGS_PODCAST_MODE = 'podcast_mode';
 export const SETTINGS_CURRENT_PLAYING = 'current_playing';
 export const SETTINGS_SHOW_SHUTDOWN_IN_NOTIF = 'shutdown_notif_button';
+export const SETTINGS_DRAW_FOLDERS_BACKGROUND = 'draw_folder_background';
 
 export const DEFAULT_COLOR_THEME = 'default';
 export const DEFAULT_PODCAST_MODE = false;
+export const DEFAULT_DRAW_FOLDERS_BACKGROUND = false;
 
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';
 export const EVENT_PACK_DELETED = 'packDeleted';
 export const EVENT_IMPORT_STATE = 'importState';
 export const EVENT_STATE = 'state';
+export const EVENT_PACK_MOVED_FOLDER = 'packMovedFolder';
+export const EVENT_FOLDER_UPDATED = 'folderUpdated';
 
 export const BOTTOM_BUTTON_OFFSET = 100;
 export const BAR_AUDIO_PLAYER_HEIGHT = 79;
 
-
-const COLOR_MATRIX_FACTOR = __IOS__ ? 1 : 255
+const COLOR_MATRIX_FACTOR = __IOS__ ? 1 : 255;
 export const IMAGE_COLORMATRIX = createColorMatrix('#ffffff');
 export const COLORMATRIX_BLACK_TRANSPARENT = [
     1,

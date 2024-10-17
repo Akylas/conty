@@ -236,8 +236,8 @@ export default class ImportWorker extends Observable {
     async importFromCurrentDataFolderQueue() {
         return this.queue.add(() => this.importFromCurrentDataFolderInternal());
     }
-    async importFromFilesQueue(files: string[]) {
-        return this.queue.add(() => this.importFromFilesInternal(files));
+    async importFromFilesQueue({ files, folder }: { files: string[]; folder?: string }) {
+        return this.queue.add(() => this.importFromFilesInternal({ files, folder }));
     }
     async importFromFileQueue(data) {
         return this.queue.add(() => this.importFromFileInternal(data));
@@ -325,7 +325,7 @@ export default class ImportWorker extends Observable {
                                 continue;
                             }
                         }
-                        await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed, extraData ? { extra: extraData } : undefined);
+                        await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed, undefined, extraData ? { extra: extraData } : undefined);
                     } else if (compressed && !supportsCompressedData) {
                         // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
                         const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
@@ -362,7 +362,7 @@ export default class ImportWorker extends Observable {
         }
     }
 
-    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, extraData?: Partial<Pack>) {
+    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, folder?: string, extraData?: Partial<Pack>) {
         // let folder = Folder.fromPath(destinationFolderPath);
         let folderPath = destinationFolderPath;
         if (extraData?.extra?.subPaths) {
@@ -413,25 +413,30 @@ export default class ImportWorker extends Observable {
             DEV_LOG && console.log('palette', `"${colors}"`, Date.now() - start, 'ms');
         }
 
-        const { title, description, format, age, version, subtitle, keywords, image, thumbnail, stageNodes, actionNodes, ...extra } = storyJSON;
-        await documentsService.importStory(id, supportsCompressedData, {
-            size: getFileOrFolderSize(folderPath),
-            type: isTelmi ? 'telmi' : 'studio',
-            title,
-            description,
-            format,
-            age,
-            version,
-            subtitle,
-            keywords,
-            thumbnail: thumbnail || image,
-            ...(extraData ?? {}),
-            extra: {
-                colors,
-                ...extra,
-                ...(extraData?.extra || {})
-            }
-        });
+        const { actionNodes, age, description, format, image, keywords, stageNodes, subtitle, thumbnail, title, version, ...extra } = storyJSON;
+        await documentsService.importStory(
+            id,
+            supportsCompressedData,
+            {
+                size: getFileOrFolderSize(folderPath),
+                type: isTelmi ? 'telmi' : 'studio',
+                title,
+                description,
+                format,
+                age,
+                version,
+                subtitle,
+                keywords,
+                thumbnail: thumbnail || image,
+                ...(extraData ?? {}),
+                extra: {
+                    colors,
+                    ...extra,
+                    ...(extraData?.extra || {})
+                }
+            },
+            folder
+        );
     }
 
     async getUnzippedStorySubPaths(destinationFolderPath) {
@@ -455,12 +460,12 @@ export default class ImportWorker extends Observable {
         // }
     }
 
-    async importFromFileInternal(data: { filePath: string; id: string; extraData?: Partial<Pack> }) {
+    async importFromFileInternal({ extraData, filePath, folder, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folder?: string }) {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
-            const inputFilePath = data.filePath;
+            const inputFilePath = filePath;
             let destinationFolderPath = inputFilePath;
-            const id = data.id || Date.now() + '';
+            id = id || Date.now() + '';
             destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
             if (!supportsCompressedData) {
                 destinationFolderPath = this.dataFolder.getFolder(id, true).path;
@@ -478,19 +483,19 @@ export default class ImportWorker extends Observable {
                 // }
                 const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
                 if (subPaths) {
-                    data.extraData = data.extraData || {};
-                    data.extraData.extra = data.extraData.extra || {};
-                    data.extraData.extra.subPaths = subPaths;
+                    extraData = extraData || {};
+                    extraData.extra = extraData.extra || {};
+                    extraData.extra.subPaths = subPaths;
                 }
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
             }
-            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, data.extraData);
+            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folder, extraData);
         } catch (error) {
             this.sendError(error);
         }
     }
-    async importFromFilesInternal(files: string[]) {
+    async importFromFilesInternal({ files, folder }: { files: string[]; folder?: string }) {
         DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
@@ -521,7 +526,7 @@ export default class ImportWorker extends Observable {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
 
-                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, extraData ? { extra: extraData } : undefined);
+                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folder, extraData ? { extra: extraData } : undefined);
             }
         } catch (error) {
             this.sendError(error);

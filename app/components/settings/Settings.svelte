@@ -21,9 +21,11 @@
     import { documentsService } from '~/services/documents';
     import { getRealPath, restartApp } from '~/utils';
     import {
+        DEFAULT_DRAW_FOLDERS_BACKGROUND,
         DEFAULT_INVERSE_IMAGES,
         DEFAULT_PODCAST_MODE,
         DEFAULT_SHOW_SHUTDOWN_IN_NOTIF,
+        SETTINGS_DRAW_FOLDERS_BACKGROUND,
         SETTINGS_INVERSE_IMAGES,
         SETTINGS_LANGUAGE,
         SETTINGS_PODCAST_MODE,
@@ -44,8 +46,8 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorPrimary, colorOutlineVariant, colorOnSurface, colorOnSurfaceVariant } = $colors;
-    $: ({ colorPrimary, colorOutlineVariant, colorOnSurface, colorOnSurfaceVariant } = $colors);
+    let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors;
+    $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
     $: ({ bottom: windowInsetBottom } = $windowInset);
 
     let collectionView: NativeViewElementNode<CollectionView>;
@@ -266,6 +268,15 @@
                           ]
                         : ([] as any)
                 )
+                .concat([
+                    {
+                        type: 'switch',
+                        id: SETTINGS_DRAW_FOLDERS_BACKGROUND,
+                        title: lc('folder_color_as_background'),
+                        description: lc('folder_color_as_background_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND)
+                    }
+                ] as any)
                 .concat([
                     {
                         id: 'third_party',
