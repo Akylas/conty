@@ -1,0 +1,5 @@
+Features:
+- folder support. To add documents to folders, select them then choose `move to folder` through the ⁝ menu.
+
+Bug fixes:
+- card view layout fix
