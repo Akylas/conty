@@ -17,7 +17,7 @@ import { showError } from '@shared/utils/showError';
 import { navigate } from '@shared/utils/svelte/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
 import { getBGServiceInstance } from '~/services/BgService';
-import PacksList from './components/App.svelte';
+import PacksList from '~/components/App.svelte';
 import { setDocumentsService } from './models/Pack';
 import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { networkService } from './services/api';
