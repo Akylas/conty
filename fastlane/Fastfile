@@ -393,8 +393,8 @@ platform :ios do
         }
       )
     else
-      build_output = params[:build_output]
-      puts "upload_to_testflight: #{build_output[:api_key]}"
+      upload_store = params[:build_output]
+      puts "build build_output: #{JSON.pretty_generate(build_output).gsub(":", " =>")}"
       upload_to_testflight(
           changelog:params[:changelog],
           distribute_external: true,
