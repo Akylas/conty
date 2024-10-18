@@ -12,6 +12,9 @@ def truncate(string, length = 20)
 end
 def writeFileIfNotExist(filePath, string)
   if !File.exist?(filePath) 
+    if (Dir.exist?(File.basename(filePath)) == false)
+      FileUtils.mkdir File.basename(filePath)
+    end
     File.write(filePath, string)
   end
 end
@@ -266,7 +269,7 @@ lane :build_flavor do |params|
             name: "#{app_name}(**#{platform}**): v#{version} Build #{versionCode}",
             tag_name: tag,
             description: changelog,
-            upload_assets: Dir.glob(File.join(File.expand_path, "*.ipa"))
+            upload_assets: Dir.glob(File.join(dist_path, "*.ipa"))
           )
         end
         upload_store(changelog:changelog, version: version, versionCode: versionCode, flavor:flavor, options:options, build_output:build_output)
