@@ -48,7 +48,7 @@ app_name = i18nEnJSON['app']['name']
 app_resources_path = ENV["APP_RESOURCES"] || "App_Resources" # based on nativescript.config.js !!!
 app_build_path = ENV["APP_BUILD_PATH"] || "platforms" # based on nativescript.config.js !!!
 metadata_path = ENV["SUPPLY_METADATA_PATH"]  || "metadata"
-metadata_path_realpath = File.join(project_root_path, metadata_path)
+metadata_path_realpath = File.join(project_root_path, 'fastlane', metadata_path)
 
 tag_prefix = ENV["TAG_PREFIX"] || ""
 ignore_app_scope = ENV["IGNORE_APP_SCOPE"]
@@ -239,7 +239,7 @@ lane :build_flavor do |params|
       set_github_release(
         repository_name: repository_name,
         api_token: ENV["GH_TOKEN"],
-        name: "#{app_name}(**#{platform}**): v#{version} Build #{versionCode}",
+        name: "#{app_name}(#{platform}): v#{version} Build #{versionCode}",
         tag_name: tag,
         description: changelog,
         upload_assets: Dir.glob(File.join(dist_path, "*.apk"))
@@ -261,18 +261,18 @@ lane :build_flavor do |params|
     #     )
     #   end
       when 'alpha','beta','production'
+        upload_store(changelog:changelog, version: version, versionCode: versionCode, flavor:flavor, options:options, build_output:build_output)
         if (platform == 'ios')
           # we now github create releases on iOS for european users
           set_github_release(
             repository_name: repository_name,
             api_token: ENV["GH_TOKEN"],
-            name: "#{app_name}(**#{platform}**): v#{version} Build #{versionCode}",
+            name: "#{app_name}(#{platform}): v#{version} Build #{versionCode}",
             tag_name: tag,
             description: changelog,
             upload_assets: Dir.glob(File.join(dist_path, "*.ipa"))
           )
         end
-        upload_store(changelog:changelog, version: version, versionCode: versionCode, flavor:flavor, options:options, build_output:build_output)
     end
     if (options[:create_tag] != false)
       git_pull
@@ -393,6 +393,7 @@ platform :ios do
       )
     else
       build_output = params[:build_output]
+      puts "upload_to_testflight: #{build_output[:api_key]}"
       upload_to_testflight(
           changelog:params[:changelog],
           distribute_external: true,
