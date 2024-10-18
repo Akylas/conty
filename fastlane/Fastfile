@@ -28,7 +28,6 @@ fastlane_version '2.135.2'
 opt_out_usage
 
 $ios_scheme = ENV["PROJECT_NAME"] || File.basename(File.expand_path('..')).gsub(/[^a-zA-Z0-9]/, "")
-sentry_cli_path = File.join(project_root_path, 'node_modules/.bin/sentry-cli')
 
 i18nEnJSON = JSON.parse(File.read('../app/i18n/en.json'))
 packageJSON = JSON.parse(File.read('../package.json'))
@@ -38,6 +37,8 @@ puts "fastlaneOptions:"  + JSON.generate(fastlaneOptions)
 puts "working directory:"  + Dir.getwd
 
 project_root_path = Pathname.new("../").realpath.to_s
+
+sentry_cli_path = File.join(project_root_path, 'node_modules/.bin/sentry-cli')
 
 app_identifier = ENV["APP_ID"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 app_name = i18nEnJSON['app']['name']
