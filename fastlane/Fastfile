@@ -28,7 +28,7 @@ fastlane_version '2.135.2'
 opt_out_usage
 
 $ios_scheme = ENV["PROJECT_NAME"] || File.basename(File.expand_path('..')).gsub(/[^a-zA-Z0-9]/, "")
-sentry_cli_path = '../node_modules/.bin/sentry-cli'
+sentry_cli_path = File.join(project_root_path, 'node_modules/.bin/sentry-cli')
 
 i18nEnJSON = JSON.parse(File.read('../app/i18n/en.json'))
 packageJSON = JSON.parse(File.read('../package.json'))
