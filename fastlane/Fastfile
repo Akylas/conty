@@ -393,8 +393,8 @@ platform :ios do
         }
       )
     else
-      upload_store = params[:build_output]
-      puts "build build_output: #{JSON.pretty_generate(build_output).gsub(":", " =>")}"
+      build_output = params[:build_output]
+      puts "build upload_to_testflight: #{JSON.pretty_generate(build_output).gsub(":", " =>")}"
       upload_to_testflight(
           changelog:params[:changelog],
           distribute_external: true,
