@@ -27,7 +27,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=85d60e&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=c232c9&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.19.3"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -81,7 +81,7 @@ __metadata:
     typescript: "npm:5.6.3"
     typescript-eslint: "npm:^8.9.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/08b1f1d0750a7abae99d5031366606a5b7d2862551e9ad404d294355880987d990a4cd8ccd370a2ea4a389778dadb4f3ccca6aaae334bfeed606a18cbfb8163e
+  checksum: 10/da9de509f3423a3665de00d4182e5aa39f9dde6e0d5b1cf11c759a45aba83dedea8305e62077a872e026ed91a37c9a972040cae21e5b7e2eb1333290a5aeb581
   languageName: node
   linkType: hard
 
@@ -927,13 +927,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/audio@portal:../audio/packages/audio::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@nativescript-community/audio@portal:../audio/packages/audio::locator=root-workspace-0b6124%40workspace%3A."
+"@nativescript-community/audio@npm:6.4.8":
+  version: 6.4.8
+  resolution: "@nativescript-community/audio@npm:6.4.8"
   dependencies:
     "@nativescript-community/perms": "npm:^2.2.2"
+  checksum: 10/5a40a3d80aa2231087117ce2bb4f1e074dcdbe867dbe937f6e9f0983c7a4a898d965e1e94230743a4cf39e53608b6f3ccecc05826a50db2b2ffa7eac3245097e
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@nativescript-community/class-mixins@npm:^1.0.0":
   version: 1.0.0

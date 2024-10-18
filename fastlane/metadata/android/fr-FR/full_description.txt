@@ -1,12 +1,14 @@
 Bienvenue dans Conty, l'application idéale pour que les enfants profitent d'histoires immersives et interactives ! Avec notre application, vous pouvez télécharger et écouter des histoires captivantes et gratuites qui encouragent la créativité, l'imagination et l'apprentissage. Que ce soit à la maison ou en déplacement, votre enfant peut plonger dans des aventures passionnantes directement depuis votre téléphone, avec ou sans connexion internet !
 
 Caractéristiques principales :
+
 * Histoires interactives pour tous les âges. Explorez une bibliothèque en constante évolution d'histoires conçues pour divertir et captiver les jeunes esprits. Chaque histoire est interactive, permettant aux enfants de faire des choix qui influencent le récit, rendant chaque aventure unique !
 * Téléchargez et jouez hors ligne. Téléchargez vos histoires préférées depuis l'application et stockez-les sur votre téléphone. Pas de connexion internet ? Aucun souci ! Une fois téléchargées, vos enfants peuvent écouter et profiter des histoires hors ligne, à tout moment et n'importe où.
 * Histoires créées par la communauté. Accédez à des histoires gratuites créées par une communauté dynamique de conteurs et d'enthousiastes. Découvrez de nouvelles voix et perspectives à mesure que la bibliothèque continue de s'agrandir.
 * Environnement sécurisé et adapté aux enfants. Nous priorisons la sécurité des enfants. L'application offre une expérience sûre, sans publicité, avec un contenu adapté à l'âge, conçu spécialement pour les jeunes enfants.
 
 Comment ça marche :
+
 * Explorez : Ouvrez l'application et parcourez la bibliothèque des histoires disponibles.
 * éléchargez : Choisissez une histoire à télécharger et enregistrez-la sur votre appareil.
 * Écoutez et interagissez : Appuyez sur play et laissez votre enfant commencer son aventure interactive !
