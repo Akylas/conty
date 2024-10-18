@@ -13,7 +13,6 @@ e2e/**/*.js
 app/**/*.js
 /mochawesome-report
 /dist
-/Gemfile.lock
 
 #android
 *.aar
