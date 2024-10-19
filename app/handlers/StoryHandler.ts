@@ -240,7 +240,7 @@ export class StoryHandler extends Handler {
                             break;
                         }
                         case 'story': {
-                            const { type, currentAudioTime, ...story } = current;
+                            const { currentAudioTime, type, ...story } = current;
                             firstData = { story };
                             updatePlaylist();
                             this.playStory({
@@ -300,10 +300,10 @@ export class StoryHandler extends Handler {
     saveSettingsInterval;
     async playAudio({
         autoPlay = true,
-        fileName,
         dataSource,
-        seek,
+        fileName,
         loop = false,
+        seek,
         throwErrorUp = true,
         updatePlayingInfo = true
     }: {
@@ -366,7 +366,7 @@ export class StoryHandler extends Handler {
         }
     }
     currentStoryAudioIndex = 0;
-    async playAudios({ audios, autoPlay = true, seek, updatePlayingInfo = true, onDone }: { audios: string[]; seek?: number; autoPlay?: boolean; updatePlayingInfo?: boolean; onDone?: Function }) {
+    async playAudios({ audios, autoPlay = true, onDone, seek, updatePlayingInfo = true }: { audios: string[]; seek?: number; autoPlay?: boolean; updatePlayingInfo?: boolean; onDone?: Function }) {
         TEST_LOG && console.log(TAG + this.id, 'playAudios', updatePlayingInfo, autoPlay, seek);
         try {
             // we use throwErrorUp to ensure the loops stop and we dont play other audios
@@ -626,11 +626,11 @@ export class StoryHandler extends Handler {
         }
     }
     async playPack({
-        pack,
-        updatePlaylist = true,
         autoPlay = true,
+        pack,
         seek,
-        startData
+        startData,
+        updatePlaylist = true
     }: {
         pack: Pack;
         updatePlaylist?: boolean;
@@ -685,7 +685,7 @@ export class StoryHandler extends Handler {
             // this.pausedStoryPlayTime = 0;
         }
     }
-    async playStory({ story, autoPlay = true, seek, updatePlaylist = true }: { story: Story; updatePlaylist?: boolean; autoPlay?: boolean; seek?: number }) {
+    async playStory({ autoPlay = true, seek, story, updatePlaylist = true }: { story: Story; updatePlaylist?: boolean; autoPlay?: boolean; seek?: number }) {
         TEST_LOG && console.log(TAG + this.id, 'playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
         if (!story.pack) {
             story.pack = await documentsService.packRepository.get(story.packId);
@@ -740,7 +740,7 @@ export class StoryHandler extends Handler {
             }
         }
     }
-    async stopPlaying({ fade = false, closeFullscreenPlayer = true, updatePlaylist = false, clearCurrentSaved = true } = {}) {
+    async stopPlaying({ clearCurrentSaved = true, closeFullscreenPlayer = true, fade = false, updatePlaylist = false } = {}) {
         TEST_LOG && console.log(TAG + this.id, 'stopPlaying', this.isPlaying, fade, closeFullscreenPlayer, updatePlaylist, clearCurrentSaved);
         if (!this.isPlaying) {
             return;
