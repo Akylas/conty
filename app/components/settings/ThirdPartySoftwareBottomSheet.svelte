@@ -12,20 +12,8 @@
             moduleUrl: 'https://pictogrammers.com/library/mdi/'
         },
         {
-            moduleName: 'OpenStreetMap',
-            moduleUrl: 'https://www.openstreetmap.org/copyright'
-        },
-        {
-            moduleName: 'Valhalla',
-            moduleUrl: 'https://github.com/valhalla/valhalla'
-        },
-        {
-            moduleName: 'Valhalla Server',
-            moduleUrl: 'https://valhalla1.openstreetmap.de'
-        },
-        {
             moduleName: 'NativeScript',
-            moduleUrl: 'https://github.com/NativeScript/NativeScript'
+            moduleUrl: 'https://github.com/Akylas/NativeScript'
         }
     ].concat(licences.dependencies);
 
