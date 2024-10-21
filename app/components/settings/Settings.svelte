@@ -112,7 +112,7 @@
                     name: 'Raconte moi une histoire',
                     url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
                     attribution:
-                        'La communauté <a>Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
+                        'La communauté <a href="https://monurl.ca/lunii.creations">Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
                     image: 'https://cdn.discordapp.com/icons/911349645752541244/2300753397affc590b981bcb582f2a65.png'
                 } as RemoteContentProvider;
                 const hasDefaultSource =
