@@ -1101,11 +1101,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/text@portal:../text/packages/text::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@nativescript-community/text@portal:../text/packages/text::locator=root-workspace-0b6124%40workspace%3A."
+"@nativescript-community/text@npm:1.6.6, @nativescript-community/text@npm:^1.5.2, @nativescript-community/text@npm:^1.5.33, @nativescript-community/text@npm:^1.6.3":
+  version: 1.6.6
+  resolution: "@nativescript-community/text@npm:1.6.6"
+  checksum: 75504a5491cf111e6d3b6fb26c6d05f7e4a00b2513e8e67b4ff68adb2ace7b1fa436556ae77cb8dec8ebe852823ffc0c546ca5e469c40508babad31db5303018
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@nativescript-community/ui-canvas@npm:4.6.34":
   version: 4.6.34
@@ -1133,21 +1134,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview-swipemenu@npm:5.3.43":
-  version: 5.3.43
-  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:5.3.43"
+"@nativescript-community/ui-collectionview-alignedflowlayout@npm:5.3.45":
+  version: 5.3.45
+  resolution: "@nativescript-community/ui-collectionview-alignedflowlayout@npm:5.3.45"
   dependencies:
-    "@nativescript-community/class-mixins": "npm:^1.0.0"
-    "@nativescript-community/ui-collectionview": "npm:^5.3.43"
-    "@nativescript-community/ui-drawer": "npm:^0.1.27"
-  checksum: a11eeb957dacf7e1b326db2332a114a77561d4695af75c534083227a9e18c2ceb529da3a08b6c3f9430424e2767f13cb767c219520a9cf91e7bff61c6bfa3860
+    "@nativescript-community/ui-collectionview": "npm:^5.3.45"
+  checksum: 0d668b67158a2d2407cfcd32fe60a4105e21baab313075e4622f42c6367af7839307e4e8dc4ae9ffea9151deded2b784d9709e369e082e41a920b685a63e1735
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:5.3.43, @nativescript-community/ui-collectionview@npm:^5.3.43":
-  version: 5.3.43
-  resolution: "@nativescript-community/ui-collectionview@npm:5.3.43"
-  checksum: 4cb69876ccd24c192a2ab35258c845d3145fbf43d9d47e364ffc72d3d48117329341faeb33437924c2b6350e9abf733028797c439ff111a6d54928f5002b3961
+"@nativescript-community/ui-collectionview-swipemenu@npm:5.3.45":
+  version: 5.3.45
+  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:5.3.45"
+  dependencies:
+    "@nativescript-community/class-mixins": "npm:^1.0.0"
+    "@nativescript-community/ui-collectionview": "npm:^5.3.45"
+    "@nativescript-community/ui-drawer": "npm:^0.1.27"
+  checksum: 478efc6a78a61541db0a489fd7321adc4aaf9af0e7419112e7ad1340eb9404ca8951ab24a9e31b28e84c0853e7f49fe58daaa5643e476f18f8a8898f2a828c3c
+  languageName: node
+  linkType: hard
+
+"@nativescript-community/ui-collectionview@npm:5.3.45, @nativescript-community/ui-collectionview@npm:^5.3.45":
+  version: 5.3.45
+  resolution: "@nativescript-community/ui-collectionview@npm:5.3.45"
+  checksum: 48f9706100e32a73ba9412d6bb56e216358f0b39809cc4ef06d3cce2787a897ba13da37536866293763546ed241635419266c51d6a38dcea6f41242ed005b15f
   languageName: node
   linkType: hard
 
@@ -9165,8 +9175,9 @@ __metadata:
     "@nativescript-community/ui-canvas": "npm:4.6.34"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.37"
     "@nativescript-community/ui-checkbox": "npm:2.0.12"
-    "@nativescript-community/ui-collectionview": "npm:5.3.43"
-    "@nativescript-community/ui-collectionview-swipemenu": "npm:5.3.43"
+    "@nativescript-community/ui-collectionview": "npm:5.3.45"
+    "@nativescript-community/ui-collectionview-alignedflowlayout": "npm:5.3.45"
+    "@nativescript-community/ui-collectionview-swipemenu": "npm:5.3.45"
     "@nativescript-community/ui-document-picker": "npm:1.1.26"
     "@nativescript-community/ui-drawer": "npm:0.1.28"
     "@nativescript-community/ui-image": "npm:4.5.3"

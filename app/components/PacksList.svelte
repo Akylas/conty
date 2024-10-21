@@ -105,12 +105,11 @@
             spans: [
                 {
                     fontFamily: $fonts.mdi,
+                    fontSize: 24,
                     color: folder.color || colorOutline,
-                    verticalAlignment: 'center',
                     text: 'mdi-folder  '
                 },
                 {
-                    verticalAlignment: 'center',
                     text: folder.name
                 }
             ]
@@ -253,7 +252,7 @@
                 return true;
             }
         });
-        DEV_LOG && console.log('onFolderUpdated', event.folder);
+        DEV_LOG && console.log('onFolderUpdated', event.folder, index);
         if (index >= 0) {
             const item = packs?.getItem(index);
             if (item) {
@@ -754,6 +753,7 @@
                                     const doc = selected[index];
                                     await doc.setFolder(folder === 'none' ? undefined : folder);
                                 }
+                                unselectAll();
                             }
 
                             break;
@@ -945,6 +945,8 @@
             iosOverflowSafeArea={true}
             {itemTemplateSelector}
             items={packs}
+            layoutHorizontalAlignment="left"
+            layoutStyle="align"
             paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) + bottomOffset}
             row={1}
             spanSize={itemTemplateSpanSize}

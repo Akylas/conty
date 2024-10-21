@@ -4,6 +4,7 @@ import { lc } from '@nativescript-community/l';
 import { installMixins as installUIMixins } from '@nativescript-community/systemui';
 import { overrideSpanAndFormattedString } from '@nativescript-community/text';
 import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemenu/svelte';
+import installAlignLayout from '@nativescript-community/ui-collectionview-alignedflowlayout';
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
 import { initialize } from '@nativescript-community/ui-image';
 import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
@@ -40,6 +41,7 @@ try {
     installColorFilters();
     overrideSpanAndFormattedString();
     initialize({ isDownsampleEnabled: true });
+    installAlignLayout();
 
     registerNativeViewElement('absolutelayout', () => require('@nativescript/core').AbsoluteLayout);
     registerElement('frame', () => new FrameElement());
