@@ -491,7 +491,7 @@
             } else if (item.folder) {
                 await goToFolderView(item.folder);
             } else {
-                if ($podcastMode && item.pack.extra.podcast === true) {
+                if ($podcastMode && item.pack.extra?.podcast === true) {
                     await showAllPodcastStories(item);
                 } else {
                     await playPack(item.pack);
@@ -503,7 +503,7 @@
     }
     async function podcastButton(item: Item) {
         try {
-            if ($podcastMode && item.pack.extra.podcast === true) {
+            if ($podcastMode && item.pack.extra?.podcast === true) {
                 await playPack(item.pack);
             } else {
                 await showAllPodcastStories(item);
