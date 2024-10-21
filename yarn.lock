@@ -27,7 +27,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=ed83d1&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=967438&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.19.3"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -81,7 +81,7 @@ __metadata:
     typescript: "npm:5.6.3"
     typescript-eslint: "npm:^8.9.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: e879f8b1ef429e9a88d86de671e9916faee6708f187dac8e8c5e4fc52ba60b08f9aa715449e7dd311866caef17f883fc94578abb840f90c79af0de2f4a85011b
+  checksum: 966bc23d8d1ec1a8711323706f7082dc7bd9e288b12f0d95db4ba03b8dc585169e54caa315742ee896159b493d2fb49d592ceacd097f31bd1e8e08073b728540
   languageName: node
   linkType: hard
 
@@ -1101,12 +1101,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/text@npm:1.6.5, @nativescript-community/text@npm:^1.5.2, @nativescript-community/text@npm:^1.5.33, @nativescript-community/text@npm:^1.6.3":
-  version: 1.6.5
-  resolution: "@nativescript-community/text@npm:1.6.5"
-  checksum: 28de62beb349faaba1d5ce76a40969b8d3c3c828128352183a72809147471861cf146c541c931219e9f3932f3817c0c02271eb84f8cf5f48c44b973198f9ee45
+"@nativescript-community/text@portal:../text/packages/text::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/text@portal:../text/packages/text::locator=root-workspace-0b6124%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@nativescript-community/ui-canvas@npm:4.6.34":
   version: 4.6.34
@@ -9162,7 +9161,7 @@ __metadata:
     "@nativescript-community/sentry": "npm:4.6.35"
     "@nativescript-community/sqlite": "npm:3.5.1"
     "@nativescript-community/systemui": "npm:1.1.23"
-    "@nativescript-community/text": "npm:1.6.5"
+    "@nativescript-community/text": "npm:1.6.6"
     "@nativescript-community/ui-canvas": "npm:4.6.34"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.37"
     "@nativescript-community/ui-checkbox": "npm:2.0.12"
