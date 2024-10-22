@@ -22,7 +22,16 @@
     import { colorTheme, onThemeChanged } from '~/helpers/theme';
     import { Pack, PackFolder, RemoteContent, Story } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
-    import { FolderUpdatedEventData, PackAddedEventData, PackDeletedEventData, PackMovedFolderEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
+    import {
+        FOLDER_COLOR_SEPARATOR,
+        FolderUpdatedEventData,
+        PackAddedEventData,
+        PackDeletedEventData,
+        PackMovedFolderEventData,
+        PackUpdatedEventData,
+        documentsService,
+        sql
+    } from '~/services/documents';
     import { BOTTOM_BUTTON_OFFSET, EVENT_FOLDER_UPDATED, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_MOVED_FOLDER, EVENT_PACK_UPDATED } from '~/utils/constants';
     import {
         goToFolderView,
@@ -52,8 +61,6 @@
     import { getRealPath, requestManagePermission } from '~/utils';
 
     const textPaint = new Paint();
-    const iconPaint = new Paint();
-    iconPaint.color = '#ffffffcc';
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
     type ViewStyle = 'expanded' | 'condensed' | 'card';
 
@@ -91,7 +98,6 @@
         colorSurfaceContainerHigh,
         colorTertiaryContainer
     } = $colors);
-    iconPaint.fontFamily = mdi;
     const screenWidth = Screen.mainScreen.widthDIPs;
 
     export let folder: PackFolder = null;
@@ -146,7 +152,6 @@
         try {
             DEV_LOG && console.log('refresh', filter);
             const r = await documentsService.packRepository.findPacks({ filter, folder, omitThoseWithFolders: true });
-            DEV_LOG && console.log('r', r.length);
 
             folders = filter?.length || folder ? [] : await documentsService.folderRepository.findFolders();
 
@@ -261,32 +266,31 @@
             }
         }
     }
-    function onPacksDeleted(event: PackDeletedEventData) {
-        for (let i = 0; i < event.packIds.length; i++) {
-            const id = event.packIds[i];
-            const index = packs.findIndex((item) => item.pack && item.pack.id === id);
-            if (index !== -1) {
-                packs.splice(index, 1);
-                nbSelected -= 1;
+    async function onPacksDeleted(event: PackDeletedEventData) {
+        try {
+            for (let i = 0; i < event.packIds.length; i++) {
+                const id = event.packIds[i];
+                const index = packs.findIndex((item) => item.pack && item.pack.id === id);
+                if (index !== -1) {
+                    packs.splice(index, 1);
+                    nbSelected -= 1;
+                }
             }
-        }
-        updateNoPack();
-    }
-    function getImageView(index: number) {
-        const view = collectionView?.nativeView?.getViewForItemAtIndex(index);
-        return view?.getViewById<Img>('imageView');
-    }
-
-    function onPackPageUpdated(event: EventData & { pageIndex: number; imageUpdated: boolean }) {
-        // let index = -1;
-        const pack = event.object as Pack;
-        const index = packs.findIndex((d) => d.pack.id === pack.id);
-        if (index >= 0) {
-            const item = packs?.getItem(index);
-            if (item) {
-                item.pack = pack;
-                packs.setItem(index, item);
+            if (!folder && event.folders?.length) {
+                for (let i = 0; i < event.folders.length; i++) {
+                    const name = event.folders[i].split(FOLDER_COLOR_SEPARATOR)[0];
+                    const index = packs.findIndex((item) => item.folder && item.folder.name === name);
+                    if (index !== -1) {
+                        const item = packs.getItem(index);
+                        const res = await documentsService.folderRepository.findFolder(name);
+                        item.folder = res[0];
+                        packs.setItem(index, packs.getItem(index));
+                    }
+                }
             }
+            updateNoPack();
+        } catch (error) {
+            showError(error);
         }
     }
 
@@ -551,7 +555,7 @@
                     if (currentPack && selectedPacks.findIndex((d) => d.id === currentPack.id)) {
                         storyHandler?.stopPlaying();
                     }
-                    await importService.deletePacks(selectedPacks.map((s) => s.id));
+                    await importService.deletePacks(selectedPacks);
                 }
             } catch (error) {
                 showError(error);
@@ -571,6 +575,7 @@
                 vertPos: VerticalPosition.BELOW,
                 onClose: (item) => {
                     viewStyle = item.id;
+                    refreshCollectionView();
                     ApplicationSettings.setString('packs_list_view_style', viewStyle);
                 }
             });
@@ -619,6 +624,14 @@
                 return screenWidth / 2;
             default:
                 return 150;
+        }
+    }
+    function getFolderRowHeight(viewStyle) {
+        switch (viewStyle) {
+            case 'card':
+                return screenWidth / 2;
+            default:
+                return 70;
         }
     }
     function getImageMargin(viewStyle) {
@@ -907,9 +920,8 @@
 
     function onFolderCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
         const w = canvas.getWidth();
-        const h = canvas.getHeight();
-        const dx = 16;
         const { folder } = item;
+        textPaint.fontWeight = 'normal';
         // textPaint.color = colorOnSurfaceVariant;
         // canvas.drawText(
         //     filesize(
@@ -921,32 +933,37 @@
         //     textPaint
         // );
         textPaint.color = colorOnBackground;
+        const cardView = viewStyle === 'card';
+        const iconSize = cardView ? 70 : 20;
+        const textSize = cardView ? 22 : 16;
+        const dx = cardView ? 0 : 16;
+        const subtitleSize = cardView ? 18 : 14;
         const topText = createNativeAttributedString({
             spans: [
                 {
                     fontFamily: $fonts.mdi,
-                    fontSize: 20 * $fontScale,
+                    fontSize: iconSize * $fontScale,
                     color: !$folderBackgroundColor && folder.color ? folder.color : colorOutline,
-                    lineHeight: 24 * $fontScale,
-                    text: 'mdi-folder '
+                    lineHeight: iconSize * 1.2 * $fontScale,
+                    text: 'mdi-folder' + (cardView ? '\n' : ' ')
                 },
                 {
-                    fontSize: 16 * $fontScale,
+                    fontSize: textSize * $fontScale,
                     fontWeight: 'bold',
                     lineBreak: 'end',
-                    lineHeight: 18 * $fontScale,
+                    lineHeight: textSize * 1.2 * $fontScale,
                     text: folder.name
                 },
                 {
-                    fontSize: 14 * $fontScale,
+                    fontSize: subtitleSize * $fontScale,
                     color: colorOutline,
-                    lineHeight: (condensed ? 14 : 20) * $fontScale,
+                    lineHeight: (condensed ? 14 : subtitleSize * 1.2) * $fontScale,
                     text: '\n' + lc('packs_count', item.folder.count)
                 }
             ]
         });
         canvas.save();
-        const staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
+        const staticLayout = new StaticLayout(topText, textPaint, w - dx, cardView ? LayoutAlignment.ALIGN_CENTER : LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
         canvas.translate(dx, 16);
         staticLayout.draw(canvas);
         canvas.restore();
@@ -1008,7 +1025,7 @@
                     borderRadius={12}
                     borderWidth={1}
                     fontSize={14 * $fontScale}
-                    height={70 * $fontScale}
+                    height={getFolderRowHeight(viewStyle) * $fontScale}
                     margin="4 8 4 8"
                     rippleColor={colorSurface}
                     on:tap={() => onItemTap(item)}

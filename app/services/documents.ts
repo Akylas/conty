@@ -21,6 +21,7 @@ export interface PackUpdatedEventData extends EventData {
 }
 export interface PackDeletedEventData extends EventData {
     packIds: string[];
+    folders: string[];
 }
 
 export interface PackMovedFolderEventData extends EventData {
@@ -158,8 +159,17 @@ COUNT(pf.pack_id) AS count`,
             from: sql`Folder f`,
             postfix: sql`
 LEFT JOIN PacksFolders pf ON f.id = pf.folder_id
-LEFT JOIN Pack p ON pf.pack_id = p.id
 GROUP BY f.id;`
+        });
+    }
+    findFolder(name: string) {
+        return this.search({
+            select: sql`f.*, 
+COUNT(pf.pack_id) AS count`,
+            from: sql`Folder f`,
+            where: sql`f.name = ${name}`,
+            postfix: sql`
+LEFT JOIN PacksFolders pf ON f.id = pf.folder_id`
         });
     }
 }
@@ -227,8 +237,8 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
         addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
         addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`,
         addType: sql`ALTER TABLE Pack ADD COLUMN type TEXT`,
-        addExtra: sql`ALTER TABLE Pack ADD COLUMN extra TEXT`
-        // addColors: sql`ALTER TABLE Pack ADD COLUMN colors TEXT`
+        addExtra: sql`ALTER TABLE Pack ADD COLUMN extra TEXT`,
+        cleanGhostFolders: sql`DELETE FROM PacksFolders WHERE pack_id NOT IN (SELECT id FROM Pack)`
     });
 
     async createPack(data: Partial<Pack>) {
@@ -357,11 +367,14 @@ LEFT JOIN
                 args.where = new SqlQuery([`pf.folder_id = ${folder.id}`]);
             }
             args.postfix = new SqlQuery((args.postfix ? [args.postfix] : []).concat([foldersPostfix]));
-        } else if (omitThoseWithFolders) {
-            args.select = sql`p.*`;
-            args.from = sql`Pack p`;
-            args.where = sql`p.id NOT IN(SELECT pack_id FROM PacksFolders)`;
-            // args.postfix = foldersPostfix;
+        } else {
+            if (omitThoseWithFolders) {
+                args.select = sql`p.*`;
+                args.from = sql`Pack p`;
+                args.where = sql`p.id NOT IN(SELECT pack_id FROM PacksFolders)`;
+            } else {
+                args.postfix = new SqlQuery((args.postfix ? [args.postfix] : []).concat([foldersPostfix]));
+            }
         }
         return this.search(args);
     }
@@ -481,6 +494,11 @@ export class DocumentsService extends Observable {
             thumbnail: data.thumbnail || 'thumbnail.png',
             ...(folder ? { folders: [folder] } : {})
         });
+    }
+
+    async removePack(id: string) {
+        await this.packRepository.delete({ id } as any);
+        await this.db.query(sql` DELETE FROM PacksFolders where pack_id=${id}`);
     }
 }
 export let documentsService: DocumentsService;
