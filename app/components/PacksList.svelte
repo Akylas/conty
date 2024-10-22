@@ -828,8 +828,27 @@
                     type: 'image',
                     image: story.thumbnail,
                     name: story.name,
+                    episode: story.episode,
+                    episodeCount: thePack.extra?.episodeCount,
                     subtitle: formatDuration(story.duration),
-                    story
+                    story,
+                    onDraw: (item, event) => {
+                        if (item.episode && item.episodeCount) {
+                            textPaint.color = colorOnTertiaryContainer;
+                            textPaint.fontWeight = 'bold';
+                            const canvas = event.canvas;
+                            const h = canvas.getHeight();
+                            const w = canvas.getWidth();
+                            const staticLayout = new StaticLayout(` ${item.episode}/${item.episodeCount} `, textPaint, w, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+                            const width = staticLayout.getLineWidth(0);
+                            const height = staticLayout.getHeight();
+                            canvas.translate(24, h - height - 10);
+                            textPaint.setColor(colorTertiaryContainer);
+                            canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+                            textPaint.color = colorOnTertiaryContainer;
+                            staticLayout.draw(canvas);
+                        }
+                    }
                 }))
             });
             if (data?.story) {

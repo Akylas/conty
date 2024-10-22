@@ -4,18 +4,19 @@
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { openFilePicker } from '@nativescript-community/ui-document-picker';
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { TextField } from '@nativescript-community/ui-material-textfield';
     import { EventData, File, ObservableArray, Utils, View } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
     import { onDestroy } from 'svelte';
     import { Template } from 'svelte-native/components';
     import IconButton from '~/components/common/IconButton.svelte';
     import ListItem from '~/components/common/ListItem.svelte';
+    import { ListItem as IListItem } from '~/components/common/ListItem';
     import { lc } from '~/helpers/locale';
-    import { actionBarButtonHeight, colors } from '~/variables';
+    import { colors } from '~/variables';
     import ListItemAutoSize from './ListItemAutoSize.svelte';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
-    export interface OptionType {
-        name: string;
+    export interface OptionType extends IListItem {
+        subtitle?: string;
         isPick?: boolean;
         boxType?: string;
         type?: string;
@@ -37,9 +38,6 @@
     export let fontWeight = 'bold';
     export let options: OptionType[] | ObservableArray<OptionType>;
     export let onClose = null;
-    export let titleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
-    export let titleHolderProps: Partial<svelteNative.JSX.StackLayoutAttributes> = {};
-    export let subtitleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
     export let selectedIndex = -1;
     export let height: number | string = null;
     export let fontSize = 16;
@@ -48,10 +46,17 @@
     export let currentlyCheckedItem = null;
     export let onCheckBox: (item, value, e) => void = null;
     export let onRightIconTap: (item, e) => void = null;
+
+    export let titleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
+    export let titleHolderProps: Partial<svelteNative.JSX.StackLayoutAttributes> = {};
+    export let subtitleProps: Partial<svelteNative.JSX.LabelAttributes> = {};
+    export let templateProps: Partial<svelteNative.JSX.GridLayoutAttributes> & {
+        [k: string]: Partial<svelteNative.JSX.ViewAttributes>;
+    } = {};
+
     export let component = autoSizeListItem ? ListItemAutoSize : ListItem;
     let filteredOptions: OptionType[] | ObservableArray<OptionType> = null;
     let filter: string = null;
-    DEV_LOG && console.log('titleProps', titleProps);
 
     // technique for only specific properties to get updated on store change
     $: ({ colorOutline } = $colors);
@@ -226,19 +231,17 @@
                 <svelte:component
                     this={component}
                     {borderRadius}
-                    color={item.color}
                     columns="auto,*,auto"
                     {fontSize}
-                    fontWeight={item.fontWeight || fontWeight}
+                    {fontWeight}
                     {iconFontSize}
-                    leftIcon={item.icon}
+                    {item}
                     mainCol={1}
                     showBottomLine={showBorders}
-                    subtitle={item.subtitle}
                     {subtitleProps}
-                    title={item.name}
                     {titleHolderProps}
                     {titleProps}
+                    {...templateProps}
                     on:tap={(event) => onTap(item, event)}>
                     <checkbox
                         id="checkbox"
@@ -254,18 +257,16 @@
                 <svelte:component
                     this={component}
                     {borderRadius}
-                    color={item.color}
                     columns="*,auto"
                     {fontSize}
                     {fontWeight}
                     {iconFontSize}
-                    leftIcon={item.icon}
+                    {item}
                     showBottomLine={showBorders}
-                    subtitle={item.subtitle}
                     {subtitleProps}
-                    title={item.name}
                     {titleHolderProps}
                     {titleProps}
+                    {...templateProps}
                     on:tap={(event) => onTap(item, event)}>
                     <mdbutton class="icon-btn" col={1} text={item.rightIcon} variant="text" on:tap={(event) => onRightTap(item, event)} />
                 </svelte:component>
@@ -274,20 +275,18 @@
                 <svelte:component
                     this={component}
                     {borderRadius}
-                    color={item.color}
                     columns="auto,*"
                     {fontSize}
                     {fontWeight}
                     {iconFontSize}
-                    leftIcon={item.icon}
+                    {item}
                     mainCol={1}
-                    rightValue={item.rightValue}
                     showBottomLine={showBorders}
-                    subtitle={item.subtitle}
                     {subtitleProps}
                     title={item.name}
                     {titleHolderProps}
                     {titleProps}
+                    {...templateProps}
                     on:tap={(event) => onTap(item, event)}>
                     <image borderRadius={4} col={0} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
                 </svelte:component>
@@ -296,18 +295,15 @@
                 <svelte:component
                     this={component}
                     {borderRadius}
-                    color={item.color}
                     {fontSize}
                     {fontWeight}
                     {iconFontSize}
-                    leftIcon={item.icon}
-                    rightIcon={item.rightIcon}
+                    {item}
                     showBottomLine={showBorders}
-                    subtitle={item.subtitle}
                     {subtitleProps}
-                    title={item.name}
                     {titleHolderProps}
                     {titleProps}
+                    {...templateProps}
                     on:rightTap={(event) => onRightTap(item, event)}
                     on:tap={(event) => onTap(item, event)}>
                 </svelte:component>
