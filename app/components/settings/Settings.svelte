@@ -32,7 +32,7 @@
         SETTINGS_REMOTE_SOURCES,
         SETTINGS_SHOW_SHUTDOWN_IN_NOTIF
     } from '~/utils/constants';
-    import { SilentError } from '@shared/utils/error';
+    import { CustomError, NoNetworkError, NoSpaceLeftError, SilentError } from '@shared/utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { Sentry } from '@shared/utils/sentry';
     import { share } from '@shared/utils/share';
@@ -342,7 +342,7 @@
             switch (id) {
                 case 'version':
                     if (SENTRY_ENABLED) {
-                        throw new Error('test error');
+                        throw new NoSpaceLeftError(new Error('test'));
                     }
             }
         } catch (error) {

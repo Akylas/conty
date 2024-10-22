@@ -1,11 +1,11 @@
 import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
 import { isObject, isString } from '@nativescript/core/utils';
+import NSQLDatabase from '@shared/db/NSQLDatabase';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, IPackFolder, LuniiPack, Pack, PackFolder, Tag, TelmiPack } from '~/models/Pack';
 import { getRealPath } from '~/utils';
 import { EVENT_PACK_ADDED } from '~/utils/constants';
-import NSQLDatabase from './NSQLDatabase';
 
 export const sql = SqlQuery.createFromTemplateString;
 export const FOLDERS_SEPARATOR = '&&&';

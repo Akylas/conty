@@ -6,7 +6,7 @@ import { connectionType, getConnectionType, startMonitoring, stopMonitoring } fr
 import { EventData, Observable } from '@nativescript/core/data/observable';
 import { getFile } from '@nativescript/core/http';
 import { throttle, wrapNativeException } from '@nativescript/core/utils';
-import { HTTPError, NoNetworkError, TimeoutError } from '@shared/utils/error';
+import { HTTPError, NoNetworkError, TimeoutError, wrapNativeHttpException } from '@shared/utils/error';
 import { showError } from '@shared/utils/showError';
 import dayjs from 'dayjs';
 import { filesize } from 'filesize';
@@ -180,19 +180,6 @@ async function handleRequestRetry(requestParams: HttpRequestOptions, retry = 0) 
     });
 }
 
-export function wrapNativeHttpException(error, requestParams: HttpRequestOptions) {
-    return wrapNativeException(error, (message) => {
-        if (/(SocketTimeout|ConnectException|SocketException|SSLException|UnknownHost)/.test(message)) {
-            return new TimeoutError();
-        } else {
-            return new HTTPError({
-                message,
-                statusCode: -1,
-                requestParams
-            });
-        }
-    });
-}
 async function handleRequestResponse<T>(response: https.HttpsResponse<https.HttpsResponseLegacy<T>>, requestParams: HttpRequestOptions, requestStartTime, retry): Promise<T> {
     const statusCode = response.statusCode;
     let content: T;
