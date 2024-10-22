@@ -199,7 +199,7 @@ lane :build_flavor do |params|
   svelteCheck
 
   build_output = build(flavor: flavor, options: options)
-
+  puts "build_output #{JSON.pretty_generate(build_output)}"
   # copy dist files to dist, already done on iOS
   if (platform == 'android')
     puts "copy dist files to #{dist_path}"
@@ -371,6 +371,7 @@ platform :ios do
     
   end
   lane :upload_store  do |params| 
+    puts "upload_store build_output #{JSON.generate(params[:build_output])}"
     api_key = params[:build_output][:api_key]
     # if (ENV["GITHUB_ACTIONS"] == 'true')
     #   # get a new key as the build process might be long and the last ke
