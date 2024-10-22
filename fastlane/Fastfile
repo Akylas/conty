@@ -371,8 +371,10 @@ platform :ios do
     
   end
   lane :upload_store  do |params| 
-    puts "upload_store build_output #{JSON.generate(params[:build_output])}"
-    api_key = params[:build_output][:api_key]
+    build_output = params[:build_output]
+    api_key = build_output[:api_key]
+    puts "upload_store build_output #{JSON.generate(build_output)}"
+    puts "upload_store api_key #{JSON.generate(api_key)}"
     # if (ENV["GITHUB_ACTIONS"] == 'true')
     #   # get a new key as the build process might be long and the last ke
     #   # might be expired
