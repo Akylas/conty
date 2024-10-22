@@ -831,7 +831,7 @@ export class StoryHandler extends Handler {
 
     saveSettingsInternal = (clear = true) => {
         const currentAudioTime = Math.floor(this.playerCurrentTime / 1000);
-        DEV_LOG && console.log(TAG + this.id, 'saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
+        // DEV_LOG && console.log(TAG + this.id, 'saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
         if (this.playingPack) {
             ApplicationSettings.setString(
                 SETTINGS_CURRENT_PLAYING,
