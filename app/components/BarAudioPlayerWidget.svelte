@@ -24,7 +24,7 @@
     import { showError } from '@shared/utils/showError';
     import { showFullscreenPlayer } from '~/utils/ui';
     import { coverSharedTransitionTag, windowInset } from '~/variables';
-    const screenWidth = Screen.mainScreen.widthDIPs;
+    import { throttle } from '@nativescript/core/utils';
 </script>
 
 <script lang="ts">
@@ -247,7 +247,7 @@
 </script>
 
 <gridlayout {height} margin={`0 2 ${$windowInset.bottom + 5} 2`} {translateY} {verticalAlignment} {...$$restProps} on:tap={() => {}}>
-    <gridlayout class="barPlayer" columns="70,*" {rows} on:tap={showFullscreenPlayer}>
+    <gridlayout class="barPlayer" columns="70,*" {rows} on:tap={throttle(() => showFullscreenPlayer(), 500)}>
         <image backgroundColor={(pack || story?.pack)?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} stretch="aspectFit" />
         <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
