@@ -379,6 +379,7 @@ platform :ios do
         issuer_id: ENV['APPLE_ISSUER_ID'],
         key_content: ENV['APPLE_KEY_CONTENT']
       )
+      puts "upload_store generating api_key #{api_key}"
     end
     if (params[:flavor] == "production")
       upload_to_app_store(
@@ -402,6 +403,7 @@ platform :ios do
         }
       )
     else
+      puts "upload_to_testflight api_key #{api_key}"
       upload_to_testflight(
           changelog:params[:changelog],
           distribute_external: true,
