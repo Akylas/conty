@@ -32,7 +32,7 @@
         const h = canvas.getHeight();
         const w = canvas.getWidth();
 
-        if (showBottomLine) {
+        if (item.showBottomLine || showBottomLine) {
             event.canvas.drawLine(20, h - 1, w, h - 1, linePaint);
         }
         (item.onDraw || onDraw)?.(item, event);
@@ -87,8 +87,8 @@
             html={item.html}
             text={item.text || item.title || item.name}
             textWrap={true}
-            {...$$restProps?.titleProps}
-            use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}>
+            {...item.titleProps || $$restProps?.titleProps}
+            use:conditionalEvent={{ condition: !!(item.onLinkTap || onLinkTap), event: 'linkTap', callback: item.onLinkTap || onLinkTap }}>
         </label>
         <label
             color={item.subtitleColor || subtitleColor || colorOnSurfaceVariant}
@@ -96,8 +96,8 @@
             fontSize={(item.subtitleFontSize || subtitleFontSize) * $fontScale}
             text={item.subtitle}
             textWrap={true}
-            use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}
-            {...$$restProps.subtitleProps || {}}>
+            use:conditionalEvent={{ condition: !!(item.onLinkTap || onLinkTap), event: 'linkTap', callback: item.onLinkTap || onLinkTap }}
+            {...item.subtitleProps || $$restProps?.subtitleProps || {}}>
         </label>
     </stacklayout>
 

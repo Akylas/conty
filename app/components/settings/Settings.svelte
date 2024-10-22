@@ -843,110 +843,43 @@
                 <label class="sectionHeader" {...item.additionalProps || {}} text={item.title} />
             </Template>
             <Template key="switch" let:item>
-                <ListItemAutoSize
-                    fontSize={20}
-                    html={item.html}
-                    leftIcon={item.icon}
-                    onLinkTap={item.onLinkTap}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
                     <switch id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="checkbox" let:item>
-                <ListItemAutoSize
-                    fontSize={20}
-                    html={item.html}
-                    leftIcon={item.icon}
-                    onLinkTap={item.onLinkTap}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
                     <checkbox id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="rightIcon" let:item>
-                <ListItemAutoSize
-                    fontSize={20}
-                    onLinkTap={item.onLinkTap}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
                     <IconButton col={1} text={item.rightBtnIcon} on:tap={(event) => onRightIconTap(item, event)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="button" let:item>
-                <ListItemAutoSize
-                    columns="50,*,auto"
-                    fontSize={20}
-                    html={item.html}
-                    mainCol={1}
-                    onLinkTap={item.onLinkTap}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    text={item.text}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize columns="50,*,auto" fontSize={20} item={{ ...item, subtitle: getDescription(item) }} mainCol={1} on:tap={(event) => onTap(item, event)}>
                     <image height={45} marginRight={4} marginTop={15} src={item.image()} verticalAlignment="top" width={45} />
                     <mdbutton col={2} marginTop={20} text={item.buttonText} verticalAlignment="top" on:tap={(event) => onButtonTap(item, event)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="leftIcon" let:item>
-                <ListItemAutoSize
-                    columns="auto,*,auto"
-                    fontSize={20}
-                    html={item.html}
-                    leftIcon={item.icon}
-                    mainCol={1}
-                    onLinkTap={item.onLinkTap}
-                    rightValue={item.rightValue}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize columns="auto,*,auto" fontSize={20} item={{ ...item, subtitle: getDescription(item) }} mainCol={1} on:tap={(event) => onTap(item, event)}>
                     <label col={0} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
                 </ListItemAutoSize>
             </Template>
             <Template key="imageLeft" let:item>
-                <ListItemAutoSize
-                    columns="50,*,auto"
-                    html={item.html}
-                    mainCol={1}
-                    onLinkTap={item.onLinkTap}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize columns="50,*,auto" item={{ ...item, subtitle: getDescription(item) }} mainCol={1} on:tap={(event) => onTap(item, event)}>
                     <image height={45} marginRight={10} marginTop={15} src={item.image()} verticalAlignment="top" visibility={!!item.image ? 'visible' : 'hidden'} />
                 </ListItemAutoSize>
             </Template>
             <Template key="image" let:item>
-                <ListItemAutoSize fontSize={20} html={item.html} showBottomLine={item.showBottomLine} subtitle={getDescription(item)} title={item.title} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
                     <image col={1} height={45} src={item.image()} />
                 </ListItemAutoSize>
             </Template>
             <Template let:item>
-                <ListItemAutoSize
-                    fontSize={20}
-                    html={item.html}
-                    onLinkTap={item.onLinkTap}
-                    rightValue={item.rightValue}
-                    showBottomLine={item.showBottomLine}
-                    subtitle={getDescription(item)}
-                    title={item.title}
-                    titleProps={item.titleProps}
-                    on:tap={(event) => onTap(item, event)}>
-                </ListItemAutoSize>
+                <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}></ListItemAutoSize>
             </Template>
         </collectionview>
         <CActionBar canGoBack title={title || $slc('settings.title')}>

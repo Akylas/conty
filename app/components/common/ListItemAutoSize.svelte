@@ -30,7 +30,7 @@
         const h = canvas.getHeight();
         const w = canvas.getWidth();
 
-        if (showBottomLine) {
+        if (item.showBottomLine || showBottomLine) {
             event.canvas.drawLine(20, h - 1, w, h - 1, linePaint);
         }
         // if (leftIcon) {
@@ -98,8 +98,8 @@
         text={item.text}
         textWrap={true}
         verticalTextAlignment="center"
-        {...$$restProps?.titleProps}
-        use:conditionalEvent={{ condition: !!onLinkTap, event: 'linkTap', callback: onLinkTap }}>
+        {...item.titleProps || $$restProps?.titleProps}
+        use:conditionalEvent={{ condition: !!(item.onLinkTap || onLinkTap), event: 'linkTap', callback: item.onLinkTap || onLinkTap }}>
         <cspan text={item.title} />
         <cspan color={item.subtitleColor || colorOnSurfaceVariant} fontSize={(item.subtitleFontSize || subtitleFontSize) * $fontScale} text={item.subtitle ? '\n' + item.subtitle : null} />
     </label>

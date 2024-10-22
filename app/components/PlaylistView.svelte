@@ -60,11 +60,13 @@
                     {fontSize}
                     {fontWeight}
                     {iconFontSize}
+                    item={{
+                        rightValue: item.rightValue,
+                        title: item.pack?.title || item.story.name,
+                        subtitle: item.story ? formatDuration(item.story.duration) : null
+                    }}
                     mainCol={1}
-                    rightValue={item.rightValue}
                     showBottomLine={showBorders}
-                    subtitle={item.story ? formatDuration(item.story.duration) : null}
-                    title={item.pack?.title || item.story.name}
                     on:tap={(event) => onTap(item, event)}>
                     <image borderRadius={4} col={0} height={45} marginRight={10} src={item.story?.thumbnail || (item.pack || item.story.pack).getThumbnail()} />
                     <label
