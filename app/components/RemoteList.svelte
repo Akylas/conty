@@ -1,13 +1,12 @@
 <script context="module" lang="ts">
-    import { debounce } from '@nativescript/core/utils';
     import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { Application, ApplicationSettings, NavigatedData, ObservableArray, Page, StackLayout, Utils } from '@nativescript/core';
-    import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
+    import { ApplicationSettings, NavigatedData, ObservableArray, Page, Utils } from '@nativescript/core';
+    import { showError } from '@shared/utils/showError';
+    import { closeModal, fade } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
     import { NativeViewElementNode } from 'svelte-native/dom';
@@ -18,12 +17,9 @@
     import { RemoteContent, RemoteContentProvider } from '~/models/Pack';
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
-    import { timeout } from '~/utils';
-    import { showError } from '@shared/utils/showError';
-    import { closeModal, fade } from '@shared/utils/svelte/ui';
-    import { onBackButton, showPopoverMenu, showSettings } from '~/utils/ui';
-    import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { showPopoverMenu, showSettings } from '~/utils/ui';
+    import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
 
     const textPaint = new Paint();
@@ -32,20 +28,20 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorPrimaryContainer, colorOnBackground } = $colors;
+    let { colorOnBackground, colorPrimaryContainer } = $colors;
     $: ({
-        colorSurfaceContainerHigh,
+        colorError,
         colorOnBackground,
-        colorSurfaceContainerLow,
+        colorOnPrimaryContainer,
         colorOnSecondary,
-        colorSurfaceContainer,
         colorOnSurfaceVariant,
         colorOutline,
         colorOutlineVariant,
-        colorSurface,
         colorPrimaryContainer,
-        colorOnPrimaryContainer,
-        colorError
+        colorSurface,
+        colorSurfaceContainer,
+        colorSurfaceContainerHigh,
+        colorSurfaceContainerLow
     } = $colors);
 
     interface Item {
