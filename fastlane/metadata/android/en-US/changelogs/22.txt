@@ -1,0 +1,5 @@
+Bug fixes:
+- crash while searching for local packs
+- cleaned up 3rd party licences
+- missing `Raconte Moi une histoire` discord link
+- podcast mode fix
