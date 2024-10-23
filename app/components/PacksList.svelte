@@ -2,11 +2,10 @@
     import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker } from '@nativescript-community/ui-document-picker';
-    import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
-    import { showPopover } from '@nativescript-community/ui-popover/svelte';
+    import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
     import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { throttle } from '@nativescript/core/utils';
@@ -22,16 +21,7 @@
     import { colorTheme, onThemeChanged } from '~/helpers/theme';
     import { Pack, PackFolder, RemoteContent, Story } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
-    import {
-        FOLDER_COLOR_SEPARATOR,
-        FolderUpdatedEventData,
-        PackAddedEventData,
-        PackDeletedEventData,
-        PackMovedFolderEventData,
-        PackUpdatedEventData,
-        documentsService,
-        sql
-    } from '~/services/documents';
+    import { FOLDER_COLOR_SEPARATOR, FolderUpdatedEventData, PackAddedEventData, PackDeletedEventData, PackMovedFolderEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
     import { BOTTOM_BUTTON_OFFSET, EVENT_FOLDER_UPDATED, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_MOVED_FOLDER, EVENT_PACK_UPDATED } from '~/utils/constants';
     import {
         currentBottomOffset,
@@ -57,9 +47,10 @@
     import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { getBGServiceInstance } from '~/services/BgService';
-    import { onServiceLoaded, onSetup, onUnsetup } from '~/services/BgService.common';
+    import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
+    import { OptionType } from './common/OptionSelect.svelte';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -571,15 +562,22 @@
     async function selectViewStyle(event) {
         try {
             // const options = Object.keys(OPTIONS[option]).map((k) => ({ ...OPTIONS[option][k], id: k }));
+            const options: OptionType[] = [
+                { id: 'expanded', name: lc('expanded') },
+                { id: 'condensed', name: lc('condensed') },
+                { id: 'card', name: lc('card') }
+            ].map((d) => ({
+                ...d,
+                boxType: 'circle',
+                type: 'checkbox',
+                value: d.id === viewStyle
+            }));
             await showPopoverMenu({
-                options: [
-                    { id: 'default', name: lc('expanded') },
-                    { id: 'condensed', name: lc('condensed') },
-                    { id: 'card', name: lc('card') }
-                ] as { id: ViewStyle; name: string }[],
+                options,
                 anchor: event.object,
                 vertPos: VerticalPosition.BELOW,
-                onClose: (item) => {
+                onCheckBox: (item) => {
+                    closePopover();
                     viewStyle = item.id;
                     refreshCollectionView();
                     ApplicationSettings.setString('packs_list_view_style', viewStyle);
@@ -744,7 +742,7 @@
         const options = new ObservableArray([
             { icon: 'mdi-folder-swap', id: 'move_folder', name: lc('move_folder') },
             { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
-        ] as any);
+        ] as OptionType);
         return showPopoverMenu({
             options,
             anchor: event.object,
@@ -951,14 +949,14 @@
                 {
                     fontSize: subtitleSize * $fontScale,
                     color: colorOutline,
-                    lineHeight: (condensed ? 14 : subtitleSize * 1.2) * $fontScale,
+                    lineHeight: subtitleSize * 1.2 * $fontScale,
                     text: '\n' + lc('packs_count', item.folder.count)
                 }
             ]
         });
         canvas.save();
         const staticLayout = new StaticLayout(topText, textPaint, w - dx, cardView ? LayoutAlignment.ALIGN_CENTER : LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, 16);
+        canvas.translate(dx, cardView ? 16 : 20);
         staticLayout.draw(canvas);
         canvas.restore();
     }
@@ -997,7 +995,6 @@
                 <canvasview
                     class="card"
                     borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
-                    fontSize={14 * $fontScale}
                     height={getItemRowHeight(viewStyle) * $fontScale}
                     on:tap={() => onItemTap(item)}
                     on:longPress={(e) => onItemLongPress(item, e)}
@@ -1030,7 +1027,6 @@
                     borderColor={colorOutline}
                     borderRadius={12}
                     borderWidth={1}
-                    fontSize={14 * $fontScale}
                     height={getFolderRowHeight(viewStyle) * $fontScale}
                     margin="4 8 4 8"
                     rippleColor={colorSurface}

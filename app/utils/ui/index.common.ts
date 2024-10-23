@@ -3,7 +3,20 @@ import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-ma
 import { MDCAlertControlerOptions, alert, confirm } from '@nativescript-community/ui-material-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import { AlertOptions, Animation, AnimationDefinition, Application, GridLayout, ModalTransition, Screen, SharedTransition, SharedTransitionConfig, Utils, View } from '@nativescript/core';
+import {
+    AlertOptions,
+    Animation,
+    AnimationDefinition,
+    Application,
+    GridLayout,
+    ModalTransition,
+    ObservableArray,
+    Screen,
+    SharedTransition,
+    SharedTransitionConfig,
+    Utils,
+    View
+} from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
 import { showError } from '@shared/utils/showError';
 import { navigate, showModal } from '@shared/utils/svelte/ui';
@@ -15,6 +28,7 @@ import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
 import BottomSnack from '~/components/common/BottomSnack.svelte';
 import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
+import type { OptionType } from '~/components/common/OptionSelect.svelte';
 import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
@@ -76,12 +90,13 @@ export async function showPopoverMenu<T = any>({
     anchor,
     closeOnClose = true,
     horizPos,
+    onCheckBox,
     onClose,
     onLongPress,
     options,
     props,
     vertPos
-}: { options; anchor; onClose?; onLongPress?; props?; closeOnClose? } & Partial<PopoverOptions>) {
+}: { options: OptionType[] | ObservableArray<OptionType>; anchor; onClose?; onLongPress?; props?; closeOnClose?; onCheckBox?: (item, value, e) => void } & Partial<PopoverOptions>) {
     const { colorSurfaceContainer } = get(colors);
     const OptionSelect = (await import('~/components/common/OptionSelect.svelte')).default;
     const rowHeight = (props?.rowHeight || 60) * get(fontScale);
@@ -103,6 +118,7 @@ export async function showPopoverMenu<T = any>({
             width: 200 * get(fontScale),
             options,
             onLongPress,
+            onCheckBox,
             onClose: async (item) => {
                 if (closeOnClose) {
                     if (__IOS__) {
