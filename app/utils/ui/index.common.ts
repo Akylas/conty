@@ -28,7 +28,6 @@ import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
 import BottomSnack from '~/components/common/BottomSnack.svelte';
 import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
-import type { OptionType } from '~/components/common/OptionSelect.svelte';
 import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
@@ -96,7 +95,7 @@ export async function showPopoverMenu<T = any>({
     options,
     props,
     vertPos
-}: { options: OptionType[] | ObservableArray<OptionType>; anchor; onClose?; onLongPress?; props?; closeOnClose?; onCheckBox?: (item, value, e) => void } & Partial<PopoverOptions>) {
+}: { options: any[] | ObservableArray<any>; anchor; onClose?; onLongPress?; props?; closeOnClose?; onCheckBox?: (item, value, e) => void } & Partial<PopoverOptions>) {
     const { colorSurfaceContainer } = get(colors);
     const OptionSelect = (await import('~/components/common/OptionSelect.svelte')).default;
     const rowHeight = (props?.rowHeight || 60) * get(fontScale);
