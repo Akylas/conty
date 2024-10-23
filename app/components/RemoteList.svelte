@@ -254,12 +254,7 @@
                 rowHeight={getItemRowHeight(viewStyle) * $fontScale}
                 android:paddingBottom={$windowInset.bottom}>
                 <Template let:item>
-                    <canvasview
-                        class="card"
-                        borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
-                        fontSize={14 * $fontScale}
-                        on:tap={() => onItemTap(item)}
-                        on:draw={(e) => onCanvasDraw(item, e)}>
+                    <canvasview class="card" borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0} on:tap={() => onItemTap(item)} on:draw={(e) => onCanvasDraw(item, e)}>
                         <image
                             borderRadius={12}
                             decodeWidth={IMAGE_DECODE_WIDTH}

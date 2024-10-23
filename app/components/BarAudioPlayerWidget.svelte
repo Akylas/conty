@@ -252,7 +252,7 @@
         <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
         <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
-            <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textalignment="right" verticalalignment="bottom" />
+            <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
         <gridlayout col={1} columns="auto,auto,auto,auto,auto,auto" horizontalAlignment="right" verticalAlignment="center">
             <mdbutton class="whiteSmallActionBarButton" text="mdi-home" variant="text" visibility={pack?.canHome(currentStage) ? 'visible' : 'collapsed'} on:tap={onHomeButton} />
