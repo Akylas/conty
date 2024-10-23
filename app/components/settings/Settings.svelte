@@ -37,7 +37,7 @@
     import { Sentry } from '@shared/utils/sentry';
     import { share } from '@shared/utils/share';
     import { showError } from '@shared/utils/showError';
-    import { createView, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
+    import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
@@ -54,6 +54,7 @@
     let page: NativeViewElementNode<Page>;
 
     let items: ObservableArray<any>;
+    const bottomOffset = currentBottomOffset;
 
     export let title = null;
     export let reorderEnabled = false;
@@ -804,7 +805,14 @@
 
 <page bind:this={page} id={title || $slc('settings.title')} actionBarHidden={true}>
     <gridlayout rows="auto,*">
-        <collectionview bind:this={collectionView} accessibilityValue="settingsCV" itemTemplateSelector={selectTemplate} {items} {reorderEnabled} row={1} android:paddingBottom={windowInsetBottom}>
+        <collectionview
+            bind:this={collectionView}
+            accessibilityValue="settingsCV"
+            itemTemplateSelector={selectTemplate}
+            {items}
+            {reorderEnabled}
+            row={1}
+            android:paddingBottom={windowInsetBottom + bottomOffset}>
             <Template key="header" let:item>
                 <gridlayout rows="auto,auto">
                     {#if __ANDROID__}

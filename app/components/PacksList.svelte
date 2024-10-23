@@ -34,6 +34,7 @@
     } from '~/services/documents';
     import { BOTTOM_BUTTON_OFFSET, EVENT_FOLDER_UPDATED, EVENT_PACK_ADDED, EVENT_PACK_DELETED, EVENT_PACK_MOVED_FOLDER, EVENT_PACK_UPDATED } from '~/utils/constants';
     import {
+        currentBottomOffset,
         goToFolderView,
         hideBarPlayer,
         hideLoading,
@@ -56,7 +57,7 @@
     import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { getBGServiceInstance } from '~/services/BgService';
-    import { onSetup, onUnsetup } from '~/services/BgService.common';
+    import { onServiceLoaded, onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
 
@@ -130,7 +131,7 @@
     let fabHolder: NativeViewElementNode<StackLayout>;
     let search: ActionBarSearch;
 
-    let stepIndex = 1;
+    const stepIndex = 1;
 
     let showSearch = false;
     let lastRefreshFilter = null;
@@ -308,8 +309,11 @@
     }
 
     onMount(async () => {
-        DEV_LOG && console.log('PackList', 'onMount');
+        // if (!folder) {
+        bottomOffset = currentBottomOffset;
+        DEV_LOG && console.log('PackList', 'onMount', currentBottomOffset);
         Application.on('bottomOffsetAnimation', onBottomOffsetAnimation);
+        // }
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
             // Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
@@ -329,7 +333,9 @@
     });
     onDestroy(() => {
         DEV_LOG && console.log('PackList', 'onDestroy');
+        // if (!folder) {
         Application.off('bottomOffsetAnimation', onBottomOffsetAnimation);
+        // }
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
             // Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
@@ -781,36 +787,24 @@
         });
     }
 
-    function showPlayer() {
-        showBarPlayer();
-        stepIndex = 2;
-    }
-    function hidePlayer() {
-        hideBarPlayer();
-        DEV_LOG && console.log('hidePlayer', stepIndex);
-        stepIndex = 1;
-    }
-
     onSetup((storyHandler) => {
         DEV_LOG && console.info('home onSetup', stepIndex, storyHandler.isPlaying, !!storyHandler.playingPack);
-        storyHandler.on(StoryStartEvent, showPlayer);
-        storyHandler.on(PackStartEvent, showPlayer);
-        storyHandler.on(PackStopEvent, hidePlayer);
-        storyHandler.on(StoryStopEvent, hidePlayer);
-
-        if (storyHandler.pack) {
-            showPlayer();
-        } else {
-            hidePlayer();
-        }
+        // if (!folder) {
+        storyHandler.on(StoryStartEvent, showBarPlayer);
+        storyHandler.on(PackStartEvent, showBarPlayer);
+        storyHandler.on(PackStopEvent, hideBarPlayer);
+        storyHandler.on(StoryStopEvent, hideBarPlayer);
+        // }
     });
 
     onUnsetup((storyHandler) => {
         DEV_LOG && console.info('home onUnsetup', stepIndex, !!storyHandler);
-        storyHandler.off(StoryStartEvent, showPlayer);
-        storyHandler.off(PackStartEvent, showPlayer);
-        storyHandler.off(PackStopEvent, hidePlayer);
-        storyHandler.off(StoryStopEvent, hidePlayer);
+        // if (!folder) {
+        storyHandler?.off(StoryStartEvent, showBarPlayer);
+        storyHandler?.off(PackStartEvent, showBarPlayer);
+        storyHandler?.off(PackStopEvent, hideBarPlayer);
+        storyHandler?.off(StoryStopEvent, hideBarPlayer);
+        // }
     });
 
     async function showAllPodcastStories(item: Item) {
@@ -968,9 +962,21 @@
         staticLayout.draw(canvas);
         canvas.restore();
     }
+    let firstLayout = true;
+    function onLayoutChanged() {
+        if (firstLayout) {
+            firstLayout = false;
+            const storyHandler = getBGServiceInstance().storyHandler;
+            if (storyHandler?.pack) {
+                showBarPlayer();
+            } else {
+                hideBarPlayer();
+            }
+        }
+    }
 </script>
 
-<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
+<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()} on:layoutChanged={onLayoutChanged}>
     <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto">
         <!-- {/if} -->
         <!-- <bottomsheet gestureEnabled={false} row={1} {stepIndex} steps={[0, 90, 90 + BAR_AUDIO_PLAYER_HEIGHT]}> -->
@@ -1040,7 +1046,14 @@
         <progress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
 
         <!-- <gridlayout prop:bottomSheet rows={`90,${BAR_AUDIO_PLAYER_HEIGHT}`} width="100%"> -->
-        <stacklayout bind:this={fabHolder} horizontalAlignment="right" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={1} verticalAlignment="bottom">
+        <stacklayout
+            bind:this={fabHolder}
+            horizontalAlignment="right"
+            marginBottom={Math.min(60, $windowInset.bottom)}
+            orientation="horizontal"
+            row={1}
+            translateY={-bottomOffset}
+            verticalAlignment="bottom">
             <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
             <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
         </stacklayout>

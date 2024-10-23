@@ -194,12 +194,14 @@ export async function showSliderPopover({
 export async function showSettings(props?) {
     const Settings = (await import('~/components/settings/Settings.svelte')).default;
     navigate({
+        frame: 'inner-frame',
         page: Settings,
         props
     });
 }
 
 const animationDuration = 100;
+export let currentBottomOffset = 0;
 function sendAnimationEvent(animationArgs) {
     let offset = 0;
     if (snackMessageVisible) {
@@ -211,6 +213,7 @@ function sendAnimationEvent(animationArgs) {
     // if (offset !== 0) {
     //     offset += get(windowInset).bottom;
     // }
+    currentBottomOffset = offset;
     Application.notify({ eventName: 'bottomOffsetAnimation', animationArgs, offset });
 }
 
@@ -426,6 +429,7 @@ export async function playStory(story: Story, showFullscreen = true, updatePlayl
 export async function goToFolderView(folder: PackFolder, useTransition = true) {
     const page = (await import('~/components/PacksList.svelte')).default;
     return navigate({
+        frame: 'inner-frame',
         page,
         props: {
             folder
@@ -456,6 +460,8 @@ export async function promptForFolder(defaultGroup: string, groups?: PackFolder[
 
 Application.on('exit', () => {
     DEV_LOG && console.log('app exit cleaning barPlayer/snackMessage');
+    barPlayerVisible = false;
+    snackMessageVisible = false;
     if (barPlayer) {
         barPlayer.element.nativeElement._tearDownUI();
         barPlayer.viewInstance.$destroy();
