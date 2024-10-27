@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Canvas, CanvasView } from '@nativescript-community/ui-canvas';
     import { createEventDispatcher } from '@shared/utils/svelte/ui';
+    import { conditionalEvent } from '@shared/utils/svelte/ui';
     import { colors, fontScale, fonts } from '~/variables';
     import { ListItem } from './ListItem';
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
@@ -14,33 +15,29 @@
     export let subtitleFontSize: number = 14;
     export let columns: string = '*';
     export let mainCol = 0;
+    export let onLongPress: (item, e) => void = null;
     export let leftIconFonFamily: string = $fonts.mdi;
-    // export let color: string = colorOnSurface;
-    // export let subtitleColor: string = null;
+    export let color: string | Color = colorOnSurface;
+    export let subtitleColor: string | Color = null;
     export let item: ListItem;
-    export let onDraw: (item: ListItem, event: { canvas: Canvas; object: CanvasView }) => void = null;
+    export let onDraw: (event: { canvas: Canvas; object: CanvasView }) => void = null;
 </script>
 
-<canvasview {columns} padding="0 16 0 16" rippleColor={item.rippleColor || colorPrimary} on:tap={(event) => dispatch('tap', event)} {...$$restProps}>
-    <canvaslabel
-        col={mainCol}
-        color={item.color || colorOnSurface}
-        on:draw={(event) => {
-            (item.onDraw || onDraw)?.(item, event);
-        }}>
+<canvasview
+    {columns}
+    padding="0 16 0 16"
+    rippleColor={colorPrimary}
+    on:tap={(event) => dispatch('tap', event)}
+    use:conditionalEvent={{ condition: !!onLongPress, event: 'longPress', callback: onLongPress }}
+    {...$$restProps}>
+    <canvaslabel col={mainCol} color={item.color || color || colorOnSurface} on:draw={onDraw}>
         <cgroup paddingBottom={item.subtitle ? 10 : 0} verticalAlignment="middle">
-            <cspan
-                fontFamily={leftIconFonFamily}
-                fontSize={(item.iconFontSize || iconFontSize) * $fontScale}
-                paddingLeft="10"
-                text={item.icon}
-                visibility={item.icon ? 'visible' : 'hidden'}
-                width={(item.iconFontSize || iconFontSize) * 2} />
+            <cspan fontFamily={leftIconFonFamily} fontSize={iconFontSize * $fontScale} paddingLeft="8" text={item.icon} visibility={item.icon ? 'visible' : 'hidden'} width={iconFontSize * 2} />
         </cgroup>
-        <cgroup paddingLeft={(item.icon ? iconFontSize * 2 : 0) + extraPaddingLeft} textAlignment="left" verticalAlignment="middle">
+        <cgroup paddingLeft={(item.icon ? 38 : 0) + extraPaddingLeft} textAlignment="left" verticalAlignment="middle">
             <cspan fontSize={(item.fontSize || fontSize) * $fontScale} {fontWeight} text={item.title || item.name} />
             <cspan
-                color={item.subtitleColor || colorOnSurfaceVariant}
+                color={item.subtitleColor || subtitleColor || colorOnSurfaceVariant}
                 fontSize={(item.subtitleFontSize || subtitleFontSize) * $fontScale}
                 text={item.subtitle ? '\n' + item.subtitle : ''}
                 visibility={item.subtitle ? 'visible' : 'hidden'} />

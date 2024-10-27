@@ -10,8 +10,8 @@
 <script lang="ts">
     const dispatch = createEventDispatcher();
     // technique for only specific properties to get updated on store change
-    let { colorOnSurface, colorOnSurfaceDisabled, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors;
-    $: ({ colorOnSurface, colorOnSurfaceDisabled, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
+    let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant } = $colors;
+    $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant } = $colors);
 
     $: linePaint.color = colorOutlineVariant;
     export let showBottomLine: boolean = false;
@@ -100,7 +100,7 @@
         verticalTextAlignment="center"
         {...item.titleProps || $$restProps?.titleProps}
         use:conditionalEvent={{ condition: !!(item.onLinkTap || onLinkTap), event: 'linkTap', callback: item.onLinkTap || onLinkTap }}>
-        <cspan text={item.title} />
+        <cspan text={item.title || item.name} />
         <cspan color={item.subtitleColor || colorOnSurfaceVariant} fontSize={(item.subtitleFontSize || subtitleFontSize) * $fontScale} text={item.subtitle ? '\n' + item.subtitle : null} />
     </label>
 
