@@ -35,14 +35,14 @@ export class Tag {
 }
 
 export interface IPackFolder {
-    id: string;
+    id: number;
     name: string;
     color?: string;
     size?: number;
     count?: number;
 }
 export class PackFolder {
-    public readonly id!: string;
+    public readonly id!: number;
     public name: string;
     public color?: string;
     size?: number;
@@ -257,7 +257,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     modifiedDate: number;
     title?: string;
     tags: string[];
-    folders: string[];
+    folders: number[];
     thumbnail?: string;
     category?: string;
     type?: string;
@@ -429,41 +429,42 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
         return JSON.parse(this.toString());
     }
 
-    async setFolder(folderAndColorName?: string, notify = true) {
-        console.log('setFolder', folderAndColorName, this.folders);
+    async setFolder({ folderId, folderName, notify = true }: { folderId?: number; folderName?: string; notify?: boolean }) {
+        console.log('setFolder', folderId, folderName, this.folders);
         const { folderRepository } = documentsService;
         const { db } = documentsService;
-        let oldFolder;
+        let oldFolderId: number;
         if (this.folders?.length) {
-            const [name, color] = this.folders[0].split(FOLDER_COLOR_SEPARATOR);
-            oldFolder = { name, color };
+            // const [name, color] = this.folders[0].split(FOLDER_COLOR_SEPARATOR);
+            // oldFolder = { name, color };
+            oldFolderId = this.folders[0];
         }
-        let folder;
-        const [folderName, folderColor] = (folderAndColorName || '').split(FOLDER_COLOR_SEPARATOR);
-        if (folderName?.length) {
+        let folder: PackFolder;
+        // const [folderName, folderColor] = (folderAndColorName || '').split(FOLDER_COLOR_SEPARATOR);
+        if (folderId || folderName?.length) {
             try {
-                folder = (await folderRepository.search({ where: sql`name=${folderName}` }))[0];
+                folder = (await folderRepository.search({ where: folderId ? sql`id=${folderId}` : sql`name=${folderName}` }))[0];
             } catch (error) {
                 console.error('setFolder', error, error.stack);
             }
             if (!folder) {
-                folder = await folderRepository.create({ id: Date.now() + '', name: folderName, ...(folderColor ? { color: folderColor } : {}) });
+                folder = await folderRepository.create({ id: folderId || Date.now(), name: folderName });
             }
         }
 
-        if (folderName?.length) {
+        if (folder) {
             await db.query(sql` DELETE FROM PacksFolders where pack_id=${this.id} AND folder_id IS NOT ${folder.id}`);
             const relation = await db.query(sql` SELECT * FROM PacksFolders WHERE "pack_id" = ${this.id} AND "folder_id" = ${folder.id}`);
             if (relation.length === 0) {
                 await db.query(sql` INSERT INTO PacksFolders ( pack_id, folder_id ) VALUES(${this.id}, ${folder.id})`);
             }
-            this.folders = [folderName];
+            this.folders = [folder.id];
         } else {
             await db.query(sql` DELETE FROM PacksFolders where pack_id=${this.id}`);
             delete this.folders;
         }
         if (notify) {
-            documentsService.notify({ eventName: EVENT_PACK_MOVED_FOLDER, object: this, folder, oldFolder } as PackMovedFolderEventData);
+            documentsService.notify({ eventName: EVENT_PACK_MOVED_FOLDER, object: this, folder, oldFolderId } as PackMovedFolderEventData);
         }
     }
 

@@ -451,7 +451,7 @@ export async function goToFolderView(folder: PackFolder, useTransition = true) {
         }
     });
 }
-export async function promptForFolder(defaultGroup: string, groups?: PackFolder[]): Promise<string> {
+export async function promptForFolderName(defaultGroup: string, groups?: PackFolder[]): Promise<string> {
     const TagView = (await import('~/components/common/FolderView.svelte')).default;
     const componentInstanceInfo = resolveComponentElement(TagView, { groups, defaultGroup });
     const modalView: View = componentInstanceInfo.element.nativeView;

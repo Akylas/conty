@@ -31,7 +31,7 @@
         onBackButton,
         playPack,
         playStory,
-        promptForFolder,
+        promptForFolderName,
         showBarPlayer,
         showBottomsheetOptionSelect,
         showLoading,
@@ -94,7 +94,7 @@
 
     export let folder: PackFolder = null;
     export let title = l('packs');
-    let folders: PackFolder[];
+    let folders: PackFolder[] = [];
 
     $: if (folder) {
         DEV_LOG && console.log('updating folder title', folder);
@@ -211,8 +211,8 @@
     }
     function onPackMovedFolder(event: PackMovedFolderEventData) {
         // TODO: for now we refresh otherwise the order might be lost
-        DEV_LOG && console.log('onPackMovedFolder', folder?.id, event.folder?.id, event.oldFolder?.id);
-        if (!folder && (!event.folder || !event.oldFolder)) {
+        DEV_LOG && console.log('onPackMovedFolder', folder?.id, event.folder?.id, event.oldFolderId);
+        if (!folder && (!event.folder || !event.oldFolderId)) {
             // if (!event.folder) {
             //     const index = documents.findIndex(d=>d.doc && d.doc.id === event.object.id)
             //     if (index === -1) {
@@ -220,7 +220,7 @@
             //     }
             // }
             refresh();
-        } else if (folder && (folder.name === event.folder?.name || folder.name === event.oldFolder?.name)) {
+        } else if (folder && (folder.id === event.folder?.id || folder.id === event.oldFolderId)) {
             refresh();
         }
     }
@@ -360,7 +360,7 @@
                     DEV_LOG && console.log('importContentFromFiles', files);
                     await importService.importContentFromFiles(
                         files.map((f) => getRealPath(f)),
-                        folder?.name
+                        folder?.id
                     );
                 }
             }
@@ -426,7 +426,7 @@
         if (!item.selected) {
             packs.some((d, index) => {
                 if (d === item) {
-                    nbSelected++;
+                    nbSelected += d.folder ? d.folder.count : 1;
                     d.selected = true;
                     packs.setItem(index, d);
                     return true;
@@ -438,7 +438,7 @@
         if (item.selected) {
             packs.some((d, index) => {
                 if (d === item) {
-                    nbSelected--;
+                    nbSelected -= d.folder ? d.folder.count : 1;
                     d.selected = false;
                     packs.setItem(index, d);
                     return true;
@@ -760,7 +760,7 @@
                             // if (selected.length === 1) {
                             //     defaultGroup = selected[0].groups?.[0];
                             // }
-                            const folder = await promptForFolder(
+                            const folderName = await promptForFolderName(
                                 defaultFolder,
                                 Object.values(folders).filter((g) => g.name !== 'none')
                             );
@@ -768,7 +768,7 @@
                                 // console.log('group2', typeof group, `"${group}"`, selected.length);
                                 for (let index = 0; index < selected.length; index++) {
                                     const doc = selected[index];
-                                    await doc.setFolder(folder === 'none' ? undefined : folder);
+                                    await doc.setFolder({ folderName: folderName === 'none' ? undefined : folderName });
                                 }
                                 unselectAll();
                             }

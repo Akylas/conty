@@ -27,7 +27,7 @@ export interface PackDeletedEventData extends EventData {
 export interface PackMovedFolderEventData extends EventData {
     object: Pack;
     folder?: PackFolder;
-    oldFolder?: PackFolder;
+    oldFolderId?: number;
 }
 
 export interface FolderUpdatedEventData extends EventData {
@@ -256,11 +256,11 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
         );
         if (folders) {
             for (let index = 0; index < folders.length; index++) {
-                await pack.setFolder(folders[index], false);
+                await pack.setFolder({ folderId: folders[index], notify: false });
             }
             pack.folders = folders;
         }
-        this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack, folder: folders ? { name: folders[0] } : undefined } as PackAddedEventData);
+        this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack, folder: folders ? { id: folders[0] } : undefined } as PackAddedEventData);
 
         return pack;
     }
@@ -342,7 +342,7 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
         const args = {
             select: new SqlQuery([
                 `p.*,
-            group_concat(f.name || CASE WHEN f.color IS NOT NULL THEN '${FOLDER_COLOR_SEPARATOR}' || f.color ELSE '' END, '${FOLDERS_SEPARATOR}') AS folders`
+            group_concat(f.id, '${FOLDERS_SEPARATOR}') AS folders`
             ]),
             from: sql`Pack p`,
             orderBy: new SqlQuery([`p.${order}`]),
@@ -385,7 +385,7 @@ LEFT JOIN
         Object.assign(pack, {
             id,
             type,
-            folders: typeof folders === 'string' ? folders.split('#$%') : folders,
+            folders: (typeof folders === 'string' ? folders.split(FOLDERS_SEPARATOR) : folders)?.map((f) => parseInt(f, 10)),
             extra: isString(extra) ? JSON.parse(extra) : extra,
             compressed,
             ...others
@@ -483,8 +483,8 @@ export class DocumentsService extends Observable {
         return false;
     }
 
-    async importStory(id: string, compressed: boolean, data: Partial<Pack> = {}, folder?: string) {
-        DEV_LOG && console.log('importStory ', id, compressed, folder, JSON.stringify(data));
+    async importStory(id: string, compressed: boolean, data: Partial<Pack> = {}, folderId?: number) {
+        DEV_LOG && console.log('importStory ', id, compressed, folderId, JSON.stringify(data));
         return this.packRepository.createPack({
             id,
             compressed: compressed ? 1 : 0,
@@ -492,7 +492,7 @@ export class DocumentsService extends Observable {
             // title: storyJSON.title,
             ...data,
             thumbnail: data.thumbnail || 'thumbnail.png',
-            ...(folder ? { folders: [folder] } : {})
+            ...(folderId ? { folders: [folderId] } : {})
         });
     }
 

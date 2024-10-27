@@ -237,8 +237,8 @@ export default class ImportWorker extends Observable {
     async importFromCurrentDataFolderQueue() {
         return this.queue.add(() => this.importFromCurrentDataFolderInternal());
     }
-    async importFromFilesQueue({ files, folder }: { files: string[]; folder?: string }) {
-        return this.queue.add(() => this.importFromFilesInternal({ files, folder }));
+    async importFromFilesQueue({ files, folderId }: { files: string[]; folderId?: number }) {
+        return this.queue.add(() => this.importFromFilesInternal({ files, folderId }));
     }
     async importFromFileQueue(data) {
         return this.queue.add(() => this.importFromFileInternal(data));
@@ -363,7 +363,7 @@ export default class ImportWorker extends Observable {
         }
     }
 
-    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, folder?: string, extraData?: Partial<Pack>) {
+    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, folderId?: number, extraData?: Partial<Pack>) {
         // let folder = Folder.fromPath(destinationFolderPath);
         let folderPath = destinationFolderPath;
         if (extraData?.extra?.subPaths) {
@@ -436,7 +436,7 @@ export default class ImportWorker extends Observable {
                     ...(extraData?.extra || {})
                 }
             },
-            folder
+            folderId
         );
     }
 
@@ -461,7 +461,7 @@ export default class ImportWorker extends Observable {
         // }
     }
 
-    async importFromFileInternal({ extraData, filePath, folder, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folder?: string }) {
+    async importFromFileInternal({ extraData, filePath, folderId, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folderId?: number }) {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             const inputFilePath = filePath;
@@ -491,12 +491,12 @@ export default class ImportWorker extends Observable {
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
             }
-            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folder, extraData);
+            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folderId, extraData);
         } catch (error) {
             this.sendError(error);
         }
     }
-    async importFromFilesInternal({ files, folder }: { files: string[]; folder?: string }) {
+    async importFromFilesInternal({ files, folderId }: { files: string[]; folderId?: number }) {
         DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
@@ -527,7 +527,7 @@ export default class ImportWorker extends Observable {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
 
-                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folder, extraData ? { extra: extraData } : undefined);
+                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folderId, extraData ? { extra: extraData } : undefined);
             }
         } catch (error) {
             this.sendError(error);
