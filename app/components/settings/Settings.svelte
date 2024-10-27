@@ -37,7 +37,7 @@
     import { Sentry } from '@shared/utils/sentry';
     import { share } from '@shared/utils/share';
     import { showError } from '@shared/utils/showError';
-    import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings } from '~/utils/ui';
+    import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
@@ -704,6 +704,35 @@
                             }
                             updateItem(item);
                         }
+                    } else if (item.type === 'slider') {
+                        await showSliderPopover({
+                            anchor: event.object,
+                            value: item.currentValue(),
+                            ...item,
+                            onChange(value) {
+                                if (item.transformValue) {
+                                    value = item.transformValue(value, item);
+                                } else {
+                                    value = Math.round(value / item.step) * item.step;
+                                }
+                                if (item.id === 'store_setting') {
+                                    const store = getStoreSetting(item.storeKey, item.storeDefault);
+                                    if (item.valueType === 'string') {
+                                        store[item.key] = value + '';
+                                    } else {
+                                        store[item.key] = value;
+                                    }
+                                    ApplicationSettings.setString(item.storeKey, JSON.stringify(store));
+                                } else {
+                                    if (item.valueType === 'string') {
+                                        ApplicationSettings.setString(item.key, value + '');
+                                    } else {
+                                        ApplicationSettings.setNumber(item.key, value);
+                                    }
+                                }
+                                updateItem(item);
+                            }
+                        });
                     } else {
                         let selectedIndex = -1;
                         const currentValue = item.currentValue?.() ?? item.currentValue;
