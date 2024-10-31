@@ -707,7 +707,7 @@
                     } else if (item.type === 'slider') {
                         await showSliderPopover({
                             anchor: event.object,
-                            value: item.currentValue(),
+                            value: (item.currentValue || item.rightValue)?.(),
                             ...item,
                             onChange(value) {
                                 if (item.transformValue) {
@@ -735,7 +735,7 @@
                         });
                     } else {
                         let selectedIndex = -1;
-                        const currentValue = item.currentValue?.() ?? item.currentValue;
+                        const currentValue = (item.currentValue || item.rightValue)?.() ?? item.currentValue;
                         const options = item.values.map((k, index) => {
                             const selected = currentValue === k.value;
                             if (selected) {
