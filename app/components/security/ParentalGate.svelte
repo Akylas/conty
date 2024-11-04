@@ -31,6 +31,7 @@
 </script>
 
 <script lang="ts">
+    export let onClose = null;
     const randomNumbers: number[] = [];
     for (let index = 0; index < 3; index++) {
         randomNumbers.push(getRandomInt(1, 9, randomNumbers));
@@ -46,7 +47,7 @@
         }
         selectedNumbers = selectedNumbers; // for svelte update
         if (selectedNumbers.length === 3 && JSON.stringify(selectedNumbers.map((n) => parseInt(n, 10)).sort()) === JSON.stringify(randomNumbers.sort())) {
-            closeModal(true);
+            onClose(true);
         }
     }
     // technique for only specific properties to get updated on store change
@@ -60,11 +61,14 @@
         <cspan text={lc('match_numbers') + '\n'} />
         <cspan color={colorPrimary} fontSize={21} fontWeight="bold" {text} />
     </label>
-    <gridlayout columns="auto,auto,auto" row={1} rows="auto,auto,auto">
+    <gridlayout columns="auto,auto,auto" horizontalAlignment="center" row={1} rows="auto,auto,auto">
         {#each Object.keys(numberStrMap) as n}
             <mdbutton
                 backgroundColor={selectedNumbers.indexOf(n) !== -1 ? new Color(colorPrimary).setAlpha(100).hex : 'transparent'}
+                borderColor={colorOnSurface}
+                borderWidth={1}
                 col={(parseInt(n, 10) - 1) % 3}
+                color={colorOnSurface}
                 height={70}
                 margin={5}
                 row={Math.floor((parseInt(n, 10) - 1) / 3)}
