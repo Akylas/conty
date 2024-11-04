@@ -35,6 +35,7 @@
         showBarPlayer,
         showBottomsheetOptionSelect,
         showLoading,
+        showParentalGate,
         showPopoverMenu,
         showSettings
     } from '~/utils/ui';
@@ -403,6 +404,10 @@
                         cancelButtonText: lc('cancel')
                     });
                     if (result) {
+                        const parentalGate = await showParentalGate();
+                        if (!parentalGate) {
+                            return;
+                        }
                         // ApplicationSettings.remove(SETTINGS_REMOTE_SOURCES);
                         await showSettings({
                             subSettingsOptions: 'remote_sources'
