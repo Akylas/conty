@@ -73,7 +73,7 @@ export class NotificationHelper {
     /* Create a notification channel */
     public static createNotificationChannels(context) {
         if (SDK_VERSION >= 26) {
-            const color = new Color(get(colors).colorPrimary).android;
+            // const color = new Color(get(colors).colorPrimary).android;
             // API level 26 ("Android O") supports notification channels.
             const service = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager;
 
