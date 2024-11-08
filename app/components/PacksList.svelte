@@ -1038,8 +1038,6 @@
             height="100%"
             ios:iosOverflowSafeArea={true}
             {itemTemplateSelector}
-            ios:layoutHorizontalAlignment="left"
-            ios:layoutStyle="align"
             items={packs}
             paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) + bottomOffset}
             row={2}
