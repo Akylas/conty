@@ -31,13 +31,14 @@
     import { showError } from '@shared/utils/showError';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { openLink, playStory, showBottomsheetOptionSelect } from '~/utils/ui';
-    import { colors, coverSharedTransitionTag, windowInset } from '~/variables';
+    import { colors, coverSharedTransitionTag, fontScale, windowInset } from '~/variables';
+    import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
 
     const PAGER_PEAKING = 30;
     const PAGER_PAGE_PADDING = 16;
 
     const IMAGE_ELEVATION = __ANDROID__ ? 0 : 0;
-
+    const textPaint = new Paint();
     interface Item {
         stage: Stage;
         image: string;
@@ -46,8 +47,8 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline, colorOutlineVariant } = $colors;
-    $: ({ colorPrimary, colorSecondaryContainer, colorOnSecondaryContainer, colorSurfaceContainerHigh, colorOutline, colorOutlineVariant } = $colors);
+    let { colorOnSecondaryContainer, colorOnTertiaryContainer, colorOutline, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerHigh, colorTertiaryContainer } = $colors;
+    $: ({ colorOnSecondaryContainer, colorOnTertiaryContainer, colorOutline, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerHigh, colorTertiaryContainer } = $colors);
     let page: NativeViewElementNode<Page>;
     let pager: NativeViewElementNode<Pager>;
     let storyCoverImage: NativeViewElementNode<Image>;
@@ -56,7 +57,7 @@
     const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
     const screenWidth = Screen.mainScreen.widthDIPs;
     const screenHeight = Screen.mainScreen.heightDIPs;
-
+    $: textPaint.textSize = 16 * $fontScale;
     let state: PlayingState = 'stopped';
     let items: Item[] = [];
     let selectedStageIndex = 0;
@@ -348,20 +349,25 @@
             const stories = await storyHandler.findAllStories(thePack);
             const rowHeight = 80;
             const showFilter = items.length > 6;
-            const data: any = await showBottomsheetOptionSelect({
-                height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 40), Screen.mainScreen.heightDIPs * 0.7),
-                rowHeight,
-                title: lc('stories', stories.length),
-                fontSize: 18,
-                showFilter,
-                options: stories.map((story) => ({
-                    type: 'image',
-                    image: story.thumbnail,
-                    name: story.name,
-                    subtitle: formatDuration(story.duration),
-                    story
-                }))
-            });
+            const data: any = await showBottomsheetOptionSelect(
+                {
+                    height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 40), Screen.mainScreen.heightDIPs * 0.7),
+                    rowHeight,
+                    title: lc('stories', stories.length),
+                    fontSize: 18,
+                    showFilter,
+                    options: stories.map((story) => ({
+                        type: 'image',
+                        image: story.thumbnail,
+                        name: story.name,
+                        subtitle: formatDuration(story.duration),
+                        story
+                    }))
+                },
+                {
+                    skipCollapsedState: true
+                }
+            );
             if (data?.story) {
                 const index = stories.findIndex((s) => s.id === data.story.id);
                 storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
@@ -402,6 +408,25 @@
             }
         } catch (error) {
             console.error(error, error.stack);
+        }
+    }
+
+    function onStoryDraw(event: { canvas: Canvas; object: CanvasView }) {
+        DEV_LOG && console.log('onStoryDraw', Object.keys(story));
+        if (story?.episode && story?.pack.extra?.episodeCount) {
+            textPaint.color = colorOnTertiaryContainer;
+            textPaint.fontWeight = 'bold';
+            const canvas = event.canvas;
+            const h = canvas.getHeight();
+            const w = canvas.getWidth();
+            const staticLayout = new StaticLayout(` ${story.episode}/${story?.pack.extra?.episodeCount} `, textPaint, w, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+            const width = staticLayout.getLineWidth(0);
+            const height = staticLayout.getHeight();
+            canvas.translate(24, h - height - 10);
+            textPaint.setColor(colorTertiaryContainer);
+            canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+            textPaint.color = colorOnTertiaryContainer;
+            staticLayout.draw(canvas);
         }
     }
 </script>
@@ -466,14 +491,15 @@
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                 <!-- {#if __IOS__ || story} -->
                 <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} visibility={story ? 'visible' : 'collapse'} on:tap={onOkButtonIfOption}>
-                    <gridlayout
+                    <canvasview
                         borderColor={colorOutlineVariant}
                         borderRadius={20}
                         borderWidth={colorTheme === 'eink' ? 1 : 0}
                         elevation={IMAGE_ELEVATION}
                         horizontalAlignment="center"
                         margin={PAGER_PAGE_PADDING - 10}
-                        verticalAlignment="center">
+                        verticalAlignment="center"
+                        on:draw={onStoryDraw}>
                         <image bind:this={storyCoverImage} borderRadius={20} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} />
                         {#if story?.images?.length > 1}
                             <stacklayout
@@ -490,7 +516,7 @@
                                 {/each}
                             </stacklayout>
                         {/if}
-                    </gridlayout>
+                    </canvasview>
                 </gridlayout>
                 <!-- {/if} -->
                 <!-- <collectionview

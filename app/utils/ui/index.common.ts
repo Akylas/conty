@@ -1,5 +1,5 @@
 import { lc } from '@nativescript-community/l';
-import { closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+import { SvelteShowBottomSheetOptions, closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
 import { MDCAlertControlerOptions, alert, confirm } from '@nativescript-community/ui-material-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
@@ -32,6 +32,7 @@ import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
+import { BottomSheetOptions } from '@nativescript-community/ui-material-bottomsheet';
 
 export * from '@shared/utils/ui';
 
@@ -65,7 +66,7 @@ export async function showAlertOptionSelect<T>(props?: ComponentProps<OptionSele
     }
 }
 
-export async function showBottomsheetOptionSelect<T>(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<AlertOptions & MDCAlertControlerOptions>) {
+export async function showBottomsheetOptionSelect(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<BottomSheetOptions>) {
     const component = (await import('~/components/common/OptionSelect.svelte')).default;
     try {
         const result = await showBottomSheet({
