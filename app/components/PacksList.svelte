@@ -987,11 +987,11 @@
             bind:this={collectionView}
             colWidth="50%"
             height="100%"
-            iosOverflowSafeArea={true}
+            ios:iosOverflowSafeArea={true}
             {itemTemplateSelector}
+            ios:layoutHorizontalAlignment="left"
+            ios:layoutStyle="align"
             items={packs}
-            layoutHorizontalAlignment="left"
-            layoutStyle="align"
             paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) + bottomOffset}
             row={1}
             spanSize={itemTemplateSpanSize}
