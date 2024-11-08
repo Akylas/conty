@@ -32,10 +32,10 @@ export async function showParentalGate() {
     }
 }
 
-export async function showSettings(props?) {
+export async function showSettings(props?, options?) {
     const parentalGate = await showParentalGate();
     if (!parentalGate) {
         return;
     }
-    return showSettingsCommon();
+    return showSettingsCommon(props, options);
 }

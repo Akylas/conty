@@ -6,11 +6,11 @@
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { throttle } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
-    import { fade, showModal } from '@shared/utils/svelte/ui';
+    import { fade, goBack, showModal } from '@shared/utils/svelte/ui';
     import { filesize } from 'filesize';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -45,11 +45,11 @@
     import ActionBarSearch from '~/components/common/ActionBarSearch.svelte';
     import IconButton from '~/components/common/IconButton.svelte';
     import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
-    import { formatDuration } from '~/helpers/formatter';
+    import { OptionType } from '~/components/common/OptionSelect.svelte';
     import { getBGServiceInstance } from '~/services/BgService';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
-    import { OptionType } from './common/OptionSelect.svelte';
+    import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -115,6 +115,7 @@
     }
 
     let packs: ObservableArray<Item> = null;
+    let folderItems: ObservableArray<Item> = null;
     let nbPacks: number = 0;
     let showNoPack = false;
     let page: NativeViewElementNode<Page>;
@@ -126,6 +127,7 @@
 
     let showSearch = false;
     let lastRefreshFilter = null;
+    let editingTitle = false;
 
     let loading = false;
 
@@ -147,18 +149,23 @@
 
             folders = filter?.length || folder ? [] : await documentsService.folderRepository.findFolders();
 
+            folderItems = new ObservableArray(
+                folders.map(
+                    (folder) =>
+                        ({
+                            folder,
+                            selected: false
+                        }) as any
+                )
+            );
             packs = new ObservableArray(
-                folders
-                    .map((folder) => ({ folder, selected: false }))
-                    .concat(
-                        r.map(
-                            (pack) =>
-                                ({
-                                    pack,
-                                    selected: false
-                                }) as any
-                        )
-                    )
+                r.map(
+                    (pack) =>
+                        ({
+                            pack,
+                            selected: false
+                        }) as any
+                )
             );
             DEV_LOG && console.log('refresh done', filter, r.length);
             updateNoPack();
@@ -242,8 +249,12 @@
         }
     }
     function onFolderUpdated(event: FolderUpdatedEventData) {
+        DEV_LOG && console.log('onFolderUpdated', event.folder);
+        if (event.folder && folder && event.folder.id === folder?.id) {
+            folder = event.folder;
+        }
         let index = -1;
-        packs?.some((d, i) => {
+        folderItems?.some((d, i) => {
             if (d.folder && d.folder.id === event.folder.id) {
                 index = i;
                 return true;
@@ -251,10 +262,10 @@
         });
         DEV_LOG && console.log('onFolderUpdated', event.folder, index);
         if (index >= 0) {
-            const item = packs?.getItem(index);
+            const item = folderItems?.getItem(index);
             if (item) {
                 item.folder = event.folder;
-                packs.setItem(index, item);
+                folderItems.setItem(index, item);
             }
         }
     }
@@ -271,12 +282,12 @@
             if (!folder && event.folders?.length) {
                 for (let i = 0; i < event.folders.length; i++) {
                     const name = event.folders[i].split(FOLDER_COLOR_SEPARATOR)[0];
-                    const index = packs.findIndex((item) => item.folder && item.folder.name === name);
+                    const index = folderItems.findIndex((item) => item.folder && item.folder.name === name);
                     if (index !== -1) {
-                        const item = packs.getItem(index);
+                        const item = folderItems.getItem(index);
                         const res = await documentsService.folderRepository.findFolder(name);
                         item.folder = res[0];
-                        packs.setItem(index, packs.getItem(index));
+                        folderItems.setItem(index, folderItems.getItem(index));
                     }
                 }
             }
@@ -428,45 +439,77 @@
     let nbSelected = 0;
     function selectItem(item: Item) {
         if (!item.selected) {
-            packs.some((d, index) => {
-                if (d === item) {
-                    nbSelected += d.folder ? d.folder.count : 1;
-                    d.selected = true;
-                    packs.setItem(index, d);
-                    return true;
-                }
-            });
+            if (item.folder) {
+                folderItems?.some((d, index) => {
+                    if (d === item) {
+                        nbSelected += d.folder.count;
+                        d.selected = true;
+                        folderItems.setItem(index, d);
+                        return true;
+                    }
+                });
+            } else {
+                packs?.some((d, index) => {
+                    if (d === item) {
+                        nbSelected += 1;
+                        d.selected = true;
+                        packs.setItem(index, d);
+                        return true;
+                    }
+                });
+            }
         }
     }
+
     function unselectItem(item: Item) {
+        DEV_LOG && console.log('unselectItem', item);
         if (item.selected) {
-            packs.some((d, index) => {
-                if (d === item) {
-                    nbSelected -= d.folder ? d.folder.count : 1;
-                    d.selected = false;
-                    packs.setItem(index, d);
-                    return true;
-                }
-            });
+            if (item.folder) {
+                folderItems?.some((d, index) => {
+                    if (d === item) {
+                        nbSelected -= d.folder.count;
+                        d.selected = false;
+                        folderItems.setItem(index, d);
+                        return true;
+                    }
+                });
+            } else {
+                packs?.some((d, index) => {
+                    if (d === item) {
+                        nbSelected -= 1;
+                        d.selected = false;
+                        packs.setItem(index, d);
+                        return true;
+                    }
+                });
+            }
         }
     }
     function unselectAll() {
+        nbSelected = 0;
         if (packs) {
-            nbSelected = 0;
             packs.splice(0, packs.length, ...packs.map((i) => ({ ...i, selected: false })));
         }
-        // packs?.forEach((d, index) => {
-        //         d.selected = false;
-        //         packs.setItem(index, d);
-        //     });
-        // refresh();
+        if (folderItems) {
+            folderItems.splice(0, folderItems.length, ...folderItems.map((i) => ({ ...i, selected: false })));
+        }
     }
-
     function selectAll() {
+        let newCount = packs.length;
         if (packs) {
             packs.splice(0, packs.length, ...packs.map((i) => ({ ...i, selected: true })));
-            nbSelected = packs.length;
         }
+        if (folderItems) {
+            folderItems.splice(
+                0,
+                folderItems.length,
+                ...folderItems.map((i) => {
+                    newCount += i.folder.count;
+                    return { ...i, selected: false };
+                })
+            );
+        }
+        nbSelected = newCount;
     }
     let ignoreTap = false;
     function onItemLongPress(item: Item, event?) {
@@ -516,12 +559,29 @@
             showError(error);
         }
     }
+    function onGoBack(data) {
+        if (editingTitle) {
+            if (data) {
+                data.cancel = true;
+            }
+            editingTitle = false;
+        }
+    }
+    function actionBarOnGoBack() {
+        if (showSearch) {
+            search.hideSearch();
+        } else if (Frame.topmost().canGoBack()) {
+            goBack();
+        }
+    }
 
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             if (nbSelected > 0) {
                 data.cancel = true;
                 unselectAll();
+            } else {
+                onGoBack(data);
             }
         });
 
@@ -532,7 +592,13 @@
             if (d.selected) {
                 if (d.pack) {
                     selected.push(d.pack);
-                } else if (d.folder) {
+                }
+            }
+        }
+        for (let index = 0; index < folderItems.length; index++) {
+            const d = folderItems.getItem(index);
+            if (d.selected) {
+                if (d.folder) {
                     selected.push(...(await documentsService.packRepository.findPacks({ folder: d.folder })));
                 }
             }
@@ -746,15 +812,12 @@
                         case 'move_folder':
                             const selected = await getSelectedPacks();
                             let defaultFolder;
-                            // if (selected.length === 1) {
-                            //     defaultGroup = selected[0].groups?.[0];
-                            // }
                             const folderName = await promptForFolderName(
                                 defaultFolder,
                                 Object.values(folders).filter((g) => g.name !== 'none')
                             );
-                            if (typeof folder === 'string') {
-                                // console.log('group2', typeof group, `"${group}"`, selected.length);
+                            DEV_LOG && console.log('folderName', folderName, selected.length);
+                            if (typeof folderName === 'string') {
                                 for (let index = 0; index < selected.length; index++) {
                                     const doc = selected[index];
                                     await doc.setFolder({ folderName: folderName === 'none' ? undefined : folderName });
@@ -886,51 +949,37 @@
 
     function onFolderCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
         const w = canvas.getWidth();
+        const h = canvas.getHeight();
+        const dx = 10;
         const { folder } = item;
-        textPaint.fontWeight = 'normal';
-        // textPaint.color = colorOnSurfaceVariant;
-        // canvas.drawText(
-        //     filesize(
-        //         item.doc.pages.reduce((acc, v) => acc + v.size, 0),
-        //         { output: 'string' }
-        //     ),
-        //     dx,
-        //     h - (condensed ? 0 : 16) - 10,
-        //     textPaint
-        // );
         textPaint.color = colorOnBackground;
-        const cardView = viewStyle === 'card';
-        const iconSize = cardView ? 70 : 20;
-        const textSize = cardView ? 22 : 16;
-        const dx = cardView ? 0 : 16;
-        const subtitleSize = cardView ? 18 : 14;
         const topText = createNativeAttributedString({
             spans: [
                 {
                     fontFamily: $fonts.mdi,
-                    fontSize: iconSize * $fontScale,
+                    fontSize: 20 * $fontScale,
                     color: !$folderBackgroundColor && folder.color ? folder.color : colorOutline,
-                    lineHeight: iconSize * 1.2 * $fontScale,
-                    text: 'mdi-folder' + (cardView ? '\n' : ' ')
+                    lineHeight: 24 * $fontScale,
+                    text: 'mdi-folder '
                 },
                 {
-                    fontSize: textSize * $fontScale,
+                    fontSize: 16 * $fontScale,
                     fontWeight: 'bold',
                     lineBreak: 'end',
-                    lineHeight: textSize * 1.2 * $fontScale,
+                    lineHeight: 18 * $fontScale,
                     text: folder.name
                 },
                 {
-                    fontSize: subtitleSize * $fontScale,
+                    fontSize: 14 * $fontScale,
                     color: colorOutline,
-                    lineHeight: subtitleSize * 1.2 * $fontScale,
+                    lineHeight: (condensed ? 14 : 20) * $fontScale,
                     text: '\n' + lc('packs_count', item.folder.count)
                 }
             ]
         });
         canvas.save();
-        const staticLayout = new StaticLayout(topText, textPaint, w - dx, cardView ? LayoutAlignment.ALIGN_CENTER : LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, cardView ? 16 : 20);
+        const staticLayout = new StaticLayout(topText, textPaint, w - dx, LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
+        canvas.translate(dx, h / 2 - staticLayout.getHeight() / 2);
         staticLayout.draw(canvas);
         canvas.restore();
     }
@@ -949,20 +998,43 @@
 </script>
 
 <page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()} on:layoutChanged={onLayoutChanged}>
-    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*,auto">
-        <!-- {/if} -->
-        <!-- <bottomsheet gestureEnabled={false} row={1} {stepIndex} steps={[0, 90, 90 + BAR_AUDIO_PLAYER_HEIGHT]}> -->
+    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
+        <collectionView
+            bind:this={collectionView}
+            colWidth={150}
+            height={70}
+            items={folderItems}
+            orientation="horizontal"
+            row={1}
+            rowHeight={70}
+            ios:iosOverflowSafeArea={true}
+            visibility={folders?.length ? 'visible' : 'collapsed'}>
+            <Template let:item>
+                <canvasview
+                    backgroundColor={($folderBackgroundColor && item.folder.color) || colorSurfaceContainerHigh}
+                    borderColor={colorOutline}
+                    borderRadius={12}
+                    borderWidth={1}
+                    margin="0 8 0 8"
+                    rippleColor={colorSurface}
+                    on:tap={() => onItemTap(item)}
+                    on:longPress={(e) => onItemLongPress(item, e)}
+                    on:draw={(e) => onFolderCanvasDraw(item, e)}>
+                    <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
+                    <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
+                    <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
+                </canvasview>
+            </Template>
+        </collectionView>
         <collectionView
             bind:this={collectionView}
             colWidth="50%"
             height="100%"
-            iosOverflowSafeArea={true}
+            ios:iosOverflowSafeArea={true}
             {itemTemplateSelector}
             items={packs}
-            layoutHorizontalAlignment="left"
-            layoutStyle="align"
             paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) + bottomOffset}
-            row={1}
+            row={2}
             spanSize={itemTemplateSpanSize}
             width="100%">
             <Template let:item>
@@ -995,38 +1067,10 @@
                         on:tap={() => podcastButton(item)} />
                 </canvasview>
             </Template>
-            <Template key="folder" let:item>
-                <canvasview
-                    backgroundColor={($folderBackgroundColor && item.folder.color) || colorSurfaceContainerHigh}
-                    borderColor={colorOutline}
-                    borderRadius={12}
-                    borderWidth={1}
-                    height={getFolderRowHeight(viewStyle) * $fontScale}
-                    margin="4 8 4 8"
-                    rippleColor={colorSurface}
-                    on:tap={() => onItemTap(item)}
-                    on:longPress={(e) => onItemLongPress(item, e)}
-                    on:draw={(e) => onFolderCanvasDraw(item, e)}>
-                    <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
-                    <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
-                    <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
-                </canvasview>
-            </Template>
         </collectionView>
-        <progress backgroundColor="transparent" busy={true} indeterminate={true} row={1} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
+        <progress backgroundColor="transparent" busy={true} indeterminate={true} row={2} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
 
         <!-- <gridlayout prop:bottomSheet rows={`90,${BAR_AUDIO_PLAYER_HEIGHT}`} width="100%"> -->
-        <stacklayout
-            bind:this={fabHolder}
-            horizontalAlignment="right"
-            marginBottom={Math.min(60, $windowInset.bottom)}
-            orientation="horizontal"
-            row={1}
-            translateY={-bottomOffset}
-            verticalAlignment="bottom">
-            <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
-            <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
-        </stacklayout>
         <!-- <BarAudioPlayerWidget padding={2} row={1} /> -->
         <!-- </gridlayout> -->
         <!-- </bottomsheet> -->
@@ -1038,7 +1082,7 @@
                 marginBottom="10%"
                 paddingLeft={16}
                 paddingRight={16}
-                row={1}
+                row={2}
                 rowSpan={2}
                 verticalAlignment="center"
                 width="80%"
@@ -1048,8 +1092,19 @@
             </flexlayout>
         {/if}
 
-        <CActionBar {title}>
-            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
+        <stacklayout
+            bind:this={fabHolder}
+            horizontalAlignment="right"
+            marginBottom={Math.min(60, $windowInset.bottom)}
+            orientation="horizontal"
+            row={2}
+            translateY={-bottomOffset}
+            verticalAlignment="bottom">
+            <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
+            <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
+        </stacklayout>
+        <CActionBar modalWindow={showSearch} onGoBack={actionBarOnGoBack} onTitleTap={folder ? () => (editingTitle = true) : null} {title}>
+            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             {#if folder}
                 <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-palette" variant="text" on:tap={pickFolderColor} />
@@ -1065,9 +1120,11 @@
                 <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showSelectedOptions} />
             </CActionBar>
         {/if}
-        {#if __IOS__}
-            <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
+        {#if editingTitle}
+            <EditNameActionBar {folder} bind:editingTitle />
         {/if}
-        <absolutelayout row={2} />
+        {#if __IOS__}
+            <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={2} verticalAlignment="bottom" />
+        {/if}
     </gridlayout>
 </page>

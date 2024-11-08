@@ -1,10 +1,9 @@
 // (com as any).tns.Runtime.getCurrentRuntime().enableVerboseLogging();
-import { GestureRootView, install as installGestures } from '@nativescript-community/gesturehandler';
+import { install as installGestures } from '@nativescript-community/gesturehandler';
 import { lc } from '@nativescript-community/l';
 import { installMixins as installUIMixins } from '@nativescript-community/systemui';
 import { overrideSpanAndFormattedString } from '@nativescript-community/text';
 import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemenu/svelte';
-import installAlignLayout from '@nativescript-community/ui-collectionview-alignedflowlayout';
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
 import { initialize } from '@nativescript-community/ui-image';
 import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
@@ -12,19 +11,18 @@ import { install as installBottomSheets } from '@nativescript-community/ui-mater
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
 import { Application } from '@nativescript/core';
-import { Frame, NavigatedData, Page } from '@nativescript/core/ui';
+import { NestedScrollView } from '@shared/components/NestedScrollView';
+import { init as sharedInit } from '@shared/index';
 import { startSentry } from '@shared/utils/sentry';
 import { showError } from '@shared/utils/showError';
 import { navigate } from '@shared/utils/svelte/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
-import { getBGServiceInstance } from '~/services/BgService';
 import PacksList from '~/components/App.svelte';
+import { getBGServiceInstance } from '~/services/BgService';
 import { setDocumentsService } from './models/Pack';
-import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
-import { init as sharedInit } from '@shared/index';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -41,7 +39,6 @@ try {
     installColorFilters();
     overrideSpanAndFormattedString();
     initialize({ isDownsampleEnabled: true });
-    installAlignLayout();
 
     registerNativeViewElement('absolutelayout', () => require('@nativescript/core').AbsoluteLayout);
     registerElement('frame', () => new FrameElement());
