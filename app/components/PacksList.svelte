@@ -6,11 +6,11 @@
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { throttle } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
-    import { fade, showModal } from '@shared/utils/svelte/ui';
+    import { fade, goBack, showModal } from '@shared/utils/svelte/ui';
     import { filesize } from 'filesize';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -45,13 +45,14 @@
     import ActionBarSearch from '~/components/common/ActionBarSearch.svelte';
     import IconButton from '~/components/common/IconButton.svelte';
     import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
+    import { OptionType } from '~/components/common/OptionSelect.svelte';
     import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
-    import { OptionType } from './common/OptionSelect.svelte';
+    import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -128,6 +129,7 @@
 
     let showSearch = false;
     let lastRefreshFilter = null;
+    let editingTitle = false;
 
     let loading = false;
 
@@ -249,6 +251,10 @@
         }
     }
     function onFolderUpdated(event: FolderUpdatedEventData) {
+        DEV_LOG && console.log('onFolderUpdated', event.folder);
+        if (event.folder && folder && event.folder.id === folder?.id) {
+            folder = event.folder;
+        }
         let index = -1;
         folderItems?.some((d, i) => {
             if (d.folder && d.folder.id === event.folder.id) {
@@ -555,12 +561,29 @@
             showError(error);
         }
     }
+    function onGoBack(data) {
+        if (editingTitle) {
+            if (data) {
+                data.cancel = true;
+            }
+            editingTitle = false;
+        }
+    }
+    function actionBarOnGoBack() {
+        if (showSearch) {
+            search.hideSearch();
+        } else if (Frame.topmost().canGoBack()) {
+            goBack();
+        }
+    }
 
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             if (nbSelected > 0) {
                 data.cancel = true;
                 unselectAll();
+            } else {
+                onGoBack(data);
             }
         });
 
@@ -571,7 +594,13 @@
             if (d.selected) {
                 if (d.pack) {
                     selected.push(d.pack);
-                } else if (d.folder) {
+                }
+            }
+        }
+        for (let index = 0; index < folderItems.length; index++) {
+            const d = folderItems.getItem(index);
+            if (d.selected) {
+                if (d.folder) {
                     selected.push(...(await documentsService.packRepository.findPacks({ folder: d.folder })));
                 }
             }
@@ -800,15 +829,12 @@
                         case 'move_folder':
                             const selected = await getSelectedPacks();
                             let defaultFolder;
-                            // if (selected.length === 1) {
-                            //     defaultGroup = selected[0].groups?.[0];
-                            // }
                             const folderName = await promptForFolderName(
                                 defaultFolder,
                                 Object.values(folders).filter((g) => g.name !== 'none')
                             );
-                            if (typeof folder === 'string') {
-                                // console.log('group2', typeof group, `"${group}"`, selected.length);
+                            DEV_LOG && console.log('folderName', folderName, selected.length);
+                            if (typeof folderName === 'string') {
                                 for (let index = 0; index < selected.length; index++) {
                                     const doc = selected[index];
                                     await doc.setFolder({ folderName: folderName === 'none' ? undefined : folderName });
@@ -1109,7 +1135,7 @@
             <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
             <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
         </stacklayout>
-        <CActionBar modalWindow={showSearch} onGoBack={() => search.hideSearch()} {title}>
+        <CActionBar modalWindow={showSearch} onGoBack={actionBarOnGoBack} onTitleTap={folder ? () => (editingTitle = true) : null} {title}>
             <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             {#if folder}
@@ -1125,6 +1151,9 @@
                 <!-- <mdbutton class="actionBarButton" text="mdi-share-variant" variant="text" visibility={nbSelected ? 'visible' : 'collapse'} on:tap={showImageExportPopover} /> -->
                 <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showSelectedOptions} />
             </CActionBar>
+        {/if}
+        {#if editingTitle}
+            <EditNameActionBar {folder} bind:editingTitle />
         {/if}
         {#if __IOS__}
             <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={2} verticalAlignment="bottom" />
