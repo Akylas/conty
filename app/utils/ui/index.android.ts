@@ -5,6 +5,6 @@ export * from './index.common';
 export async function showParentalGate() {
     return true;
 }
-export async function showSettings(props?) {
-    return showSettingsCommon(props);
+export async function showSettings(props?, options?) {
+    return showSettingsCommon(props, options);
 }

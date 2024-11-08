@@ -202,9 +202,14 @@
 
     async function addSource() {
         try {
-            await showSettings({
-                subSettingsOptions: 'remote_sources'
-            });
+            await showSettings(
+                {
+                    subSettingsOptions: 'remote_sources'
+                },
+                {
+                    frame: 'download'
+                }
+            );
         } catch (error) {
             showError(error);
         }
@@ -232,7 +237,7 @@
     }
 </script>
 
-<frame>
+<frame id="download">
     <page bind:this={page} id="remoteList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()}>
         <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
             <textfield

@@ -206,10 +206,11 @@ export async function showSliderPopover({
     });
 }
 
-export async function showSettings(props?) {
+export async function showSettings(props?, options?) {
+    DEV_LOG && console.log('showSettings', props, options);
     const Settings = (await import('~/components/settings/Settings.svelte')).default;
     navigate({
-        frame: 'inner-frame',
+        frame: options?.frame || 'inner-frame',
         page: Settings,
         props
     });
