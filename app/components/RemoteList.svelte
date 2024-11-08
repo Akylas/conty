@@ -235,6 +235,13 @@
             showError(error);
         }
     }
+    function onGoBack() {
+        if (showSearch) {
+            search.hideSearch();
+        } else {
+            closeModal();
+        }
+    }
 </script>
 
 <frame id="download">
@@ -289,8 +296,8 @@
                 </flexlayout>
             {/if}
 
-            <CActionBar modalWindow={true} title={l('download_packs')}>
-                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
+            <CActionBar modalWindow={true} {onGoBack} title={l('download_packs')}>
+                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
                 <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
 
                 <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />

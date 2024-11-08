@@ -1079,8 +1079,8 @@
             </flexlayout>
         {/if}
 
-        <CActionBar {title}>
-            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearchTF()} />
+        <CActionBar modalWindow={showSearch} onGoBack={() => search.hideSearch()} {title}>
+            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
             <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={selectViewStyle} />
             {#if folder}
                 <mdbutton class="actionBarButton" accessibilityValue="settingsBtn" text="mdi-palette" variant="text" on:tap={pickFolderColor} />
@@ -1099,6 +1099,5 @@
         {#if __IOS__}
             <absolutelayout backgroundColor={colorBackground} height={$windowInset.bottom} row={1} verticalAlignment="bottom" />
         {/if}
-        <absolutelayout row={2} />
     </gridlayout>
 </page>
