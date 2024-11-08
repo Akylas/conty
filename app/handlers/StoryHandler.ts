@@ -2,15 +2,16 @@ import { AdditiveTweening } from '@nativescript-community/additween';
 import { TNSPlayer } from '@nativescript-community/audio';
 import { lc } from '@nativescript-community/l';
 import { Application, ApplicationSettings, EventData, ImageSource, Observable, ObservableArray } from '@nativescript/core';
+import { clearInterval, debounce } from '@nativescript/core/utils';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { showError } from '@shared/utils/showError';
 import { Pack, Stage, Story } from '~/models/Pack';
-import { prefs } from '~/services/preferences';
-import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_CURRENT_PLAYING, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
-import { Handler } from './Handler';
-import { clearInterval, debounce } from '@nativescript/core/utils';
-import { closeApp } from '~/utils';
 import { documentsService } from '~/services/documents';
+import { prefs } from '~/services/preferences';
+import { closeApp } from '~/utils';
+import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_CURRENT_PLAYING, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
+import { hideBarPlayer, showBarPlayer } from '~/utils/ui';
+import { Handler } from './Handler';
 
 export type PlayingState = 'stopped' | 'playing' | 'paused';
 
@@ -668,6 +669,7 @@ export class StoryHandler extends Handler {
             this.selectedStageIndex = startData.index;
             this.currentStages = startData.stages;
             this.notify({ eventName: PackStartEvent, ...this.stageChangeEventData() } as PackStartEventData);
+            showBarPlayer();
             // DEV_LOG && console.log('playPack1', JSON.stringify(this.currentStages));
             // this.notify({ eventName: StagesChangeEvent, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex });
             // this.notify({ eventName: PlaybackEvent, data: 'play' });
@@ -708,6 +710,7 @@ export class StoryHandler extends Handler {
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
+            showBarPlayer();
             this.playAudios({
                 audios: story.audioFiles,
                 updatePlayingInfo: false,
@@ -766,6 +769,7 @@ export class StoryHandler extends Handler {
                 this.clearPlayer();
                 if (currentPlayingPack) {
                     this.notify({ eventName: PackStopEvent, pack: currentPlayingPack, closeFullscreenPlayer: updatePlaylist ? this.playlist.length <= 1 : closeFullscreenPlayer });
+                    hideBarPlayer();
                     if (updatePlaylist) {
                         this.handleOnPlayingEndPlaylist();
                     }
@@ -777,6 +781,7 @@ export class StoryHandler extends Handler {
                         story: currentPlayingStory,
                         closeFullscreenPlayer: updatePlaylist ? this.playlist.length <= 1 : closeFullscreenPlayer
                     } as StoryStartEventData);
+                    hideBarPlayer();
                     if (updatePlaylist) {
                         this.handleOnPlayingEndPlaylist();
                     }

@@ -45,10 +45,8 @@
     import ActionBarSearch from '~/components/common/ActionBarSearch.svelte';
     import IconButton from '~/components/common/IconButton.svelte';
     import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
-    import { PackStartEvent, PackStopEvent, StoryStartEvent, StoryStopEvent } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { getBGServiceInstance } from '~/services/BgService';
-    import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
     import { OptionType } from './common/OptionSelect.svelte';
@@ -600,21 +598,6 @@
     onPodcastModeChanged(refreshCollectionView);
     onFolderBackgroundColorChanged(refreshCollectionView);
 
-    // let lottieLightColor = new Color(colorPrimaryContainer);
-    // const
-    // let lottieDarkFColor;
-    // let lottieLightColor;
-    // $: {
-    //     if (colorPrimaryContainer) {
-    //         lottieDarkFColor = new Color(colorPrimaryContainer);
-    //         const realTheme = getRealTheme();
-    //         if (realTheme === 'light') {
-    //             lottieLightColor = new Color(colorPrimaryContainer).darken(10);
-    //         } else {
-    //             lottieLightColor = new Color(colorPrimaryContainer).lighten(10);
-    //         }
-    //     }
-    // }
     function getItemImageWidth(viewStyle) {
         switch (viewStyle) {
             case 'condensed':
@@ -789,26 +772,6 @@
             }
         });
     }
-
-    onSetup((storyHandler) => {
-        DEV_LOG && console.info('home onSetup', stepIndex, storyHandler.isPlaying, !!storyHandler.playingPack);
-        // if (!folder) {
-        storyHandler.on(StoryStartEvent, showBarPlayer);
-        storyHandler.on(PackStartEvent, showBarPlayer);
-        storyHandler.on(PackStopEvent, hideBarPlayer);
-        storyHandler.on(StoryStopEvent, hideBarPlayer);
-        // }
-    });
-
-    onUnsetup((storyHandler) => {
-        DEV_LOG && console.info('home onUnsetup', stepIndex, !!storyHandler);
-        // if (!folder) {
-        storyHandler?.off(StoryStartEvent, showBarPlayer);
-        storyHandler?.off(PackStartEvent, showBarPlayer);
-        storyHandler?.off(PackStopEvent, hideBarPlayer);
-        storyHandler?.off(StoryStopEvent, hideBarPlayer);
-        // }
-    });
 
     async function showAllPodcastStories(item: Item) {
         try {
