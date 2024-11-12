@@ -120,6 +120,15 @@
         <item name="colorSurfaceContainerHighest">@color/md_theme_lunii_surfaceContainerHighest</item>
     </style>
     <style name="AppTheme.EInk" parent="AppTheme">
+
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowActionBarOverlay">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+
         <!-- <item name="android:statusBarColor">@color/md_theme_eink_background</item> -->
         <item name="colorPrimary">@color/md_theme_eink_primary</item>
         <item name="colorOnPrimary">@color/md_theme_eink_onPrimary</item>
