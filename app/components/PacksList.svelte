@@ -50,6 +50,7 @@
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
+    import { formatDuration } from '~/helpers/formatter';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);

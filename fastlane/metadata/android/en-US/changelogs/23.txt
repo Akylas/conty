@@ -1,0 +1,11 @@
+Bug fixes:
+- prevent showing Fullscreen player too many times
+- show episode numbers when showing episodes in podcast mode
+- folder count fix when deleting packs
+- bar player not showing after closing/opening the app
+- show current view style when wanting to change it
+- crash on opening github
+- folders now appear on tap as an horizontall list
+- allow to rename folder
+- fixed issue with bar player not hiding
+- correctly show bottomsheets in landscape
