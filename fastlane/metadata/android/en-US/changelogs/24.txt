@@ -1,0 +1,4 @@
+Bug fixes:
+- true black mode theme fix
+- eink using white status bar and navigation bar
+- settings icon not updating correctly on dark mode change
