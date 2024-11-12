@@ -46,8 +46,8 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors;
-    $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
+    let { colorOnBackground, colorPrimary } = $colors;
+    $: ({ colorOnBackground, colorPrimary } = $colors);
     $: ({ bottom: windowInsetBottom } = $windowInset);
 
     let collectionView: NativeViewElementNode<CollectionView>;
@@ -902,7 +902,7 @@
             </Template>
             <Template key="leftIcon" let:item>
                 <ListItemAutoSize columns="auto,*,auto" fontSize={20} item={{ ...item, subtitle: getDescription(item) }} mainCol={1} on:tap={(event) => onTap(item, event)}>
-                    <label col={0} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
+                    <label col={0} color={colorOnBackground} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
                 </ListItemAutoSize>
             </Template>
             <Template key="imageLeft" let:item>
