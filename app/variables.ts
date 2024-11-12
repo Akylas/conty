@@ -212,6 +212,10 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
             // TODO: define all color themes for iOS
             if (theme === 'dark' || theme === 'black') {
                 Object.assign(currentColors, themeColors.dark);
+                if (theme === 'black') {
+                    currentColors.colorBackground = '#000000';
+                    currentColors.colorSurfaceContainer = '#000000';
+                }
             } else {
                 Object.assign(currentColors, themeColors.light);
             }
