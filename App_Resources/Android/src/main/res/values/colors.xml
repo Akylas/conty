@@ -109,7 +109,7 @@
     <color name="md_theme_eink_onSecondaryContainer">#575859</color>
     <color name="md_theme_eink_tertiary">#5D5F5F</color>
     <color name="md_theme_eink_onTertiary">#FFFFFF</color>
-    <color name="md_theme_eink_tertiaryContainer">#F4F0EF</color>
+    <color name="md_theme_eink_tertiaryContainer">#FFFFFF</color>
     <color name="md_theme_eink_onTertiaryContainer">#575859</color>
     <color name="md_theme_eink_error">#BA1A1A</color>
     <color name="md_theme_eink_onError">#FFFFFF</color>
@@ -125,7 +125,7 @@
     <color name="md_theme_eink_outlineVariant">#747878</color>
     <color name="md_theme_eink_scrim">#000000</color>
     <color name="md_theme_eink_inverseSurface">#313030</color>
-    <color name="md_theme_eink_inverseOnSurface">#F4F0EF</color>
+    <color name="md_theme_eink_inverseOnSurface">#FFFFFF</color>
     <color name="md_theme_eink_inversePrimary">#FFFFFF</color>
     <color name="md_theme_eink_primaryFixed">#FFFFFF</color>
     <color name="md_theme_eink_onPrimaryFixed">#1A1C1C</color>
