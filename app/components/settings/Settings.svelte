@@ -7,7 +7,7 @@
     import { showSnack } from '@nativescript-community/ui-material-snackbar';
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { TextView } from '@nativescript-community/ui-material-textview';
-    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
+    import { ApplicationSettings, File, ObservableArray, Page, Screen, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
     import { SDK_VERSION } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
     import { Template } from 'svelte-native/components';
@@ -467,8 +467,7 @@
                     const ThirdPartySoftwareBottomSheet = (await import('~/components/settings/ThirdPartySoftwareBottomSheet.svelte')).default;
                     showBottomSheet({
                         parent: this,
-                        peekHeight: 400,
-                        // skipCollapsedState: isLandscape(),
+                        peekHeight: Math.min(400, Screen.mainScreen.heightDIPs * 0.7),
                         view: ThirdPartySoftwareBottomSheet
                     });
                     break;

@@ -32,6 +32,7 @@
         playPack,
         playStory,
         promptForFolderName,
+        showAllPlayablePackStories,
         showBarPlayer,
         showBottomsheetOptionSelect,
         showLoading,
@@ -853,63 +854,11 @@
 
     async function showAllPodcastStories(item: Item) {
         try {
-            const thePack = item.pack;
-            const storyHandler = getBGServiceInstance().storyHandler;
-            const stories = await storyHandler.findAllStories(thePack, true);
-            const rowHeight = 80;
-            const showFilter = stories.length > 6;
-            const data: any = await showBottomsheetOptionSelect(
-                {
-                    height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 40), Screen.mainScreen.heightDIPs * 0.7),
-                    rowHeight,
-                    fontSize: 18,
-                    showFilter,
-                    title: thePack.title,
-                    component: ListItemAutoSizeFull,
-                    titleProps: {
-                        maxLines: 2,
-                        lineBreak: 'end'
-                        // maxFontSize: 18,
-                        // autoFontSize: true
-                    },
-                    titleHolderProps: {
-                        paddingTop: 0,
-                        paddingBottom: 0
-                    },
-                    options: stories.map((story) => ({
-                        type: 'image',
-                        image: story.thumbnail,
-                        name: story.name,
-                        episode: story.episode,
-                        episodeCount: thePack.extra?.episodeCount,
-                        subtitle: formatDuration(story.duration),
-                        story,
-                        onDraw: (item, event) => {
-                            if (item.episode && item.episodeCount) {
-                                textPaint.color = colorOnTertiaryContainer;
-                                textPaint.fontWeight = 'bold';
-                                const canvas = event.canvas;
-                                const h = canvas.getHeight();
-                                const w = canvas.getWidth();
-                                const staticLayout = new StaticLayout(` ${item.episode}/${item.episodeCount} `, textPaint, w, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
-                                const width = staticLayout.getLineWidth(0);
-                                const height = staticLayout.getHeight();
-                                canvas.translate(24, h - height - 10);
-                                textPaint.setColor(colorTertiaryContainer);
-                                canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
-                                textPaint.color = colorOnTertiaryContainer;
-                                staticLayout.draw(canvas);
-                            }
-                        }
-                    }))
-                },
-                {
-                    skipCollapsedState: true
-                }
-            );
+            const data = await showAllPlayablePackStories(item.pack, true);
             if (data?.story) {
-                const index = stories.findIndex((s) => s.id === data.story.id);
-                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
+                const storyHandler = getBGServiceInstance().storyHandler;
+                const index = data.stories.findIndex((s) => s.id === data.story.id);
+                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...data.stories.slice(index).map((s) => ({ story: s })));
                 playStory(data?.story as Story, true, false);
             }
         } catch (error) {

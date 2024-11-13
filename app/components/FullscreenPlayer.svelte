@@ -30,7 +30,7 @@
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { showError } from '@shared/utils/showError';
     import { closeModal } from '@shared/utils/svelte/ui';
-    import { openLink, playStory, showBottomsheetOptionSelect } from '~/utils/ui';
+    import { openLink, playStory, showAllPlayablePackStories, showBottomsheetOptionSelect } from '~/utils/ui';
     import { colors, coverSharedTransitionTag, fontScale, windowInset } from '~/variables';
     import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
 
@@ -345,32 +345,10 @@
     }
     async function showAllPlayableStories() {
         try {
-            const thePack = pack || story?.pack;
-            const stories = await storyHandler.findAllStories(thePack);
-            const rowHeight = 80;
-            const showFilter = items.length > 6;
-            const data: any = await showBottomsheetOptionSelect(
-                {
-                    height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 40), Screen.mainScreen.heightDIPs * 0.7),
-                    rowHeight,
-                    title: lc('stories', stories.length),
-                    fontSize: 18,
-                    showFilter,
-                    options: stories.map((story) => ({
-                        type: 'image',
-                        image: story.thumbnail,
-                        name: story.name,
-                        subtitle: formatDuration(story.duration),
-                        story
-                    }))
-                },
-                {
-                    skipCollapsedState: true
-                }
-            );
+            const data = await showAllPlayablePackStories(pack || story?.pack, true);
             if (data?.story) {
-                const index = stories.findIndex((s) => s.id === data.story.id);
-                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...stories.slice(index).map((s) => ({ story: s })));
+                const index = data.stories.findIndex((s) => s.id === data.story.id);
+                storyHandler.playlist.splice(0, storyHandler.playlist.length, ...data.stories.slice(index).map((s) => ({ story: s })));
                 playStory(data?.story as Story, false, false);
             }
         } catch (error) {

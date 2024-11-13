@@ -33,6 +33,9 @@ import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
 import { BottomSheetOptions } from '@nativescript-community/ui-material-bottomsheet';
+import { formatDuration } from '~/helpers/formatter';
+import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
+import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
 
 export * from '@shared/utils/ui';
 
@@ -473,6 +476,70 @@ export async function promptForFolderName(defaultGroup: string, groups?: PackFol
         return currentFolderText || 'none';
     }
     return null;
+}
+const textPaint = new Paint();
+
+export async function showAllPlayablePackStories(pack: Pack, podcastMode = false) {
+    try {
+        const storyHandler = getBGServiceInstance().storyHandler;
+        const stories = await storyHandler.findAllStories(pack, podcastMode);
+        const rowHeight = 80;
+        const showFilter = stories.length > 6;
+        const { colorOnTertiaryContainer, colorTertiaryContainer } = get(colors);
+        const data: any = await showBottomsheetOptionSelect(
+            {
+                height: Math.min(stories.length * rowHeight + (showFilter ? 110 : 70), Screen.mainScreen.heightDIPs * 0.7),
+                rowHeight,
+                fontSize: 18,
+                showFilter,
+                title: pack.title,
+                component: ListItemAutoSizeFull,
+                titleProps: {
+                    maxLines: 2,
+                    lineBreak: 'end'
+                    // maxFontSize: 18,
+                    // autoFontSize: true
+                },
+                titleHolderProps: {
+                    paddingTop: 0,
+                    paddingBottom: 0
+                },
+                options: stories.map((story) => ({
+                    type: 'image',
+                    image: story.thumbnail,
+                    name: story.name,
+                    episode: story.episode,
+                    episodeCount: pack.extra?.episodeCount,
+                    subtitle: formatDuration(story.duration),
+                    story,
+                    onDraw: (item, event) => {
+                        if (item.episode && item.episodeCount) {
+                            textPaint.color = colorOnTertiaryContainer;
+                            textPaint.fontWeight = 'bold';
+                            const canvas = event.canvas;
+                            const h = canvas.getHeight();
+                            const w = canvas.getWidth();
+                            const staticLayout = new StaticLayout(` ${item.episode}/${item.episodeCount} `, textPaint, w, LayoutAlignment.ALIGN_NORMAL, 1, 0, false);
+                            const width = staticLayout.getLineWidth(0);
+                            const height = staticLayout.getHeight();
+                            canvas.translate(24, h - height - 10);
+                            textPaint.setColor(colorTertiaryContainer);
+                            canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+                            textPaint.color = colorOnTertiaryContainer;
+                            staticLayout.draw(canvas);
+                        }
+                    }
+                }))
+            },
+            {
+                peekHeight: Math.min(500, Screen.mainScreen.heightDIPs * 0.7)
+                // skipCollapsedState: true
+            }
+        );
+        return { story: data?.story, stories };
+    } catch (error) {
+        showError(error);
+    }
 }
 
 Application.on('exit', () => {
