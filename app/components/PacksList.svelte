@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-    import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
+    import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout, Style } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker } from '@nativescript-community/ui-document-picker';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
@@ -57,6 +57,7 @@
     type ViewStyle = 'expanded' | 'condensed' | 'card';
 
     interface Item {
+        type?: string;
         pack?: Pack;
         folder?: PackFolder;
         selected: boolean;
@@ -160,12 +161,14 @@
                 )
             );
             packs = new ObservableArray(
-                r.map(
-                    (pack) =>
-                        ({
-                            pack,
-                            selected: false
-                        }) as any
+                (folderItems.length ? [{ type: 'folders', selected: false }] : []).concat(
+                    r.map(
+                        (pack) =>
+                            ({
+                                pack,
+                                selected: false
+                            }) as any
+                    )
                 )
             );
             DEV_LOG && console.log('refresh done', filter, r.length);
@@ -282,14 +285,21 @@
             }
             if (!folder && event.folders?.length) {
                 for (let i = 0; i < event.folders.length; i++) {
-                    const name = event.folders[i].split(FOLDER_COLOR_SEPARATOR)[0];
-                    const index = folderItems.findIndex((item) => item.folder && item.folder.name === name);
+                    const folderId = event.folders[i];
+                    const index = folderItems.findIndex((item) => item.folder && item.folder.id === folderId);
                     if (index !== -1) {
                         const item = folderItems.getItem(index);
-                        const res = await documentsService.folderRepository.findFolder(name);
+                        const res = await documentsService.folderRepository.findFolderById(folderId);
                         item.folder = res[0];
-                        folderItems.setItem(index, folderItems.getItem(index));
+                        if (item.folder.count > 0) {
+                            folderItems.setItem(index, folderItems.getItem(index));
+                        } else {
+                            folderItems.splice(index, 1);
+                        }
                     }
+                }
+                if (folderItems.length === 0) {
+                    packs.splice(0, 1);
                 }
             }
             updateNoPack();
@@ -787,8 +797,10 @@
             const width = staticLayout.getLineWidth(0);
             const height = staticLayout.getHeight();
             canvas.translate(dx + 60, h - height - 10);
-            textPaint.setColor(colorTertiaryContainer);
-            canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+            if (colorTheme !== 'eink') {
+                textPaint.setColor(colorTertiaryContainer);
+                canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
+            }
             textPaint.color = colorOnTertiaryContainer;
             staticLayout.draw(canvas);
         }
@@ -828,7 +840,8 @@
 
                             break;
                         case 'delete':
-                            deleteSelectedPacks();
+                            await deleteSelectedPacks();
+                            unselectAll();
                             break;
                     }
                 } catch (error) {
@@ -905,13 +918,16 @@
     }
 
     function itemTemplateSelector(item: Item, index, items) {
+        if (item.type) {
+            return item.type;
+        }
         if (item.folder) {
             return 'folder';
         }
         return 'default';
     }
     function itemTemplateSpanSize(item: Item, index, items) {
-        if (item.folder || viewStyle === 'card') {
+        if (item.type !== 'folders' && (item.folder || viewStyle === 'card')) {
             return 1;
         }
         return 2;
@@ -1002,33 +1018,6 @@
     <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
         <collectionView
             bind:this={collectionView}
-            colWidth={150}
-            height={70}
-            items={folderItems}
-            orientation="horizontal"
-            row={1}
-            rowHeight={70}
-            ios:iosOverflowSafeArea={true}
-            visibility={folders?.length ? 'visible' : 'collapsed'}>
-            <Template let:item>
-                <canvasview
-                    backgroundColor={($folderBackgroundColor && item.folder.color) || colorSurfaceContainerHigh}
-                    borderColor={colorOutline}
-                    borderRadius={12}
-                    borderWidth={1}
-                    margin="0 8 0 8"
-                    rippleColor={colorSurface}
-                    on:tap={() => onItemTap(item)}
-                    on:longPress={(e) => onItemLongPress(item, e)}
-                    on:draw={(e) => onFolderCanvasDraw(item, e)}>
-                    <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
-                    <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
-                    <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
-                </canvasview>
-            </Template>
-        </collectionView>
-        <collectionView
-            bind:this={collectionView}
             colWidth="50%"
             height="100%"
             ios:iosOverflowSafeArea={true}
@@ -1038,6 +1027,35 @@
             row={2}
             spanSize={itemTemplateSpanSize}
             width="100%">
+            <Template key="folders" let:item>
+                <collectionView
+                    bind:this={collectionView}
+                    colWidth={150}
+                    height={70}
+                    items={folderItems}
+                    orientation="horizontal"
+                    row={1}
+                    rowHeight={70}
+                    ios:iosOverflowSafeArea={true}
+                    visibility={folders?.length ? 'visible' : 'collapsed'}>
+                    <Template let:item>
+                        <canvasview
+                            backgroundColor={($folderBackgroundColor && item.folder.color) || colorTheme === 'eink' ? 'transparent' : colorSurfaceContainerHigh}
+                            borderColor={colorOutline}
+                            borderRadius={12}
+                            borderWidth={1}
+                            margin="0 8 0 8"
+                            rippleColor={colorSurface}
+                            on:tap={() => onItemTap(item)}
+                            on:longPress={(e) => onItemLongPress(item, e)}
+                            on:draw={(e) => onFolderCanvasDraw(item, e)}>
+                            <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
+                            <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
+                            <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
+                        </canvasview>
+                    </Template>
+                </collectionView>
+            </Template>
             <Template let:item>
                 <canvasview
                     class="card"

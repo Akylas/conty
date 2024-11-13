@@ -21,7 +21,7 @@ export interface PackUpdatedEventData extends EventData {
 }
 export interface PackDeletedEventData extends EventData {
     packIds: string[];
-    folders: string[];
+    folders: number[];
 }
 
 export interface PackMovedFolderEventData extends EventData {
@@ -162,12 +162,12 @@ LEFT JOIN PacksFolders pf ON f.id = pf.folder_id
 GROUP BY f.id;`
         });
     }
-    findFolder(name: string) {
+    findFolderById(id: number) {
         return this.search({
             select: sql`f.*, 
 COUNT(pf.pack_id) AS count`,
             from: sql`Folder f`,
-            where: sql`f.name = ${name}`,
+            where: sql`f.id = ${id}`,
             postfix: sql`
 LEFT JOIN PacksFolders pf ON f.id = pf.folder_id`
         });

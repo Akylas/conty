@@ -192,12 +192,12 @@ export default class ImportWorker extends Observable {
                         break;
                     case 'delete_packs':
                         await worker.handleStart(event);
-                        const ids = event.data.messageData as { id: string; folders: string[] }[];
+                        const ids = event.data.messageData as { id: string; folders: number[] }[];
                         DEV_LOG && console.log('deleteDocuments', ids);
                         // await this.packRepository.delete(model);
-                        await doInBatch<{ id: string; folders: string[] }, void>(
+                        await doInBatch<{ id: string; folders: number[] }, void>(
                             ids,
-                            async (d) => {
+                            async (d: { id: string; folders: number[] }) => {
                                 const id = d.id;
                                 await documentsService.removePack(id);
                                 const docData = Folder.fromPath(path.join(documentsService.realDataFolderPath, id));
