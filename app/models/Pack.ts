@@ -200,10 +200,7 @@ export interface IPack {
     category?: string;
     pack?: string;
     // colors?: string[];
-    extra?: {
-        colors?: string[];
-        [k: string]: any;
-    };
+    extra?: PackExtra;
     keywords?: string;
     subtitle?: string;
     age?: number;
