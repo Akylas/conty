@@ -153,13 +153,15 @@
             folders = filter?.length || folder ? [] : await documentsService.folderRepository.findFolders();
 
             folderItems = new ObservableArray(
-                folders.map(
-                    (folder) =>
-                        ({
-                            folder,
-                            selected: false
-                        }) as any
-                )
+                folders
+                    .filter((f) => f.count > 0)
+                    .map(
+                        (folder) =>
+                            ({
+                                folder,
+                                selected: false
+                            }) as any
+                    )
             );
             packs = new ObservableArray(
                 (folderItems.length ? [{ type: 'folders', selected: false }] : []).concat(
