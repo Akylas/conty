@@ -1,0 +1,8 @@
+Features:
+- allow to modify/remove remote lists
+
+Bug fixes:
+- folders are now scrollable with the pack list. Also fixed deleting entire folders
+- correctly load remote packs from selected remote list
+- hide empty folders in main view
+- import pack from within folder would not update list
