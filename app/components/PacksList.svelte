@@ -207,7 +207,7 @@
     }
     function onPackAdded(event: PackAddedEventData) {
         DEV_LOG && console.log('onPackAdded', nbPacks, folder, event.folder);
-        if ((!event.folder && !folder) || folder?.name === event.folder?.name) {
+        if ((!event.folder && !folder) || folder?.id === event.folder?.id) {
             const index = packs?.findIndex((d) => !!d.pack);
             if (index !== -1) {
                 packs?.splice(index, 0, {
