@@ -1,0 +1,25 @@
+{
+	"banner": {
+		"image": "https://raw.githubusercontent.com/Akylas/conty/main/icon.png",
+		"link": "https://monurl.ca/lunii.creations",
+		"background": "#ff0000"
+	},
+	"data": [
+		{
+			"age": 4,
+			"title": "Les Histoires pas-sages de la Baba Yaga (9 histoires)",
+			"description": "Un poudcast où c’est la sorcière qui raconte les histoires ! Bonjour les petits fouinards, c’est la Baba Yaga, la sorcière qui vous écrit à @*$ù’(é& Aanh comment ça marche ce clavier ? Venez dans ma maison écouter mes histoires venues d’un peu partout dans le monde, mais attention, je vous préviens, ici, ce sera pas comme partout ailleurs ! Entrez dans mon univers merveilleux, puant et fantastique !\n\nhttps://www.lesyeuxdanslespoches.com/baba-yaga",
+			"thumbs": {
+				"small": "https://v5.airtableusercontent.com/v3/u/35/35/1733673600000/RiB9EOsJCAtbHBm909j25g/R44QnHWG3cbxb3nKMxYShA4m2gYT0sakUl3ZFV-yP0iw05ZNk6gHy6MOXy8NgjlwT8gglb1JRyMYGpppW1DZMMyS3LFJj1xJE94JFzE_DE_30LpzNMMzgiNYvUM-sJWgQyZMUSyVE93lpDEC62acxw/3Ks-MPPILs7vzSVQXCmDQD-1oIfn4ch80GCehE20hP0",
+				"medium": "https://v5.airtableusercontent.com/v3/u/35/35/1733673600000/nVlIs5jk7B8CgWEkQD5Ffg/rT01xJHfgDS0dcOqrCf-3BlzsE85II1wdz7jwSi7eHlBxsoPvnNXvqzOubQ2Yt0SwiPsgR7u_KY4G84ThB1hF6MTDdwoIvtECugoBTl4KghxILtSi1jLrZEmcIaMl5g4WAAM91SEquxRC4kyko8VlA/Id14K1_HXSxzdkZQkkZgtPhid1Cmz0EnC33Lp1kpZjs"
+			},
+			"download": "https://dl.seph29.ovh/link/RnY3BTdnFRTkJ2NzhOSktUVlE",
+			"awards": [
+				"Navigation",
+				"Histoire"
+			],
+			"created_at": "2023-12-02T12:13:31.000Z",
+			"updated_at": "2024-05-18T22:19:04.000Z"
+		}
+    ]
+}
