@@ -35,7 +35,7 @@
     import { CustomError, NoNetworkError, NoSpaceLeftError, SilentError } from '@shared/utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { Sentry } from '@shared/utils/sentry';
-    import { share } from '@shared/utils/share';
+    import { share } from '@akylas/nativescript-app-utils/share';
     import { showError } from '@shared/utils/showError';
     import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
