@@ -40,6 +40,7 @@
     import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover } from '~/utils/ui';
     import { colors, fonts, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
+    import { getJSON } from '@nativescript-community/https';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const storeSettings = {};
 </script>
@@ -97,12 +98,32 @@
 
     function addRemoteSource(source: RemoteContentProvider) {
         const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
-        if (sources.findIndex((s) => s.url === source.url) !== -1) {
-            return alert({ message: lc('remote_source_already_added') });
-        }
+        // if (sources.findIndex((s) => s.url === source.url) !== -1) {
+        //     return alert({ message: lc('remote_source_already_added') });
+        // }
+
         sources.push(source);
         ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
         refresh();
+    }
+    function updateRemoteSource(source: RemoteContentProvider, updateData) {
+        const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+        const index = sources.findIndex((s) => s.url === source.url);
+        if (index !== -1) {
+            Object.assign(source, updateData);
+            sources.splice(index, 1, source);
+            ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
+            refresh();
+        }
+    }
+    function removeRemoteSource(source: RemoteContentProvider) {
+        const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+        const index = sources.findIndex((s) => s.url === source.url);
+        if (index !== -1) {
+            sources.splice(index, 1);
+            ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
+            refresh();
+        }
     }
     function getSubSettings(id: string) {
         switch (id) {
@@ -156,6 +177,8 @@
                         sources.length
                             ? sources.map((s) => ({
                                   type: 'imageLeft',
+                                  data: s,
+                                  id: 'source',
                                   html: s.attribution ? defaultSource.name + '<br/><small><small>' + s.attribution + '</small></small>' : undefined,
                                   title: s.attribution ? undefined : s.name,
                                   showBottomLine: true,
@@ -338,12 +361,39 @@
     }
     refresh();
 
-    async function onLongPress(id, event) {
+    async function onLongPress(id, item, event) {
+        DEV_LOG && console.log('onLongPress', id, item);
         try {
             switch (id) {
                 case 'version':
                     if (SENTRY_ENABLED) {
                         throw new NoSpaceLeftError(new Error('test'));
+                    }
+                    break;
+                case 'source':
+                    const source = item.data as RemoteContentProvider;
+                    const result = await login({
+                        title: lc('add_source'),
+                        autoFocus: true,
+                        userName: source.name,
+                        password: source.url,
+                        usernameTextFieldProperties: {
+                            margin: 10,
+                            hint: lc('name')
+                        },
+                        passwordTextFieldProperties: {
+                            margin: 10,
+                            hint: lc('remote_source_json_url'),
+                            secure: false
+                        },
+                        cancelButtonText: lc('delete')
+                    });
+                    if (result?.result) {
+                        // update source
+                        const data = await getJSON<any>(result.password);
+                        updateRemoteSource(source, { name: result.userName, url: result.password, image: data.image || data.banner?.image, attribution: data.attribution || data.banner?.attribution });
+                    } else if (result && result.result === false) {
+                        removeRemoteSource(source);
                     }
             }
         } catch (error) {
@@ -434,8 +484,11 @@
                         }
                     });
                     if (result?.password && result?.userName) {
+                        const data = await getJSON<any>(result.password);
                         addRemoteSource({
                             name: result.userName,
+                            image: data.image || data.banner?.image,
+                            attribution: data.attribution || data.banner?.attribution,
                             url: result.password
                         });
                     } else {
@@ -871,7 +924,7 @@
 
                     <stacklayout horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
                         <image borderRadius="25" height={50} horizontalAlignment="center" src="res://icon" width={50} />
-                        <label fontSize={13} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', event)} />
+                        <label fontSize={13} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', item, event)} />
                     </stacklayout>
                 </gridlayout>
             </Template>
@@ -905,7 +958,12 @@
                 </ListItemAutoSize>
             </Template>
             <Template key="imageLeft" let:item>
-                <ListItemAutoSize columns="50,*,auto" item={{ ...item, subtitle: getDescription(item) }} mainCol={1} on:tap={(event) => onTap(item, event)}>
+                <ListItemAutoSize
+                    columns="50,*,auto"
+                    item={{ ...item, subtitle: getDescription(item) }}
+                    mainCol={1}
+                    on:tap={(event) => onTap(item, event)}
+                    on:longPress={(event) => onLongPress(item.id, item, event)}>
                     <image height={45} marginRight={10} marginTop={15} src={item.image()} verticalAlignment="top" visibility={!!item.image ? 'visible' : 'hidden'} />
                 </ListItemAutoSize>
             </Template>
