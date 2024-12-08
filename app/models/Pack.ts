@@ -192,6 +192,7 @@ interface TelmiTransaction {
 }
 
 export interface IPack {
+    externalPath?: string;
     id: string;
     title?: string;
     tags: string[];
@@ -249,6 +250,7 @@ export interface PackExtra {
 }
 
 export abstract class Pack<S extends Stage = Stage, A extends Action = Action> extends Observable implements IPack {
+    externalPath?: string;
     importedDate: number;
     createdDate: number;
     modifiedDate: number;
@@ -286,7 +288,11 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     get folderPath() {
         // subPaths is for unzipped files containing subfolders
         if (!this._folderPath) {
-            return Folder.fromPath(path.join(documentsService.dataFolder.path, this.id, ...(this.extra?.subPaths || [])), false);
+            if (this.externalPath) {
+                this._folderPath = Folder.fromPath(this.externalPath);
+            } else {
+                this._folderPath = Folder.fromPath(path.join(documentsService.dataFolder.path, this.id, ...(this.extra?.subPaths || [])), false);
+            }
             // let folder = documentsService.dataFolder.getFolder(this.id, false);
             // const subPaths = this.extra?.subPaths;
             // if (subPaths?.length) {
@@ -407,9 +413,9 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
         }
     }
 
-    async removeFromDisk() {
-        return Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id, false).remove();
-    }
+    // async removeFromDisk() {
+    //     return Folder.fromPath(documentsService.realDataFolderPath).getFolder(this.id, false).remove();
+    // }
 
     async save(data: Partial<Pack> = {}, updateModifiedDate = false, notify = true) {
         await documentsService.packRepository.update(this, data, updateModifiedDate);

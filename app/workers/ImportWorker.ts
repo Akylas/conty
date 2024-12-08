@@ -200,9 +200,12 @@ export default class ImportWorker extends Observable {
                             async (d: { id: string; folders: number[] }) => {
                                 const id = d.id;
                                 await documentsService.removePack(id);
-                                const docData = Folder.fromPath(path.join(documentsService.realDataFolderPath, id));
-                                DEV_LOG && console.log('deleteDocument', docData.path);
-                                await docData.remove();
+                                const folderPathStr = path.join(documentsService.realDataFolderPath, id);
+                                if (Folder.exists(folderPathStr)) {
+                                    const docData = Folder.fromPath(folderPathStr, false);
+                                    DEV_LOG && console.log('deleteDocument', folderPathStr);
+                                    await docData.remove();
+                                }
                                 // we notify on each delete so that UI updates fast
                                 documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id], folders: d.folders } as PackDeletedEventData);
                             },
@@ -268,8 +271,9 @@ export default class ImportWorker extends Observable {
             // we remove duplicates
             const existToTest = [...new Set(entities.map((e) => '"' + (e['extension'] ? e.name.slice(0, -e['extension'].length) : e.name) + '"'))];
             // DEV_LOG && console.log('existToTest', existToTest);
-            const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id,compressed FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
+            const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id,compressed,externalPath FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
                 id: string;
+                externalPath?: string;
                 compressed: 1 | 0;
             }[];
             // DEV_LOG && console.log('updateContentFromDataFolder1 in db', r);
@@ -326,7 +330,12 @@ export default class ImportWorker extends Observable {
                                 continue;
                             }
                         }
-                        await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData && compressed, undefined, extraData ? { extra: extraData } : undefined);
+                        await this.prepareAndImportUncompressedPack({
+                            destinationFolderPath,
+                            id,
+                            supportsCompressedData: supportsCompressedData && compressed,
+                            extraData: extraData ? { extra: extraData } : undefined
+                        });
                     } else if (compressed && !supportsCompressedData) {
                         // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
                         const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
@@ -357,13 +366,53 @@ export default class ImportWorker extends Observable {
                     throw error;
                 }
             }
+
+            const externalPaths = JSON.parse(JSON.stringify(ApplicationSettings.getString('external_paths', '[]')));
+            const externalEntities = [];
+            for (let index = 0; index < externalPaths.length; index++) {
+                const pathStr = externalPaths[index];
+                if (Folder.exists(externalPaths[index])) {
+                    externalEntities.push(await Folder.fromPath(pathStr).getEntities());
+                }
+            }
+
+            for (let index = 0; index < externalEntities.length; index++) {
+                const entity = externalEntities[index];
+                try {
+                    if (!this.isFolderValid(entity.path)) {
+                        console.error(`invalid folder : ${entity.path}`);
+                        continue;
+                    }
+                    const existing = r.find((i) => i.externalPath === entity.path);
+                    if (!existing) {
+                        await this.prepareAndImportUncompressedPack({ destinationFolderPath: entity.path, externalPath: entity.path, id: entity.path, supportsCompressedData: false });
+                    }
+                } catch (error) {
+                    await Folder.fromPath(entity.path).remove();
+                    throw error;
+                }
+            }
         } catch (error) {
             DEV_LOG && console.error(error, error.stack);
             this.sendError(error);
         }
     }
 
-    async prepareAndImportUncompressedPack(destinationFolderPath: string, id: string, supportsCompressedData: boolean, folderId?: number, extraData?: Partial<Pack>) {
+    async prepareAndImportUncompressedPack({
+        destinationFolderPath,
+        externalPath,
+        extraData,
+        folderId,
+        id,
+        supportsCompressedData
+    }: {
+        destinationFolderPath: string;
+        externalPath?: string;
+        id: string;
+        supportsCompressedData: boolean;
+        folderId?: number;
+        extraData?: Partial<Pack>;
+    }) {
         // let folder = Folder.fromPath(destinationFolderPath);
         let folderPath = destinationFolderPath;
         if (extraData?.extra?.subPaths) {
@@ -428,6 +477,7 @@ export default class ImportWorker extends Observable {
                 version,
                 subtitle,
                 keywords,
+                ...(externalPath ? { externalPath } : {}),
                 thumbnail: thumbnail || image,
                 ...(extraData ?? {}),
                 extra: {
@@ -491,7 +541,7 @@ export default class ImportWorker extends Observable {
             } else {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
             }
-            await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folderId, extraData);
+            await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData });
         } catch (error) {
             this.sendError(error);
         }
@@ -527,7 +577,7 @@ export default class ImportWorker extends Observable {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
 
-                await this.prepareAndImportUncompressedPack(destinationFolderPath, id, supportsCompressedData, folderId, extraData ? { extra: extraData } : undefined);
+                await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData: extraData ? { extra: extraData } : undefined });
             }
         } catch (error) {
             this.sendError(error);

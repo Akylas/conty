@@ -234,6 +234,7 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
     }
 
     migrations = Object.assign({
+        externalPath: sql`ALTER TABLE Pack ADD COLUMN externalPath TEXT`,
         addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
         addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`,
         addType: sql`ALTER TABLE Pack ADD COLUMN type TEXT`,
