@@ -85,7 +85,7 @@
             if (force || !packs) {
                 const r = await request({
                     method: 'GET',
-                    url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json'
+                    url: currentRemoteSource.url
                 });
                 DEV_LOG && console.log('got remote packs', r.data.length);
                 packs = new ObservableArray(
