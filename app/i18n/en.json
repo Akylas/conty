@@ -80,7 +80,7 @@
     "move_folder_desc": "move the selected document to a folder. Leave the field empty to remove from any folder",
     "moving_files": "moving files",
     "name": "name",
-    "need_download_browser": "we can't download that file from inside the app. You need top open it in your browser, download the file and import it in Conty",
+    "need_download_browser": "we can't download that file from inside the app. You need top open it in your browser(you might have to ask for the desktop version), download the file and import it in Conty",
     "next": "next",
     "nine": "nine",
     "no_network": "no network",
