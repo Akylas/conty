@@ -16,6 +16,7 @@ export const SETTINGS_CURRENT_PLAYING = 'current_playing';
 export const SETTINGS_SHOW_SHUTDOWN_IN_NOTIF = 'shutdown_notif_button';
 export const SETTINGS_DRAW_FOLDERS_BACKGROUND = 'draw_folder_background';
 
+export const DEFAULT_LOCALE = 'auto';
 export const DEFAULT_COLOR_THEME = 'default';
 export const DEFAULT_PODCAST_MODE = false;
 export const DEFAULT_DRAW_FOLDERS_BACKGROUND = false;
