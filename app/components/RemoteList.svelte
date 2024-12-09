@@ -21,6 +21,8 @@
     import { showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
+    import { openUrl } from '@akylas/nativescript/utils';
+    import { confirm } from '@nativescript-community/ui-material-dialogs';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -132,6 +134,17 @@
 
     async function onItemTap(item: Item) {
         try {
+            if (item.pack.download.startsWith('https://mega.nz/')) {
+                const result = await confirm({
+                    message: lc('need_download_browser'),
+                    okButtonText: lc('open'),
+                    cancelButtonText: lc('cancel')
+                });
+                if (result?.result) {
+                    openUrl(item.pack.download);
+                }
+                return;
+            }
             const component = (await import('~/components/DownloadWebview.svelte')).default;
             const actualUrl = await showBottomSheet({
                 view: component,

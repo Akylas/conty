@@ -21,14 +21,15 @@
         DEV_LOG && console.log('onShouldOverrideUrlLoading', url.endsWith('.zip'), args.url);
         if (!args.url.startsWith('about:')) {
             currentUrl = args.url;
-            if (args.url.startsWith('blob:http')) {
-                if (__ANDROID__) {
-                    args.cancel = true;
-                    closeBottomSheet(currentUrl);
-                } else {
-                    blobUrl = currentUrl;
-                }
-            } else if (currentUrl.endsWith('.zip')) {
+            // if (args.url.startsWith('blob:http')) {
+            //     // if (__ANDROID__) {
+            //     args.cancel = true;
+            //     closeBottomSheet(currentUrl);
+            //     // } else {
+            //     //     blobUrl = currentUrl;
+            //     // }
+            // } else
+             if (currentUrl.endsWith('.zip')) {
                 args.cancel = true;
                 closeBottomSheet(currentUrl);
             }
@@ -52,5 +53,5 @@
 <gesturerootview {...$$restProps} height={400} rows="auto,*">
     <label fontSize={16} margin={10} text={lc('download_webview_description')} textAlignment="center" />
     <IconButton horizontalAlignment="right" text="mdi-open-in-new" on:tap={openInExternal} />
-    <webview row={1} src={url} userAgent="desktop" on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} on:loadFinished={onLoadFinished} />
+    <webview domStorage={true} row={1} src={url} userAgent="desktop" on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} on:loadFinished={onLoadFinished} />
 </gesturerootview>

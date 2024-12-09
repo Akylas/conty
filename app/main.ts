@@ -2,6 +2,7 @@
 import { install as installGestures } from '@nativescript-community/gesturehandler';
 import { lc } from '@nativescript-community/l';
 import { installMixins as installUIMixins } from '@nativescript-community/systemui';
+import { WebViewTraceCategory } from '@nativescript-community/ui-webview';
 import { overrideSpanAndFormattedString } from '@nativescript-community/text';
 import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemenu/svelte';
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
@@ -10,7 +11,7 @@ import { installMixins as installColorFilters } from '@nativescript-community/ui
 import { install as installBottomSheets } from '@nativescript-community/ui-material-bottomsheet';
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
-import { Application } from '@nativescript/core';
+import { Application, Trace } from '@nativescript/core';
 import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { init as sharedInit } from '@shared/index';
 import { startSentry } from '@shared/utils/sentry';
@@ -72,7 +73,7 @@ try {
     // registerNativeViewElement('svg', () => require('@nativescript-community/ui-svg').SVG);
     registerNativeViewElement('bottomsheet', () => require('@nativescript-community/ui-persistent-bottomsheet').PersistentBottomSheet);
     registerNativeViewElement('gesturerootview', () => require('@nativescript-community/gesturehandler').GestureRootView);
-    registerNativeViewElement('awebview', () => require('@nativescript-community/ui-webview').AWebView);
+    registerNativeViewElement('webview', () => require('@nativescript-community/ui-webview').AWebView);
     registerNativeViewElement('checkbox', () => require('@nativescript-community/ui-checkbox').CheckBox);
     CollectionViewElement.register();
     SwipeMenuElement.register();
@@ -83,8 +84,8 @@ try {
         // Trace.addCategories(Trace.categories.Navigation);
         // Trace.addCategories(Trace.categories.Transition);
         // Trace.addCategories(Trace.categories.Layout);
-        // Trace.addCategories(ChartTraceCategory);
-        // Trace.enable();
+        Trace.addCategories(WebViewTraceCategory);
+        Trace.enable();
     }
 
     themer.createShape('round', {
