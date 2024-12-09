@@ -140,7 +140,7 @@
                     okButtonText: lc('open'),
                     cancelButtonText: lc('cancel')
                 });
-                if (result?.result) {
+                if (result) {
                     openUrl(item.pack.download);
                 }
                 return;
