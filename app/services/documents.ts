@@ -356,7 +356,8 @@ LEFT JOIN
     Folder f ON pf.folder_id = f.id`;
         if (filter?.length || folder) {
             if (filter?.length) {
-                const where = `p.title LIKE '%${filter}%' OR p.subtitle LIKE '%${filter}%' OR p.description LIKE '%${filter}%'`;
+                const realFilter = filter.replace(/[(\[\]%_)]/, '\\$1');
+                const where = `p.title LIKE '%${realFilter}%' OR p.subtitle LIKE '%${realFilter}%' OR p.description LIKE '%${realFilter}%'`;
                 if (folder) {
                     // args.postfix = sql` LEFT JOIN Page p ON p.pack_id = d.id `;
                     args.where = new SqlQuery([`pf.folder_id = ${folder.id} AND (${where})`]);
