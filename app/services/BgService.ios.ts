@@ -80,22 +80,28 @@ export class BgService extends BgServiceCommon {
         try {
             const playingInfo = this.playingInfo;
             const pack = playingInfo.pack;
-            const keys = [
-                MPMediaItemPropertyTitle,
-                MPMediaItemPropertyAlbumTitle,
-                MPMediaItemPropertyPlaybackDuration,
-                MPNowPlayingInfoPropertyPlaybackRate,
-                MPNowPlayingInfoPropertyElapsedPlaybackTime
-            ];
-            const objects = [playingInfo.name, playingInfo.description, playingInfo.duration / 1000, this.playingState === 'playing' ? 1 : 0, this.storyHandler.playerCurrentTime / 1000];
+            const playingData = {
+                [MPMediaItemPropertyPlaybackDuration]: playingInfo.duration / 1000,
+                [MPNowPlayingInfoPropertyPlaybackRate]: this.playingState === 'playing' ? 1 : 0,
+                [MPNowPlayingInfoPropertyElapsedPlaybackTime]: this.storyHandler.playerCurrentTime / 1000,
+                ...(playingInfo.name
+                    ? {
+                          [MPMediaItemPropertyTitle]: playingInfo.name
+                      }
+                    : {}),
+                ...(playingInfo.description
+                    ? {
+                          [MPMediaItemPropertyAlbumTitle]: playingInfo.description
+                      }
+                    : {})
+            };
             // DEV_LOG && console.log('updatePlayerNotification', this.playingState);
             if (playingInfo.cover) {
                 const cover = playingInfo.cover();
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;
                 // metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, image || playingInfo.cover);
                 if (imageSource?.ios) {
-                    keys.push(MPMediaItemPropertyArtwork);
-                    objects.push(MPMediaItemArtwork.alloc().initWithBoundsSizeRequestHandler((imageSource?.ios as UIImage).size, (size) => imageSource?.ios));
+                    playingData[MPMediaItemPropertyArtwork] = MPMediaItemArtwork.alloc().initWithBoundsSizeRequestHandler((imageSource?.ios as UIImage).size, (size) => imageSource?.ios);
                 }
             }
             const sharedCommandCenter = MPRemoteCommandCenter.sharedCommandCenter();
@@ -105,7 +111,7 @@ export class BgService extends BgServiceCommon {
             this._enableDisableCommand('ok', sharedCommandCenter.likeCommand, pack.canOk(currentStage));
             this._enableDisableCommand('home', sharedCommandCenter.bookmarkCommand, !!currentStage && pack.canHome(currentStage));
             this._enableDisableCommand('stop', sharedCommandCenter.stopCommand, true);
-            MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = NSDictionary.dictionaryWithObjectsForKeys(objects, keys);
+            MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = NSDictionary.dictionaryWithDictionary(playingData as any);
             MPNowPlayingInfoCenter.defaultCenter().playbackState = this.playingState === 'playing' ? MPNowPlayingPlaybackState.Playing : MPNowPlayingPlaybackState.Paused;
         } catch (error) {
             showError(error);
