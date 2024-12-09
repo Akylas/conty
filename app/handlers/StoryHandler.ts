@@ -343,11 +343,11 @@ export class StoryHandler extends Handler {
                             this._setPlaybackState('stopped');
                         },
                         errorCallback: async (e) => {
-                            DEV_LOG && console.error('errorCallback', fileName, e.error);
+                            DEV_LOG && console.error('errorCallback', throwErrorUp, fileName, e.error);
                             this._setPlaybackState('stopped');
                             if (!resolved) {
                                 resolved = true;
-                                if (throwErrorUp) {
+                                if (throwErrorUp && e.error) {
                                     reject(e.error);
                                 } else {
                                     resolve();

@@ -257,114 +257,148 @@ export async function downloadStories(story: RemoteContent, folder?: string) {
     let progressNotificationId;
     let destinationFilePath;
     try {
-        // showSnack({ message: lc('preparing_download') });
-        const headResult = await getHEAD(story.download);
-        const size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
-        DEV_LOG && console.log('downloadStories', size);
-        // const toDownload = await Promise.all(
-        //     stories.map(async (s) => {
-        //         const pageContent = await (await https.request<string>({ method: 'GET', url: stories[0].download })).content.toStringAsync();
-        //         const actualUrl = pageContent.match(/<meta http-equiv="refresh" content="0; url=(.*)">/)[1];
-        //         const size = parseInt((await getHEAD(actualUrl))['content-length'], 10);
-        //         return {
-        //             ...s,
-        //             download: actualUrl,
-        //             size
-        //         };
-        //     })
-        // );
-        // DEV_LOG &&
-        //     console.log(
-        //         'toDownload',
-        //         toDownload.map((s) => ({ size: s.size, download: s.download }))
-        //     );
-        // const totalSize = toDownload.reduce((acc, cur) => acc + cur.size, 0);
-        // const confirmed = await confirm({
-        //     title: lc('download_stories'),
-        //     message: lc(
-        //         'confirm_download_stories',
-        //         toDownload.length,
-        //         filesize(
-        //             toDownload.reduce((acc, cur) => acc + cur.size, 0),
-        //             { output: 'string' }
-        //         )
-        //     )
-        // });
-
-        // if (!confirmed) {
-        //     return;
-        // }
-
-        progressNotificationId = 52346 + hashCode(story.download);
-        // const headers = await Promise.all(stories.map(getHEAD));
-
-        // const newContentSize = headers['content-length'];
-        // DEV_LOG && console.log('checkForStoryUpdate', url, storyId, workingDir, newContentSize, typeof newContentSize, lastSize !== newContentSize, Folder.exists(storyDirPath));
-
-        // if (forceReload || lastSize !== newContentSize || !Folder.exists(storyDirPath)) {
-        const runningRequestTag: string = story.download;
-        // const name = cleanFilename(story.title);
         const name = Date.now() + '';
 
-        const progressNotification = ProgressNotifications.show({
-            id: progressNotificationId, //required
-            icon: 'mdi-download',
-            smallIcon: 'mdi-download',
-            title: lc('downloading_story') + '...',
-            message: filesize(size, { output: 'string' }),
-            indeterminate: false,
-            progress: 0,
-            actions: [
-                {
-                    id: 'cancel',
-                    text: 'mdi-close',
-                    notifText: lc('cancel'),
-                    callback: () => {
-                        DEV_LOG && console.log('cancelling downloading request', runningRequestTag);
-                        https.cancelRequest(runningRequestTag);
-                    }
-                }
-            ]
-        });
-        function updateProgress(progress) {
-            // if (__IOS__) {
-            showSnackMessage({ text: l('downloading_story_progress', progress), progress });
-            // }
-        }
-        updateProgress(0);
-        // DEV_LOG && console.log('progressNotification', progressNotification);
-
-        // await Promise.all(
-        // toDownload.map(async (s) => {
         const destinationFileName = `${name}.zip`;
         const destinationFolderPath = __IOS__ ? knownFolders.temp().path : documentsService.dataFolder.path;
         const androidUseContent = __ANDROID__ && destinationFolderPath.startsWith(ANDROID_CONTENT);
-        const onProgress = throttle((current, total) => {
-            const perc = Math.round((current / total) * 100);
-            updateProgress(perc);
-            ProgressNotifications.update(progressNotification, {
-                rightIcon: `${perc}%`,
-                progress: perc
+
+        let file: File;
+        if (story.download.startsWith('blob:')) {
+            DEV_LOG && console.log('downloadStories', 'blob', story.download);
+            if (__IOS__) {
+                showSnackMessage({ text: l('downloading'), progress: -1 });
+                const url = NSURL.URLWithString(story.download);
+                DEV_LOG && console.log('downloadStories', 'url', url);
+                const data = NSData.alloc().initWithContentsOfURL(url);
+                DEV_LOG && console.log('downloadStories', 'data', data);
+                await new Promise((resolve, reject) => {
+                    try {
+                        data.writeToFileAtomicallyCompletion(path.join(destinationFolderPath, destinationFileName), true, () => resolve);
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            } else {
+                const blobURL = new java.net.URL(story.download);
+                const pathExtension = blobURL.getPath().split('.').pop();
+                try {
+                    const inputStream = blobURL.openStream();
+                    const fileOutputStream = new java.io.FileOutputStream(`${getExternalFilesDir(null)}/downloaded_file.${pathExtension}`);
+                    inputStream.copyTo(fileOutputStream);
+                    inputStream.close();
+                    fileOutputStream.close();
+                } catch (e) {
+                    showError(e);
+                }
+            }
+        } else {
+            // showSnack({ message: lc('preparing_download') });
+            const headResult = await getHEAD(story.download);
+            const size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
+            DEV_LOG && console.log('downloadStories', size);
+            // const toDownload = await Promise.all(
+            //     stories.map(async (s) => {
+            //         const pageContent = await (await https.request<string>({ method: 'GET', url: stories[0].download })).content.toStringAsync();
+            //         const actualUrl = pageContent.match(/<meta http-equiv="refresh" content="0; url=(.*)">/)[1];
+            //         const size = parseInt((await getHEAD(actualUrl))['content-length'], 10);
+            //         return {
+            //             ...s,
+            //             download: actualUrl,
+            //             size
+            //         };
+            //     })
+            // );
+            // DEV_LOG &&
+            //     console.log(
+            //         'toDownload',
+            //         toDownload.map((s) => ({ size: s.size, download: s.download }))
+            //     );
+            // const totalSize = toDownload.reduce((acc, cur) => acc + cur.size, 0);
+            // const confirmed = await confirm({
+            //     title: lc('download_stories'),
+            //     message: lc(
+            //         'confirm_download_stories',
+            //         toDownload.length,
+            //         filesize(
+            //             toDownload.reduce((acc, cur) => acc + cur.size, 0),
+            //             { output: 'string' }
+            //         )
+            //     )
+            // });
+
+            // if (!confirmed) {
+            //     return;
+            // }
+
+            progressNotificationId = 52346 + hashCode(story.download);
+            // const headers = await Promise.all(stories.map(getHEAD));
+
+            // const newContentSize = headers['content-length'];
+            // DEV_LOG && console.log('checkForStoryUpdate', url, storyId, workingDir, newContentSize, typeof newContentSize, lastSize !== newContentSize, Folder.exists(storyDirPath));
+
+            // if (forceReload || lastSize !== newContentSize || !Folder.exists(storyDirPath)) {
+            const runningRequestTag: string = story.download;
+            // const name = cleanFilename(story.title);
+
+            const progressNotification = ProgressNotifications.show({
+                id: progressNotificationId, //required
+                icon: 'mdi-download',
+                smallIcon: 'mdi-download',
+                title: lc('downloading_story') + '...',
+                message: filesize(size, { output: 'string' }),
+                indeterminate: false,
+                progress: 0,
+                actions: [
+                    {
+                        id: 'cancel',
+                        text: 'mdi-close',
+                        notifText: lc('cancel'),
+                        callback: () => {
+                            DEV_LOG && console.log('cancelling downloading request', runningRequestTag);
+                            https.cancelRequest(runningRequestTag);
+                        }
+                    }
+                ]
             });
-        }, 1000);
+            function updateProgress(progress) {
+                // if (__IOS__) {
+                showSnackMessage({ text: l('downloading_story_progress', progress), progress });
+                // }
+            }
+            updateProgress(0);
+            // DEV_LOG && console.log('progressNotification', progressNotification);
+
+            // await Promise.all(
+            // toDownload.map(async (s) => {
+            const onProgress = throttle((current, total) => {
+                const perc = Math.round((current / total) * 100);
+                updateProgress(perc);
+                ProgressNotifications.update(progressNotification, {
+                    rightIcon: `${perc}%`,
+                    progress: perc
+                });
+            }, 1000);
+
+            const compressed = documentsService.supportsCompressedData;
+
+            const downloadFilePath = !compressed || androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
+            file = await getFile(
+                {
+                    url: story.download,
+                    tag: runningRequestTag,
+                    method: 'GET',
+                    onProgress
+                },
+                downloadFilePath
+            );
+        }
         // const existingStory = await documentsService.packRepository.search({
         //     where: sql`title = ${story.title}`
         // });
         // if (existingStory?.length) {
         //     throw new Error(`existing story ${story.title}`);
         // }
-        const compressed = documentsService.supportsCompressedData;
-
-        const downloadFilePath = !compressed || androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
-        const file = await getFile(
-            {
-                url: story.download,
-                tag: runningRequestTag,
-                method: 'GET',
-                onProgress
-            },
-            downloadFilePath
-        );
 
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
