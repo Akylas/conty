@@ -152,6 +152,9 @@ export class ImportService extends Observable {
     }
     onImportState(event: ImportStateEventData) {
         DEV_LOG && console.log('SyncService', 'onImportState', event.type, event.state);
+        if (event.showSnack === false) {
+            return;
+        }
         if (event.state === 'running' && event.type.indexOf('import') !== -1) {
             showSnackMessage({ text: lc('importing'), progress: -1 });
         } else if (event.state === 'running' && event.type === 'delete_packs') {
@@ -182,9 +185,9 @@ export class ImportService extends Observable {
         // }
         // this.services.forEach((service) => service.stop());
     }
-    async updateContentFromDataFolder() {
+    async updateContentFromDataFolder({ showSnack = true }: { showSnack?: boolean } = {}) {
         this.ensureWorker();
-        await this.sendMessageToWorker('import_data', undefined, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_data', { showSnack }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
     async importContentFromFiles(files: string[], folderId?: number) {
         DEV_LOG && console.log('importContentFromFiles', files, folderId);

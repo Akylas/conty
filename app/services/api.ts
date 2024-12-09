@@ -21,8 +21,6 @@ import { importService } from './importservice';
 export type HTTPSOptions = https.HttpsRequestOptions;
 export type { Headers } from '@nativescript-community/https';
 
-const sql = SqlQuery.createFromTemplateString;
-
 export const NetworkConnectionStateEvent = 'connected';
 export interface NetworkConnectionStateEventData extends EventData {
     data: {

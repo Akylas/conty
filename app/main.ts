@@ -123,7 +123,7 @@ try {
             Application.notify({ eventName: 'servicesStarted' });
             try {
                 await importService.start();
-                await importService.updateContentFromDataFolder();
+                await importService.updateContentFromDataFolder({ showSnack: false });
             } catch (error) {
                 console.error('start import from data error', error, error.stack);
             }

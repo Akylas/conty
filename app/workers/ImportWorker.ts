@@ -16,6 +16,7 @@ const context: Worker = self as any;
 
 export interface ImportStateEventData extends EventData {
     state: 'finished' | 'running';
+    showSnack?: boolean;
     type: 'file_import' | 'data_import' | 'delete_packs';
 }
 export interface WorkerPostOptions {
@@ -175,12 +176,12 @@ export default class ImportWorker extends Observable {
             try {
                 const data = event.data;
                 if (this.queue.size === 0) {
-                    this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: data.type } as ImportStateEventData);
+                    this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: data.type, showSnack: event.data?.messageData?.showSnack } as ImportStateEventData);
                 }
                 switch (data.type) {
                     case 'import_data':
                         await worker.handleStart(event);
-                        this.importFromCurrentDataFolderQueue();
+                        this.importFromCurrentDataFolderQueue(event.data.messageData);
                         break;
                     case 'import_from_files':
                         await worker.handleStart(event);
@@ -237,8 +238,8 @@ export default class ImportWorker extends Observable {
     }
 
     queue = new Queue();
-    async importFromCurrentDataFolderQueue() {
-        return this.queue.add(() => this.importFromCurrentDataFolderInternal());
+    async importFromCurrentDataFolderQueue(args: { showSnack?: boolean }) {
+        return this.queue.add(() => this.importFromCurrentDataFolderInternal(args));
     }
     async importFromFilesQueue({ files, folderId }: { files: string[]; folderId?: number }) {
         return this.queue.add(() => this.importFromFilesInternal({ files, folderId }));
@@ -256,7 +257,7 @@ export default class ImportWorker extends Observable {
         }
         return entities.findIndex((e) => e.name === LUNII_DATA_FILE || e.name === TELMI_DATA_FILE) !== -1;
     }
-    async importFromCurrentDataFolderInternal() {
+    async importFromCurrentDataFolderInternal({ showSnack }: { showSnack?: boolean }) {
         try {
             const supportsCompressedData = documentsService.supportsCompressedData;
             DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
