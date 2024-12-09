@@ -601,6 +601,9 @@ export class StoryHandler extends Handler {
             }
             this.saveSettings();
             const stage = this.currentStageSelected();
+            if (!stage) {
+                throw new Error(lc('pack_unsupported'));
+            }
             // this.notify({ eventName: 'runStage', stage, selectedStageIndex: this.selectedStageIndex, stages: this.currentStages });
             DEV_LOG && console.info(TAG + this.id, 'runStage', JSON.stringify(stage), this.currentStages.length);
             if (stage.audio) {

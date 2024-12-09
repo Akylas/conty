@@ -91,6 +91,7 @@
     "notification_download_desc": "notifications shown while downloading packs",
     "ok": "OK",
     "one": "one",
+    "pack_unsupported": "this pack does not seem supported. Please report the issue and mention the pack used",
     "packs": "packs",
     "packs_count": "%1$s packs",
     "pause": "pause",
