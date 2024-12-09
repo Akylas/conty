@@ -107,6 +107,7 @@ const onInitRootView = function () {
                     left: Utils.layout.toDeviceIndependentPixels(inset[2]),
                     right: Utils.layout.toDeviceIndependentPixels(inset[3])
                 });
+                DEV_LOG && console.log('windowInset', get(windowInset));
             });
         }
         const rootViewStyle = rootView?.style;
