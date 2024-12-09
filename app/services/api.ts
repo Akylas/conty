@@ -266,6 +266,7 @@ export async function downloadStories(story: RemoteContent, folder?: string) {
         let file: File;
         if (story.download.startsWith('blob:')) {
             DEV_LOG && console.log('downloadStories', 'blob', story.download);
+            const destinationFilePath = path.join(knownFolders.temp().path, destinationFileName);
             if (__IOS__) {
                 showSnackMessage({ text: l('downloading'), progress: -1 });
                 const url = NSURL.URLWithString(story.download);
@@ -274,23 +275,19 @@ export async function downloadStories(story: RemoteContent, folder?: string) {
                 DEV_LOG && console.log('downloadStories', 'data', data);
                 await new Promise((resolve, reject) => {
                     try {
-                        data.writeToFileAtomicallyCompletion(path.join(destinationFolderPath, destinationFileName), true, () => resolve);
+                        data.writeToFileAtomicallyCompletion(destinationFilePath, true, () => resolve);
                     } catch (error) {
                         reject(error);
                     }
                 });
+                file = File.fromPath(destinationFilePath);
             } else {
-                const blobURL = new java.net.URL(story.download);
-                const pathExtension = blobURL.getPath().split('.').pop();
                 try {
-                    const inputStream = blobURL.openStream();
-                    const fileOutputStream = new java.io.FileOutputStream(`${getExternalFilesDir(null)}/downloaded_file.${pathExtension}`);
-                    inputStream.copyTo(fileOutputStream);
-                    inputStream.close();
-                    fileOutputStream.close();
+                    com.akylas.conty.FileUtils.Companion.writeURLToFile(story.download, destinationFilePath);
                 } catch (e) {
                     showError(e);
                 }
+                file = File.fromPath(destinationFilePath);
             }
         } else {
             // showSnack({ message: lc('preparing_download') });

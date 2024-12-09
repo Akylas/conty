@@ -2,6 +2,9 @@ package com.akylas.conty
 
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.net.URL
+
 import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 
@@ -11,6 +14,14 @@ class FileUtils {
     }
     companion object {
         val CONTENT_PATH = "content://"
+
+        fun writeURLToFile(urlString: String, destinationFilePath: String) {
+            val inputStream = URL(urlString).openStream()
+            val fileOutputStream = FileOutputStream(destinationFilePath)
+            inputStream.copyTo(fileOutputStream)
+            inputStream.close()
+            fileOutputStream.close()
+        }
 
         fun copyFile(context: Context, inputFilePath: String, destFolder: String, fileName: String, mimeType: String, overwrite: Boolean): String {
             val outDocument =
