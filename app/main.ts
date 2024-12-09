@@ -72,7 +72,7 @@ try {
     // registerNativeViewElement('svg', () => require('@nativescript-community/ui-svg').SVG);
     registerNativeViewElement('bottomsheet', () => require('@nativescript-community/ui-persistent-bottomsheet').PersistentBottomSheet);
     registerNativeViewElement('gesturerootview', () => require('@nativescript-community/gesturehandler').GestureRootView);
-    registerNativeViewElement('awebview', () => require('@nativescript-community/ui-webview').AWebView);
+    registerNativeViewElement('webview', () => require('@nativescript-community/ui-webview').AWebView);
     registerNativeViewElement('checkbox', () => require('@nativescript-community/ui-checkbox').CheckBox);
     CollectionViewElement.register();
     SwipeMenuElement.register();
