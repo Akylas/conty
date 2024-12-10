@@ -288,7 +288,7 @@ export async function downloadStories(story: RemoteContent, folder?: string) {
         //         file = File.fromPath(destinationFilePath);
         //     }
         // } else {
-        // showSnack({ message: lc('preparing_download') });
+        showSnackMessage({ text: l('preparing_download'), progress: -1 });
         const headResult = await getHEAD(story.download);
         const size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
         DEV_LOG && console.log('downloadStories', size);
