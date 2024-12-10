@@ -71,6 +71,7 @@ export class ImportService extends Observable {
                         }
                         documentsService.notify({ ...eventData, object: eventData.object || documentsService });
                     } else {
+                        DEV_LOG && console.info('notifying event from worker', documentsService.id, eventData.eventName, Object.keys(eventData));
                         this.notify({ ...eventData });
                     }
                     break;
@@ -151,7 +152,7 @@ export class ImportService extends Observable {
         }
     }
     onImportState(event: ImportStateEventData) {
-        DEV_LOG && console.log('SyncService', 'onImportState', event.type, event.state);
+        DEV_LOG && console.log('SyncService', 'onImportState', event.type, event.state, event.showSnack);
         if (event.showSnack === false) {
             return;
         }

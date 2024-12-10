@@ -256,6 +256,7 @@ function getSnackMessage(props?) {
     return snackMessage;
 }
 export function updateSnackMessage(msg: Partial<ShowSnackMessageOptions>) {
+    // DEV_LOG && console.warn('updateSnackMessage', JSON.stringify(msg));
     if (snackMessage) {
         const snackMessage = getSnackMessage();
         const props = Object.assign(
@@ -265,6 +266,7 @@ export function updateSnackMessage(msg: Partial<ShowSnackMessageOptions>) {
             },
             msg
         );
+        // DEV_LOG && console.log('snackMessage.viewInstance.$set', props);
         snackMessage.viewInstance.$set(props);
     }
 }
@@ -284,7 +286,7 @@ async function animateSnackMessage(y: number, update = true) {
     }
 }
 export async function showSnackMessage(props: ShowSnackMessageOptions) {
-    // DEV_LOG && console.log('showSnackMessage', JSON.stringify(props));
+    // DEV_LOG && console.warn('showSnackMessage', JSON.stringify(props));
     if (snackMessage) {
         updateSnackMessage(props);
     } else {
@@ -295,6 +297,7 @@ export async function showSnackMessage(props: ShowSnackMessageOptions) {
     }
 }
 export async function hideSnackMessage() {
+    // DEV_LOG && console.warn('hideSnackMessage');
     if (snackMessage) {
         snackMessageVisible = false;
         await animateSnackMessage(100, false);
