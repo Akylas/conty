@@ -99,22 +99,24 @@
     export let title = l('packs');
     let folders: PackFolder[] = [];
 
-    $: if (folder) {
-        DEV_LOG && console.log('updating folder title', folder);
+    $: updateTitle(folder);
 
-        title = createNativeAttributedString({
-            spans: [
-                {
-                    fontFamily: $fonts.mdi,
-                    fontSize: 24,
-                    color: folder.color || colorOutline,
-                    text: 'mdi-folder  '
-                },
-                {
-                    text: folder.name
-                }
-            ]
-        });
+    function updateTitle(folder) {
+        title = folder
+            ? createNativeAttributedString({
+                  spans: [
+                      {
+                          fontFamily: $fonts.mdi,
+                          fontSize: 24,
+                          color: folder.color || colorOutline,
+                          text: 'mdi-folder  '
+                      },
+                      {
+                          text: folder.name
+                      }
+                  ]
+              })
+            : l('packs');
     }
 
     let packs: ObservableArray<Item> = null;
@@ -405,7 +407,7 @@
             });
             DEV_LOG && console.log('toDownload', toDownload);
             if (toDownload) {
-                await downloadStories(toDownload, folder?.name);
+                await downloadStories(toDownload, folder?.id);
             }
         } catch (error) {
             showError(error);
@@ -965,7 +967,14 @@
     }
 </script>
 
-<page bind:this={page} id="packList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={() => search.unfocusSearch()} on:layoutChanged={onLayoutChanged}>
+<page
+    bind:this={page}
+    id="packList"
+    actionBarHidden={true}
+    on:navigatedTo={onNavigatedTo}
+    on:navigatingFrom={() => search.unfocusSearch()}
+    on:layoutChanged={onLayoutChanged}
+    on:loaded={(e) => __IOS__ && updateTitle(folder)}>
     <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,auto,*,auto">
         <collectionView
             bind:this={collectionView}

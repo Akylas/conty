@@ -2,7 +2,7 @@
     import { lc } from '@nativescript-community/l';
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Pager } from '@nativescript-community/ui-pager';
-    import { Color, EventData, Image, Page, Screen, View } from '@nativescript/core';
+    import { Color, EventData, GridLayout, Image, Page, Screen, View } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
     import { onDestroy, onMount } from 'svelte';
     import { Template } from 'svelte-native/components';
@@ -31,13 +31,12 @@
     import { showError } from '@shared/utils/showError';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { openLink, playStory, showAllPlayablePackStories, showBottomsheetOptionSelect } from '~/utils/ui';
-    import { colors, coverSharedTransitionTag, fontScale, windowInset } from '~/variables';
+    import { colors, coverSharedTransitionTag, fontScale, isLandscape, screenWidthDips, windowInset } from '~/variables';
     import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
+    import { CARD_RATIO } from '~/utils/constants';
 
-    const PAGER_PEAKING = 30;
     const PAGER_PAGE_PADDING = 16;
 
-    const IMAGE_ELEVATION = __ANDROID__ ? 0 : 0;
     const textPaint = new Paint();
     interface Item {
         stage: Stage;
@@ -55,8 +54,6 @@
     const colorMatrix = imagesMatrix;
 
     const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
-    const screenWidth = Screen.mainScreen.widthDIPs;
-    const screenHeight = Screen.mainScreen.heightDIPs;
     $: textPaint.textSize = 16 * $fontScale;
     let state: PlayingState = 'stopped';
     let items: Item[] = [];
@@ -75,6 +72,10 @@
     // let controlSettings: ControlSettings;
     $: currentStage = items[selectedStageIndex]?.stage;
     $: hideOtherPageItems = !pack?.isMenuStage(currentStage) && items.length > 1;
+
+    let pagerPeaking = 30;
+    // $: pagerPeaking = $isLandscape ? 180 : 30;
+    // $: DEV_LOG && console.log('isLandscape', $isLandscape);
     // $: storyHandler?.getStageImage(pack, currentStage).then((r) => (currentImage = r));
     // $: DEV_LOG && console.warn('currentImage', currentImage);
     // $: DEV_LOG && console.error('hideOtherPageItems', hideOtherPageItems);
@@ -325,7 +326,7 @@
         storyHandler?.handleAction('home');
     }
     async function onPagerChanged(e) {
-        DEV_LOG && console.log('onPagerChanged', !!pack, selectedStageIndex, e.value);
+        // DEV_LOG && console.log('onPagerChanged', !!pack, selectedStageIndex, e.value);
         if (pack && selectedStageIndex !== e.value) {
             selectedStageIndex = e.value;
             $coverSharedTransitionTag = `cover_${selectedStageIndex}`;
@@ -407,6 +408,13 @@
             staticLayout.draw(canvas);
         }
     }
+    function onPagerHolderLayoutChanged({ object }) {
+        if ($isLandscape) {
+            pagerPeaking = (object.getMeasuredWidth() - object.getMeasuredHeight() / CARD_RATIO) / 2;
+        } else {
+            pagerPeaking = 30;
+        }
+    }
 </script>
 
 <page
@@ -436,16 +444,16 @@
                 on:linkTap={onLinkTap} />
             <!-- <GridLayout row="2" verticalAlignment="center"> -->
 
-            <gridlayout flexGrow={1} flexShrink={0} height={0.8 * screenWidth * 0.86} row={2}>
+            <gridlayout flexGrow={1} flexShrink={0} height={0.8 * screenWidthDips * 0.86} row={2} on:layoutChanged={onPagerHolderLayoutChanged}>
                 <!-- {#if __IOS__ || pack} -->
                 <pager
                     bind:this={pager}
                     circularMode={!hideOtherPageItems && items?.length > 1}
                     {items}
-                    marginLeft={hideOtherPageItems ? PAGER_PEAKING : 0}
-                    marginRight={hideOtherPageItems ? PAGER_PEAKING : 0}
+                    marginLeft={hideOtherPageItems ? pagerPeaking : 0}
+                    marginRight={hideOtherPageItems ? pagerPeaking : 0}
                     orientation="horizontal"
-                    peaking={hideOtherPageItems ? 0 : PAGER_PEAKING}
+                    peaking={hideOtherPageItems ? 0 : pagerPeaking}
                     preserveIndexOnItemsChange={true}
                     selectedIndex={selectedStageIndex}
                     visibility={!!pack ? 'visible' : 'collapse'}
@@ -453,13 +461,7 @@
                     <Template let:index let:item>
                         <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                             <!-- we need another gridlayout because elevation does not work on Image on iOS -->
-                            <gridlayout
-                                borderColor={colorOutlineVariant}
-                                borderRadius={20}
-                                borderWidth={colorTheme === 'eink' ? 1 : 0}
-                                elevation={IMAGE_ELEVATION}
-                                horizontalAlignment="center"
-                                verticalAlignment="center">
+                            <gridlayout class="einkBordered" borderRadius={20} horizontalAlignment="center" verticalAlignment="center">
                                 <image id="cover" borderRadius={20} {colorMatrix} sharedTransitionTag={`cover_${index}`} src={item.image} />
                             </gridlayout>
                         </gridlayout>
@@ -468,16 +470,8 @@
                 <!-- {/if} -->
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                 <!-- {#if __IOS__ || story} -->
-                <gridlayout marginLeft={PAGER_PEAKING} marginRight={PAGER_PEAKING} visibility={story ? 'visible' : 'collapse'} on:tap={onOkButtonIfOption}>
-                    <canvasview
-                        borderColor={colorOutlineVariant}
-                        borderRadius={20}
-                        borderWidth={colorTheme === 'eink' ? 1 : 0}
-                        elevation={IMAGE_ELEVATION}
-                        horizontalAlignment="center"
-                        margin={PAGER_PAGE_PADDING - 10}
-                        verticalAlignment="center"
-                        on:draw={onStoryDraw}>
+                <gridlayout marginLeft={pagerPeaking} marginRight={pagerPeaking} visibility={story ? 'visible' : 'collapse'} on:tap={onOkButtonIfOption}>
+                    <canvasview class="einkBordered" borderRadius={20} horizontalAlignment="center" margin={PAGER_PAGE_PADDING - 10} verticalAlignment="center" on:draw={onStoryDraw}>
                         <image bind:this={storyCoverImage} borderRadius={20} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} />
                         {#if story?.images?.length > 1}
                             <stacklayout
@@ -528,10 +522,10 @@
             text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || story?.name || ' '}
             textAlignment="center" />
 
-        <slider margin="0 10 0 10" maxValue=" 100" minValue="0" row="3" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
-        <canvaslabel color={colorOnSecondaryContainer} fontSize="14" height="18" margin="0 20 0 20" row={4}>
+        <slider margin="0 10 0 10" maxValue=" 100" minValue={0} row={3} trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
+        <canvaslabel color={colorOnSecondaryContainer} fontSize={14} height={18} margin="0 20 0 20" row={4}>
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
-            <cspan paddingRight="2" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
+            <cspan paddingRight={2} text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
         <stacklayout horizontalAlignment="center" orientation="horizontal" row={5}>
             <mdbutton

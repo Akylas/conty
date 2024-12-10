@@ -251,7 +251,7 @@ export async function getHEAD<T>(arg: any) {
     return (await https.request<T>(typeof arg === 'string' ? { url: arg, method: 'HEAD' } : arg)).headers;
 }
 
-export async function downloadStories(story: RemoteContent, folder?: string) {
+export async function downloadStories(story: RemoteContent, folderId?: number) {
     let progressNotificationId;
     let destinationFilePath;
     try {
@@ -408,7 +408,7 @@ export async function downloadStories(story: RemoteContent, folder?: string) {
                     createdDate: dayjs(story.created_at).valueOf(),
                     modifiedDate: dayjs(story.updated_at).valueOf()
                 },
-                folder
+                folderId
             });
         }
     } catch (error) {
