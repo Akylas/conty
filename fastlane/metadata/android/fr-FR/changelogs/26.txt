@@ -1,0 +1,8 @@
+Bug fixes:
+- action bar search background fix
+- error when searching for special chars like []%_
+- report error if pack is not supported
+- we cant download mega files from within the app (yet)
+- impossibility to select some stages
+- adding packs from within a folder
+- support remote packs download link directly linking to zip file
