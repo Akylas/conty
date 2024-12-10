@@ -522,10 +522,10 @@
             text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || story?.name || ' '}
             textAlignment="center" />
 
-        <slider margin="0 10 0 10" maxValue=" 100" minValue="{0}" row="{3}" trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
-        <canvaslabel color={colorOnSecondaryContainer} fontSize="{14}" height="{18}" margin="0 20 0 20" row={4}>
+        <slider margin="0 10 0 10" maxValue=" 100" minValue={0} row={3} trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />
+        <canvaslabel color={colorOnSecondaryContainer} fontSize={14} height={18} margin="0 20 0 20" row={4}>
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
-            <cspan paddingRight="{2}" text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
+            <cspan paddingRight={2} text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>
         <stacklayout horizontalAlignment="center" orientation="horizontal" row={5}>
             <mdbutton

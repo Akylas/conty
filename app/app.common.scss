@@ -313,6 +313,13 @@ mdtextfield,
     // }
 }
 
+.einkBordered {
+    .ns-eink & {
+        border-color: var(--colorOutlineVariant);
+        border-width: 1;
+    }
+}
+
 .card {
     margin: 8;
     background-color: var(--colorSurfaceContainerHigh);

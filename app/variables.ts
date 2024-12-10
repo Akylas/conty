@@ -1,5 +1,5 @@
 import { themer } from '@nativescript-community/ui-material-core';
-import { Application, ApplicationSettings, Color, Frame, Page, Screen, Utils } from '@nativescript/core';
+import { Application, ApplicationSettings, Color, Frame, OrientationChangedEventData, Page, Screen, Utils } from '@nativescript/core';
 import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale';
 import { get, writable } from 'svelte/store';
 import { ColorThemes, getRealTheme, theme } from './helpers/theme';
@@ -54,10 +54,21 @@ export const fonts = writable({
 });
 export const windowInset = writable({ top: 0, left: 0, right: 0, bottom: 0 });
 export const actionBarButtonHeight = writable(0);
+
 export const actionBarHeight = writable(0);
-export const screenHeightDips = Screen.mainScreen.heightDIPs;
-export const screenWidthDips = Screen.mainScreen.widthDIPs;
+let startOrientation = __ANDROID__ ? Application.android['getOrientationValue'](Utils.android.getApplicationContext().getResources().getConfiguration()) : undefined;
+if (__IOS__) {
+    Application.on(Application.launchEvent, async () => {
+        startOrientation = Application.orientation();
+        orientation.set(startOrientation);
+        isLandscape.set(startOrientation === 'landscape');
+    });
+}
+const startingInLandscape = startOrientation === 'landscape';
+export const screenHeightDips = startingInLandscape ? Screen.mainScreen.widthDIPs : Screen.mainScreen.heightDIPs;
+export const screenWidthDips = startingInLandscape ? Screen.mainScreen.heightDIPs : Screen.mainScreen.widthDIPs;
 export const screenRatio = screenWidthDips / screenHeightDips;
+DEV_LOG && console.log('startingInLandscape', startingInLandscape, screenWidthDips, screenHeightDips);
 
 export const fontScale = writable(1);
 export const isRTL = writable(false);
@@ -70,6 +81,9 @@ prefs.on(`key:${SETTINGS_PODCAST_MODE}`, () => {
 });
 export const onPodcastModeChanged = createGlobalEventListener(SETTINGS_PODCAST_MODE);
 
+export const orientation = writable(startOrientation);
+export const isLandscape = writable(startingInLandscape);
+
 export const folderBackgroundColor = writable(DEFAULT_DRAW_FOLDERS_BACKGROUND);
 prefs.on(`key:${SETTINGS_DRAW_FOLDERS_BACKGROUND}`, () => {
     const newValue = ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND);
@@ -81,6 +95,12 @@ export const onFolderBackgroundColorChanged = createGlobalEventListener(SETTINGS
 function updateSystemFontScale(value) {
     fontScale.set(value);
 }
+
+Application.on('orientationChanged', (event: OrientationChangedEventData) => {
+    const newOrientation = event.newValue;
+    orientation.set(newOrientation);
+    isLandscape.set(newOrientation === 'landscape');
+});
 
 if (__ANDROID__) {
     Application.android.on(Application.android.activityCreateEvent, (event) => {

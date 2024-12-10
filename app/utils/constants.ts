@@ -2,6 +2,8 @@ import { Screen } from '@nativescript/core';
 import { createColorMatrix } from './index.common';
 import { SDK_VERSION } from '@nativescript/core/utils';
 
+export const CARD_RATIO = 0.629;
+
 export const ALERT_OPTION_MAX_HEIGHT = Screen.mainScreen.heightDIPs * 0.47;
 export const ANDROID_CONTENT = 'content://';
 export const DEFAULT_INVERSE_IMAGES = false;
