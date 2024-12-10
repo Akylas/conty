@@ -145,19 +145,22 @@
                 }
                 return;
             }
-            const component = (await import('~/components/DownloadWebview.svelte')).default;
-            const actualUrl = await showBottomSheet({
-                view: component,
-                props: {
-                    url: item.pack.download
+            if (!item.pack.download.endsWith('.zip')) {
+                const component = (await import('~/components/DownloadWebview.svelte')).default;
+                const actualUrl = await showBottomSheet({
+                    view: component,
+                    props: {
+                        url: item.pack.download
+                    }
+                });
+                DEV_LOG && console.log('actualUrl', actualUrl);
+                if (actualUrl) {
+                    item.pack.download = actualUrl;
+                    //wait a bit because closeModal would not work because of the precedent closeBottomSheet
+                    // await timeout(1500);
+                    closeModal(item.pack);
                 }
-            });
-            DEV_LOG && console.log('actualUrl', actualUrl);
-            if (actualUrl) {
-                item.pack.download = actualUrl;
-                //wait a bit because closeModal would not work because of the precedent closeBottomSheet
-                // await timeout(1500);
-                DEV_LOG && console.log('closing RemoteList', actualUrl);
+            } else {
                 closeModal(item.pack);
             }
         } catch (error) {
