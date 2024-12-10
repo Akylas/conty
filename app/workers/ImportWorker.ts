@@ -514,6 +514,7 @@ export default class ImportWorker extends Observable {
 
     async importFromFileInternal({ extraData, filePath, folderId, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folderId?: number }) {
         try {
+            DEV_LOG && console.log('importFromFileInternal', extraData, filePath, folderId, id);
             const supportsCompressedData = documentsService.supportsCompressedData;
             const inputFilePath = filePath;
             let destinationFolderPath = inputFilePath;
