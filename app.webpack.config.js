@@ -566,14 +566,14 @@ module.exports = (env, params = {}) => {
         if (!!sentry && !!uploadSentry) {
             config.devtool = false;
             config.devtool = 'source-map';
-            // config.plugins.push(
-            //     new webpack.SourceMapDevToolPlugin({
-            //         // moduleFilenameTemplate:  'webpack://[namespace]/[resource-path]?[loaders]',
-            //         append: `\n//# sourceMappingURL=${process.env.SOURCEMAP_REL_DIR}/[name].js.map`,
-            //         filename: join(process.env.SOURCEMAP_REL_DIR, '[name].js.map')
-            //     })
-            // );
-            console.log(dist + '/**/*.js', join(dist, process.env.SOURCEMAP_REL_DIR) + '/*.map');
+            config.plugins.push(
+                new webpack.SourceMapDevToolPlugin({
+                    // moduleFilenameTemplate:  'webpack://[namespace]/[resource-path]?[loaders]',
+                    append: `\n//# sourceMappingURL=${process.env.SOURCEMAP_REL_DIR}/[name].js.map`,
+                    filename: join(process.env.SOURCEMAP_REL_DIR, '[name].js.map')
+                })
+            );
+            // console.log(dist + '/**/*.js', join(dist, process.env.SOURCEMAP_REL_DIR) + '/*.map');
             config.plugins.push(
                 sentryWebpackPlugin({
                     telemetry: false,
@@ -581,12 +581,6 @@ module.exports = (env, params = {}) => {
                     url: process.env.SENTRY_URL,
                     project: process.env.SENTRY_PROJECT,
                     authToken: process.env.SENTRY_AUTH_TOKEN,
-                    bundleSizeOptimizations: {
-                        excludeDebugStatements: true,
-                        excludeReplayShadowDom: true,
-                        excludeReplayIframe: true,
-                        excludeReplayWorker: true
-                    },
                     release: {
                         name: `${appId}@${appVersion}+${buildNumber}`,
                         dist: `${buildNumber}.${platform}`,
@@ -598,12 +592,12 @@ module.exports = (env, params = {}) => {
                         create: true,
                         cleanArtifacts: true
                     },
-                    debug: true,
+                    // debug: true,
                     sourcemaps: {
                         // assets: './**/*.nonexistent'
                         rewriteSources: (source, map) => source.replace('webpack:///', 'webpack://'),
                         ignore: ['tns-java-classes', 'hot-update'],
-                        assets: [dist + '/**/*.js', join(dist, process.env.SOURCEMAP_REL_DIR) + '/*.map']
+                        assets: [join(dist, '**/*.js'), join(dist, process.env.SOURCEMAP_REL_DIR, '*.map')]
                     }
                 })
             );
