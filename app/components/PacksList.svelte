@@ -542,7 +542,7 @@
             selectItem(item);
         }
     }
-    async function onItemTap(item: Item) {
+    const onItemTap = throttle(async function onItemTap(item: Item) {
         try {
             if (ignoreTap) {
                 ignoreTap = false;
@@ -563,7 +563,7 @@
         } catch (error) {
             showError(error);
         }
-    }
+    }, 500);
     async function podcastButton(item: Item) {
         try {
             if ($podcastMode && item.pack.extra?.podcast === true) {
