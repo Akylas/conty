@@ -322,7 +322,7 @@
         if (Math.floor(value) === Math.floor(progress)) {
             return;
         }
-        storyHandler.setPlayerTimestamp(actualProgress);
+        storyHandler?.setPlayerTimestamp(actualProgress);
 
         onPlayerProgressInterval();
     }, 50);
