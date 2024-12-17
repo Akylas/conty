@@ -18,7 +18,7 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
-    import { colorTheme, onThemeChanged } from '~/helpers/theme';
+    import { colorTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { Pack, PackFolder, RemoteContent, Story } from '~/models/Pack';
     import { downloadStories } from '~/services/api';
     import { FOLDER_COLOR_SEPARATOR, FolderUpdatedEventData, PackAddedEventData, PackDeletedEventData, PackMovedFolderEventData, PackUpdatedEventData, documentsService } from '~/services/documents';
@@ -802,7 +802,7 @@
             const width = staticLayout.getLineWidth(0);
             const height = staticLayout.getHeight();
             canvas.translate(dx + 60, h - height - 10);
-            if (colorTheme !== 'eink') {
+            if (!isEInk) {
                 textPaint.setColor(colorTertiaryContainer);
                 canvas.drawRoundRect(-4, -1, width + 4, height + 1, height / 2, height / 2, textPaint);
             }
@@ -1000,7 +1000,7 @@
                     visibility={folders?.length ? 'visible' : 'collapsed'}>
                     <Template let:item>
                         <canvasview
-                            backgroundColor={($folderBackgroundColor && item.folder.color) || colorTheme === 'eink' ? 'transparent' : colorSurfaceContainerHigh}
+                            backgroundColor={($folderBackgroundColor && item.folder.color) || isEInk ? 'transparent' : colorSurfaceContainerHigh}
                             borderColor={colorOutline}
                             borderRadius={12}
                             borderWidth={1}
@@ -1019,13 +1019,13 @@
             <Template let:item>
                 <canvasview
                     class="card"
-                    borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0}
+                    borderWidth={viewStyle === 'card' || isEInk ? 1 : 0}
                     height={getItemRowHeight(viewStyle) * $fontScale}
                     on:tap={() => onItemTap(item)}
                     on:longPress={(e) => onItemLongPress(item, e)}
                     on:draw={(e) => onCanvasDraw(item, e)}>
                     <image
-                        backgroundColor={item.pack.extra?.colors?.[0]}
+                        backgroundColor={isEInk ? null : item.pack.extra?.colors?.[0]}
                         borderRadius={12}
                         decodeWidth={IMAGE_DECODE_WIDTH}
                         failureImageUri="res://icon_not_found"

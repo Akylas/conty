@@ -290,6 +290,11 @@ mdtextfield,
     @extend .actionBarButton;
     color: white;
     ripple-color: white;
+
+    .ns-eink & {
+        color: black;
+    ripple-color: black;
+    }
 }
 
 .whiteSmallActionBarButton {
@@ -335,9 +340,9 @@ mdtextfield,
 .barPlayer {
     background-color:#000000dd;
     border-radius: 4;
-    // .ns-eink & {
-    //     background-color: transparent;
-    //     border-width: 1;
-    //     border-color: var(--colorOutlineVariant);
-    // }
+    .ns-eink & {
+        background-color: white;
+        border-width: 1;
+        border-color: var(--colorOutlineVariant);
+    }
 }

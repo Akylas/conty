@@ -13,7 +13,7 @@
     import CActionBar from '~/components/common/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
-    import { colorTheme, onThemeChanged } from '~/helpers/theme';
+    import { colorTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { RemoteContent, RemoteContentProvider } from '~/models/Pack';
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
@@ -282,7 +282,7 @@
                 rowHeight={getItemRowHeight(viewStyle) * $fontScale}
                 android:paddingBottom={$windowInset.bottom}>
                 <Template let:item>
-                    <canvasview class="card" borderWidth={viewStyle === 'card' || colorTheme === 'eink' ? 1 : 0} on:tap={() => onItemTap(item)} on:draw={(e) => onCanvasDraw(item, e)}>
+                    <canvasview class="card" borderWidth={viewStyle === 'card' || isEInk ? 1 : 0} on:tap={() => onItemTap(item)} on:draw={(e) => onCanvasDraw(item, e)}>
                         <image
                             borderRadius={12}
                             decodeWidth={IMAGE_DECODE_WIDTH}

@@ -1,4 +1,4 @@
-import { Canvas, CanvasView } from "@nativescript-community/ui-canvas";
+import { Canvas, CanvasView } from '@nativescript-community/ui-canvas';
 
 export interface ListItem {
     showBottomLine?: boolean;
