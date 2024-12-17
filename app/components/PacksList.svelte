@@ -143,6 +143,7 @@
     $: condensed = viewStyle === 'condensed';
 
     async function refresh(force = true, filter?: string) {
+        DEV_LOG && console.log('refresh', force);
         if (loading || (!force && lastRefreshFilter === filter)) {
             return;
         }
@@ -280,12 +281,17 @@
     }
     async function onPacksDeleted(event: PackDeletedEventData) {
         try {
+            if (!packs) {
+                return;
+            }
             for (let i = 0; i < event.packIds.length; i++) {
                 const id = event.packIds[i];
                 const index = packs.findIndex((item) => item.pack && item.pack.id === id);
                 if (index !== -1) {
                     packs.splice(index, 1);
-                    nbSelected -= 1;
+                    if (nbSelected > 0) {
+                        nbSelected = Math.max(nbSelected - 1, 0);
+                    }
                 }
             }
             if (!folder && event.folders?.length) {
