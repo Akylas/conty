@@ -84,6 +84,8 @@
                 return lc('notifs_buttons_settings');
             case 'folders':
                 return lc('folders');
+            case 'images':
+                return lc('images');
             default:
                 break;
         }

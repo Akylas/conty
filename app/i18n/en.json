@@ -60,6 +60,7 @@
     "handle_volume_button": "use volume buttons",
     "handle_volume_button_desc": "use short press on volume buttons to change selected stage, or long press volume button to change played story",
     "home": "home",
+    "images": "images",
     "images_setings_desc": "settings related to images",
     "import_files": "import files",
     "import_settings": "import settings",
