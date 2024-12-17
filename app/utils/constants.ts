@@ -13,6 +13,7 @@ export const SETTINGS_LANGUAGE = 'language';
 export const SETTINGS_REMOTE_SOURCES = 'remote_sources';
 export const SETTINGS_COLOR_THEME = 'color_theme';
 export const SETTINGS_INVERSE_IMAGES = 'inverse_images';
+export const SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES = 'only_inverse_lunii_type_images';
 export const SETTINGS_PODCAST_MODE = 'podcast_mode';
 export const SETTINGS_CURRENT_PLAYING = 'current_playing';
 export const SETTINGS_SHOW_SHUTDOWN_IN_NOTIF = 'shutdown_notif_button';
@@ -26,6 +27,7 @@ export const DEFAULT_PODCAST_MODE = false;
 export const DEFAULT_DRAW_FOLDERS_BACKGROUND = false;
 export const DEFAULT_HANDLE_VOLUME_BUTTONS = false;
 export const DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING = false;
+export const DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES = true;
 
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';

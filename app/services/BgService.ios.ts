@@ -97,7 +97,7 @@ export class BgService extends BgServiceCommon {
             };
             // DEV_LOG && console.log('updatePlayerNotification', this.playingState);
             if (playingInfo.cover) {
-                const cover = playingInfo.cover();
+                const cover = playingInfo.cover;
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;
                 // metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, image || playingInfo.cover);
                 if (imageSource?.ios) {

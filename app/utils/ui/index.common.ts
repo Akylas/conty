@@ -36,6 +36,8 @@ import { BottomSheetOptions } from '@nativescript-community/ui-material-bottomsh
 import { formatDuration } from '~/helpers/formatter';
 import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
 import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
+import { isEInk } from '~/helpers/theme';
+import { imagesMatrix, onlyInverseLuniiTypeImages } from '~/handlers/StoryHandler';
 
 export * from '@shared/utils/ui';
 
@@ -375,7 +377,7 @@ export async function hideBarPlayer() {
 }
 export function updateAudioPlayer(props: Partial<BarPlayerOptions>) {
     if (barPlayer) {
-        DEV_LOG && console.log('updateAudioPlayer', props);
+        // DEV_LOG && console.log('updateAudioPlayer', props);
         barPlayer.viewInstance.$set(props);
     }
 }
@@ -509,6 +511,7 @@ export async function showAllPlayablePackStories(pack: Pack, podcastMode = false
                 },
                 options: stories.map((story) => ({
                     type: 'image',
+                    imageMatrix: !onlyInverseLuniiTypeImages || (story.episode === undefined && story.thumbnail !== pack.getThumbnail()) ? imagesMatrix : null,
                     image: story.thumbnail,
                     name: story.name,
                     episode: story.episode,

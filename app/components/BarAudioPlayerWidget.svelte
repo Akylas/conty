@@ -15,7 +15,8 @@
         StoryHandler,
         StoryStartEvent,
         StoryStopEvent,
-        imagesMatrix
+        imagesMatrix,
+        onlyInverseLuniiTypeImages
     } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { Pack, Stage, Story } from '~/models/Pack';
@@ -25,6 +26,7 @@
     import { showFullscreenPlayer } from '~/utils/ui';
     import { coverSharedTransitionTag, windowInset } from '~/variables';
     import { throttle } from '@nativescript/core/utils';
+    import { isEInk } from '~/helpers/theme';
 </script>
 
 <script lang="ts">
@@ -43,7 +45,12 @@
     let playingInfo: PlayingInfo = null;
     let pack: Pack = null;
     let story: Story = null;
-    const colorMatrix = imagesMatrix;
+
+    function getPack() {
+        return pack || story?.pack;
+    }
+
+    let colorMatrix = imagesMatrix;
 
     // let visible = false;
     let storyHandler: StoryHandler;
@@ -116,12 +123,24 @@
         if (pack) {
             onPackStart({ pack });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
-            onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onStageChanged({
+                eventName: StagesChangeEvent,
+                stages: handler.currentStages,
+                selectedStageIndex: handler.selectedStageIndex,
+                currentStage: handler.currentStageSelected(),
+                playingInfo: handler.currentPlayingInfo
+            });
         }
         if (story) {
             onStoryStart({ story });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
-            onStageChanged({ eventName: StagesChangeEvent, stages: handler.currentStages, selectedStageIndex: handler.selectedStageIndex, currentStage: handler.currentStageSelected() });
+            onStageChanged({
+                eventName: StagesChangeEvent,
+                stages: handler.currentStages,
+                selectedStageIndex: handler.selectedStageIndex,
+                currentStage: handler.currentStageSelected(),
+                playingInfo: handler.currentPlayingInfo
+            });
         }
     });
 
@@ -181,6 +200,7 @@
         pack = null;
         story = event.story;
         currentImage = story.thumbnail;
+        colorMatrix = null;
         // story.pack.getThumbnail().then((r) => (currentImage = r));
     }
     function onStoryStop(event) {
@@ -217,7 +237,8 @@
             currentStages = event.stages;
             selectedStageIndex = event.selectedStageIndex;
             showReplay = false;
-            currentImage = storyHandler.getCurrentStageImage();
+            currentImage = event.playingInfo.cover;
+            colorMatrix = event.playingInfo.inverseImageColors ? imagesMatrix : null;
             // storyHandler?.getCurrentStageImage().then((r) => (currentImage = r));
         } catch (error) {
             showError(error);
@@ -248,9 +269,21 @@
 
 <gridlayout {height} margin={`0 2 ${$windowInset.bottom + 5} 2`} {translateY} {verticalAlignment} {...$$restProps} on:tap={() => {}}>
     <gridlayout class="barPlayer" columns="70,*" {rows} on:tap={throttle(() => showFullscreenPlayer(), 500)}>
-        <image backgroundColor={(pack || story?.pack)?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} stretch="aspectFit" />
-        <label col={1} color="white" fontSize={15} lineBreak="end" margin="3 3 0 10" maxLines={2} row={1} sharedTransitionTag="title" text={playingInfo?.name || ''} verticalAlignment="top"> </label>
-        <canvaslabel col={1} color="lightgray" fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
+        <image backgroundColor={isEInk ? null : (pack || story?.pack)?.extra?.colors?.[0]} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} stretch="aspectFit" />
+        <label
+            autoFontSize={true}
+            col={1}
+            color={isEInk ? 'black' : 'white'}
+            fontSize={15}
+            height={20}
+            lineBreak="end"
+            margin="3 3 0 10"
+            maxLines={2}
+            sharedTransitionTag="title"
+            text={playingInfo?.name || ''}
+            verticalAlignment="top">
+        </label>
+        <canvaslabel col={1} color={isEInk ? 'darkgray' : 'lightgray'} fontSize={12} margin="0 10 4 10" verticalTextAlignment="bottom">
             <cspan text={formatDuration(currentTime, 'mm:ss')} verticalAlignment="bottom" />
             <cspan text={playingInfo && formatDuration(playingInfo.duration, 'mm:ss')} textAlignment="right" verticalAlignment="bottom" />
         </canvaslabel>

@@ -9,7 +9,14 @@ import { Pack, Stage, Story } from '~/models/Pack';
 import { documentsService } from '~/services/documents';
 import { prefs } from '~/services/preferences';
 import { closeApp } from '~/utils';
-import { COLORMATRIX_INVERSED_BLACK_TRANSPARENT, DEFAULT_INVERSE_IMAGES, SETTINGS_CURRENT_PLAYING, SETTINGS_INVERSE_IMAGES } from '~/utils/constants';
+import {
+    COLORMATRIX_INVERSED_BLACK_TRANSPARENT,
+    DEFAULT_INVERSE_IMAGES,
+    DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES,
+    SETTINGS_CURRENT_PLAYING,
+    SETTINGS_INVERSE_IMAGES,
+    SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES
+} from '~/utils/constants';
 import { hideBarPlayer, showBarPlayer } from '~/utils/ui';
 import { Handler } from './Handler';
 
@@ -64,6 +71,7 @@ export interface PlaybackEventData extends StageEventData {
 
 export interface PlayingInfo {
     pack: Pack;
+    isStory?: boolean;
     canPause?: boolean;
     canHome?: boolean;
     canStop?: boolean;
@@ -73,9 +81,10 @@ export interface PlayingInfo {
     durations?: number[];
     duration: number;
     state: PlayingState;
+    inverseImageColors?: boolean;
     name: any;
     description?: any;
-    cover?: () => string | ImageSource;
+    cover?: string;
     // cover?: () => Promise<string | ImageSource>;
 }
 
@@ -87,10 +96,15 @@ export interface PlaylistItem {
 export type Playlist = ObservableArray<PlaylistItem>;
 
 let inverseImagesColors = ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES);
-export let imagesMatrix: number[] = null;
+export let imagesMatrix: number[] = inverseImagesColors ? COLORMATRIX_INVERSED_BLACK_TRANSPARENT : null;
 prefs.on(`key:${SETTINGS_INVERSE_IMAGES}`, () => {
-    inverseImagesColors = ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES);
+    inverseImagesColors = ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES);
     imagesMatrix = inverseImagesColors ? COLORMATRIX_INVERSED_BLACK_TRANSPARENT : null;
+});
+
+export let onlyInverseLuniiTypeImages = ApplicationSettings.getBoolean(SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES, DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES);
+prefs.on(`key:${SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES}`, () => {
+    onlyInverseLuniiTypeImages = ApplicationSettings.getBoolean(SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES, DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES);
 });
 
 const TAG = '[Story]';
@@ -125,15 +139,22 @@ export class StoryHandler extends Handler {
     currentPlayingInfo: PlayingInfo = null;
     currentStageImage: string = null;
     playingInfo(): PlayingInfo {
+        // DEV_LOG && console.log('playingInfo', this.isPlaying, !!this.playingPack, !!this.playingStory);
         if (this.isPlaying) {
             let pack = this.playingPack;
             if (pack) {
                 const currentStage = this.currentStageSelected();
+                const cover = this.getStageImage(pack, currentStage);
                 const duration = this.mPlayer?.duration || 0;
                 let name = pack.title;
                 let description = pack.subtitle || pack.description;
+                let isStory = false;
+                let inverseImageColors = !onlyInverseLuniiTypeImages || cover !== pack.getThumbnail();
+                DEV_LOG && console.log('playingInfo',cover, pack.getThumbnail(), inverseImageColors);
                 if (currentStage) {
-                    if (duration > 10000 || pack.stageIsStory(currentStage)) {
+                    if (duration > 30000 || pack.stageIsStory(currentStage)) {
+                        isStory = true;
+                        inverseImageColors = inverseImageColors && (pack.extra?.podcast !== true || currentStage['episode'] === undefined);
                         name = this.getStoryName(pack, currentStage) || name;
                         if (name !== pack.title) {
                             description = name;
@@ -141,12 +162,15 @@ export class StoryHandler extends Handler {
                     } else if (pack.isMenuStage(currentStage)) {
                         description = name;
                         name = pack.cleanupStageName(currentStage);
+                        inverseImageColors = inverseImageColors && (pack.extra?.podcast !== true || pack.nextStageFrom(currentStage)[0]?.['episode'] === undefined);
                     }
                 }
                 // DEV_LOG && console.log('updating playing info', currentStage.uuid, currentStage.image, duration, name);
                 const canNextPrev = this.currentStages?.length > 1;
                 return {
                     pack,
+                    isStory,
+                    inverseImageColors,
                     canPause: pack.canPause(currentStage),
                     canHome: pack.canHome(currentStage),
                     canOk: pack.canOk(currentStage),
@@ -156,25 +180,28 @@ export class StoryHandler extends Handler {
                     duration,
                     name,
                     description,
-                    cover: () => this.getStageImage(pack, currentStage)
+                    cover
                 };
             } else if (this.playingStory) {
                 const episode = this.playingStory;
                 pack = episode.pack;
+                const cover = episode?.thumbnail || pack.getThumbnail();
 
                 // we need to get the total duration
                 return {
                     pack,
                     canPause: true,
+                    isStory: true,
                     canHome: false,
                     canOk: false,
+                    inverseImageColors: onlyInverseLuniiTypeImages && cover !== pack.getThumbnail() && episode.episode === undefined,
                     canNext: this.playlist.length > 1,
                     state: this.playerState,
                     durations: episode.durations,
                     duration: episode.duration,
                     name: episode.name + (pack.extra?.podcast && episode.episode !== undefined ? ` (${lc('episode', episode.episode)})` : ''),
                     description: pack.title,
-                    cover: () => episode?.thumbnail || pack.getThumbnail()
+                    cover
                 };
             }
         }
@@ -192,6 +219,7 @@ export class StoryHandler extends Handler {
             this.saveSettings = debounce(this.saveSettingsInternal, 500);
             const saved = ApplicationSettings.getString(SETTINGS_CURRENT_PLAYING);
             if (saved) {
+                DEV_LOG && console.log('restored pack', saved);
                 // ApplicationSettings.remove(SETTINGS_CURRENT_PLAYING);
                 const data = JSON.parse(saved) as any[];
                 const dataLength = data.length;
@@ -343,12 +371,12 @@ export class StoryHandler extends Handler {
                             this._setPlaybackState('stopped');
                         },
                         errorCallback: async (e) => {
-                            DEV_LOG && console.error('errorCallback', throwErrorUp, fileName, e.error);
+                            // DEV_LOG && console.error('errorCallback', throwErrorUp, fileName, e.error, e);
                             this._setPlaybackState('stopped');
                             if (!resolved) {
                                 resolved = true;
                                 if (throwErrorUp && e.error) {
-                                    reject(e.error);
+                                    reject(new Error(lc('audio_player_error', e.error)));
                                 } else {
                                     resolve();
                                 }
@@ -443,7 +471,7 @@ export class StoryHandler extends Handler {
         return this.currentStages?.[this.selectedStageIndex];
     }
 
-    getStageImage(pack: Pack, stage: Stage): string | ImageSource {
+    getStageImage(pack: Pack, stage: Stage): string {
         return pack?.getCurrentStageImage(stage, this.currentStageSelected(), this.currentStageImage);
     }
     getCurrentStageImage() {
@@ -470,7 +498,14 @@ export class StoryHandler extends Handler {
         return this.pack.findStoryImage(s);
     }
     setSelectedStage(index: number) {
-        // DEV_LOG && console.log('setSelectedStage', index, this.selectedStageIndex, this.currentStages.length);
+        DEV_LOG &&
+            console.log(
+                'setSelectedStage',
+                index,
+                this.selectedStageIndex,
+                this.currentStages.length,
+                this.currentStages.map((s) => s.uuid)
+            );
         if (this.selectedStageIndex !== index && index >= 0 && index <= this.currentStages.length - 1) {
             this.selectedStageIndex = index;
             this.notifyStageChange(false);
@@ -478,9 +513,11 @@ export class StoryHandler extends Handler {
         }
     }
     selectPreviousStage() {
+        DEV_LOG && console.log('selectPreviousStage', this.selectedStageIndex, this.currentStages.length);
         this.setSelectedStage((this.selectedStageIndex - 1 + this.currentStages.length) % this.currentStages.length);
     }
     selectNextStage() {
+        DEV_LOG && console.log('selectNextStage', this.selectedStageIndex, this.currentStages.length);
         this.setSelectedStage((this.selectedStageIndex + 1) % this.currentStages.length);
     }
     async handleAction(action: string) {
@@ -536,10 +573,11 @@ export class StoryHandler extends Handler {
         }
     }
 
-    async onStageOk(autoPlay = true, seek?: number) {
+    async onStageOk(autoPlay = true, seek?: number, enforceIndex?: number) {
         const pack = this.pack;
         const oldSelected = this.currentStageSelected();
         this.oldStageUuid = oldSelected.uuid;
+        DEV_LOG && console.log('onStageOk', autoPlay, seek, this.oldStageUuid);
         const oldSelectedIndex = this.selectedStageIndex;
         DEV_LOG && console.log(TAG + this.id, 'onStageOk', oldSelectedIndex, oldSelected.uuid, pack.hasOkTransition(oldSelected), pack.hasHomeTransition(oldSelected));
         if (!pack.hasOkTransition(oldSelected)) {
@@ -559,9 +597,9 @@ export class StoryHandler extends Handler {
 
         this.currentStages = pack.mapOfStagesForOption(nextStages);
         // DEV_LOG && console.log('this.currentStages', JSON.stringify(this.currentStages));
-        this.selectedStageIndex = optionIndex !== undefined ? (optionIndex >= 0 ? optionIndex : Math.round(Math.random() * (this.currentStages.length - 1))) : 0;
+        this.selectedStageIndex = enforceIndex ?? (optionIndex !== undefined ? (optionIndex >= 0 ? optionIndex : Math.round(Math.random() * (this.currentStages.length - 1))) : 0);
         const currentStageSelected = this.currentStageSelected();
-        // DEV_LOG && console.log('optionIndex', optionIndex, this.selectedStageIndex, this.currentStages.length, currentStageSelected?.uuid);
+        DEV_LOG && console.log('optionIndex', optionIndex, this.selectedStageIndex, this.currentStages.length, currentStageSelected?.uuid);
         if (pack.isMissingHome(currentStageSelected)) {
             // the json is missing the homeTransition. Let s fake it
             pack.buildMissingHome(currentStageSelected);
@@ -622,6 +660,7 @@ export class StoryHandler extends Handler {
                 await this.onStageOk();
             }
         } catch (error) {
+            DEV_LOG && console.error(error, error.stacl);
             if (error) {
                 showError(error);
                 this.stopPlaying();
@@ -670,16 +709,17 @@ export class StoryHandler extends Handler {
             // DEV_LOG && console.log('this.stageNodes', JSON.stringify(this.stageNodes));
             // DEV_LOG && console.log('playPack data', this.actionNodes.length, this.stageNodes.length);
             startData = startData || pack.startData();
-            this.selectedStageIndex = startData.index;
+            DEV_LOG && console.log('playPack startData', JSON.stringify(startData));
+            this.selectedStageIndex = 0;
             this.currentStages = startData.stages;
             this.notify({ eventName: PackStartEvent, ...this.stageChangeEventData() } as PackStartEventData);
-            showBarPlayer();
-            // DEV_LOG && console.log('playPack1', JSON.stringify(this.currentStages));
+            DEV_LOG && console.log('playPack1', JSON.stringify(this.currentStages));
             // this.notify({ eventName: StagesChangeEvent, stages: this.currentStages, selectedStageIndex: this.selectedStageIndex });
             // this.notify({ eventName: PlaybackEvent, data: 'play' });
             // we call onStageOk directly to
-            this.onStageOk(autoPlay, seek);
+            await this.onStageOk(autoPlay, seek, startData.index);
             // mark story as played
+            showBarPlayer();
 
             // this.playedStory(index + '', markAsPlayedOnMap);
             // this.notify({ eventName: PlaybackEvent, data: 'stopped' });
@@ -710,7 +750,7 @@ export class StoryHandler extends Handler {
         }
         try {
             this.isPlaying = true;
-            TEST_LOG && console.log(TAG + this.id, 'playStory1', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
+            // TEST_LOG && console.log(TAG + this.id, 'playStory1', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
@@ -840,7 +880,7 @@ export class StoryHandler extends Handler {
 
     saveSettingsInternal = (clear = true) => {
         const currentAudioTime = Math.floor(this.playerCurrentTime / 1000);
-        // DEV_LOG && console.log(TAG + this.id, 'saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory);
+        // DEV_LOG && console.log(TAG + this.id, 'saveSettingsInternal', currentAudioTime, !!this.playingPack, !!this.playingStory, this.oldStageUuid, this.selectedStageIndex, currentAudioTime);
         if (this.playingPack) {
             ApplicationSettings.setString(
                 SETTINGS_CURRENT_PLAYING,

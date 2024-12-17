@@ -288,7 +288,7 @@
                     {titleProps}
                     {...templateProps}
                     on:tap={(event) => onTap(item, event)}>
-                    <image borderRadius={4} col={0} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
+                    <image borderRadius={4} col={0} colorMatrix={item.imageMatrix} marginBottom={5} marginRight={10} marginTop={5} src={item.image} />
                 </svelte:component>
             </Template>
             <Template let:item>

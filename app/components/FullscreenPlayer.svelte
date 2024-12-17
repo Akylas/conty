@@ -21,10 +21,11 @@
         StoryHandler,
         StoryStartEvent,
         StoryStopEvent,
-        imagesMatrix
+        imagesMatrix,
+        onlyInverseLuniiTypeImages
     } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
-    import { colorTheme } from '~/helpers/theme';
+    import { colorTheme, isEInk } from '~/helpers/theme';
     import { Pack, Stage, Story } from '~/models/Pack';
     import { getBGServiceInstance } from '~/services/BgService';
     import { onSetup, onUnsetup } from '~/services/BgService.common';
@@ -32,8 +33,11 @@
     import { closeModal } from '@shared/utils/svelte/ui';
     import { openLink, playStory, showAllPlayablePackStories, showBottomsheetOptionSelect } from '~/utils/ui';
     import { colors, coverSharedTransitionTag, fontScale, isLandscape, screenWidthDips, windowInset } from '~/variables';
-    import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
+    import { CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CARD_RATIO } from '~/utils/constants';
+    import { alert } from '@nativescript-community/ui-material-dialogs';
+    import { createView } from '@shared/utils/ui';
+    import { Label } from '@nativescript-community/ui-label';
 
     const PAGER_PAGE_PADDING = 16;
 
@@ -51,7 +55,8 @@
     let page: NativeViewElementNode<Page>;
     let pager: NativeViewElementNode<Pager>;
     let storyCoverImage: NativeViewElementNode<Image>;
-    const colorMatrix = imagesMatrix;
+    let storyCanvas: NativeViewElementNode<CanvasView>;
+    let colorMatrix = imagesMatrix;
 
     const statusBarStyle = new Color(colorOnSecondaryContainer).isDark() ? 'light' : 'dark';
     $: textPaint.textSize = 16 * $fontScale;
@@ -117,7 +122,8 @@
                 stages: handler.currentStages,
                 selectedStageIndex: handler.selectedStageIndex,
                 currentStage: handler.currentStageSelected(),
-                currentStatesChanged: true
+                currentStatesChanged: true,
+                playingInfo: handler.currentPlayingInfo
             });
             onPlayerState({ eventName: PlaybackEvent, state: handler.playerState, playingInfo: handler.currentPlayingInfo });
         } else if (story) {
@@ -178,11 +184,13 @@
     function onStoryStart(event) {
         // state = 'play';
         story = event.story;
+        storyCanvas?.nativeView?.redraw();
         progress = 0;
         currentTime = 0;
         showReplay = false;
         // story.pack.getThumbnail().then((r) => (currentImage = r));
         currentImage = story.thumbnail;
+        colorMatrix = null;
         DEV_LOG && console.log('Fullscreen', 'onStoryStart', !!story, currentImage, JSON.stringify(playingInfo));
     }
 
@@ -245,19 +253,26 @@
     }
     function onStageChanged(event: StageEventData) {
         try {
-            // DEV_LOG && console.log('FullScreen', 'onStageChanged', event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
+            DEV_LOG && console.log('FullScreen', 'onStageChanged', selectedStageIndex, event.selectedStageIndex, event.currentStatesChanged, event.stages.length);
             if (event.currentStatesChanged) {
                 // if (event.stages.length === 1) {
                 //     currentImage = getImage(event.stages[0]);
                 //     items = [];
                 // } else {
-                items = event.stages.map(
-                    (stage) =>
-                        ({
-                            stage,
-                            image: getImage(stage)
-                        }) as Item
-                );
+                items = event.stages.map((stage) => {
+                    const image = getImage(stage);
+                    const inverseColors =
+                        !onlyInverseLuniiTypeImages ||
+                        (image !== pack.getThumbnail() &&
+                            (pack.stageIsStory(stage)
+                                ? pack.extra?.podcast !== true || stage['episode'] === undefined
+                                : pack.extra?.podcast !== true || pack.nextStageFrom(stage)[0]?.['episode'] === undefined));
+                    return {
+                        stage,
+                        imageMatrix: inverseColors ? imagesMatrix : null,
+                        image
+                    } as Item;
+                });
                 currentImage = null;
                 // }
                 // items = await Promise.all(
@@ -267,12 +282,14 @@
                 //     }))
                 // );
             } else {
-                currentImage = storyHandler.getCurrentStageImage();
+                currentImage = event.playingInfo.cover;
+                DEV_LOG && console.warn('currentImage', currentImage, event.playingInfo.inverseImageColors);
+                colorMatrix = event.playingInfo.inverseImageColors ? imagesMatrix : null;
             }
             // we dont want stage change to be animated if event.currentStatesChanged
             if (selectedStageIndex !== event.selectedStageIndex) {
                 if (pager?.nativeElement) {
-                    pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, !event.currentStatesChanged, !event.currentStatesChanged);
+                    pager.nativeElement.scrollToIndexAnimated(event.selectedStageIndex, !isEInk && !event.currentStatesChanged, !event.currentStatesChanged);
                 } else {
                     selectedStageIndex = event.selectedStageIndex;
                 }
@@ -326,7 +343,7 @@
         storyHandler?.handleAction('home');
     }
     async function onPagerChanged(e) {
-        // DEV_LOG && console.log('onPagerChanged', !!pack, selectedStageIndex, e.value);
+        DEV_LOG && console.log('onPagerChanged', !!pack, selectedStageIndex, e.value);
         if (pack && selectedStageIndex !== e.value) {
             selectedStageIndex = e.value;
             $coverSharedTransitionTag = `cover_${selectedStageIndex}`;
@@ -356,8 +373,27 @@
             showError(error);
         }
     }
-    function onLinkTap(e) {
-        openLink(e.link);
+    async function onLinkTap(e) {
+        try {
+            openLink(e.link);
+        } catch (error) {
+            showError(error);
+        }
+    }
+    async function onDescriptionTap(e) {
+        try {
+            await alert({
+                okButtonText: lc('ok'),
+                view: createView(Label, {
+                    padding: '10 20 0 20',
+                    textWrap: true,
+                    html: e.object.html
+                }),
+                iosForceClosePresentedViewController: true //ensure error popup is always showing
+            });
+        } catch (error) {
+            showError(error);
+        }
     }
     async function showPlaylist() {
         try {
@@ -391,7 +427,10 @@
     }
 
     function onStoryDraw(event: { canvas: Canvas; object: CanvasView }) {
-        DEV_LOG && console.log('onStoryDraw', Object.keys(story));
+        if (DEV_LOG) {
+            const { pack, ...others } = story;
+            console.log('onStoryDraw', JSON.stringify(others));
+        }
         if (story?.episode && story?.pack.extra?.episodeCount) {
             textPaint.color = colorOnTertiaryContainer;
             textPaint.fontWeight = 'bold';
@@ -441,14 +480,15 @@
                 maxLines={5}
                 selectable={true}
                 textAlignment="center"
-                on:linkTap={onLinkTap} />
+                on:linkTap={onLinkTap}
+                on:tap={onDescriptionTap} />
             <!-- <GridLayout row="2" verticalAlignment="center"> -->
 
             <gridlayout flexGrow={1} flexShrink={0} height={0.8 * screenWidthDips * 0.86} row={2} on:layoutChanged={onPagerHolderLayoutChanged}>
                 <!-- {#if __IOS__ || pack} -->
                 <pager
                     bind:this={pager}
-                    circularMode={!hideOtherPageItems && items?.length > 1}
+                    disableAnimation={isEInk}
                     {items}
                     marginLeft={hideOtherPageItems ? pagerPeaking : 0}
                     marginRight={hideOtherPageItems ? pagerPeaking : 0}
@@ -462,7 +502,7 @@
                         <gridlayout padding={PAGER_PAGE_PADDING - 10} on:tap={onOkButtonIfOption}>
                             <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                             <gridlayout class="einkBordered" borderRadius={20} horizontalAlignment="center" verticalAlignment="center">
-                                <image id="cover" borderRadius={20} {colorMatrix} sharedTransitionTag={`cover_${index}`} src={item.image} />
+                                <image id="cover" borderRadius={20} colorMatrix={item.imageMatrix} sharedTransitionTag={`cover_${index}`} src={item.image} />
                             </gridlayout>
                         </gridlayout>
                     </Template>
@@ -471,7 +511,14 @@
                 <!-- we need another gridlayout because elevation does not work on Image on iOS -->
                 <!-- {#if __IOS__ || story} -->
                 <gridlayout marginLeft={pagerPeaking} marginRight={pagerPeaking} visibility={story ? 'visible' : 'collapse'} on:tap={onOkButtonIfOption}>
-                    <canvasview class="einkBordered" borderRadius={20} horizontalAlignment="center" margin={PAGER_PAGE_PADDING - 10} verticalAlignment="center" on:draw={onStoryDraw}>
+                    <canvasview
+                        bind:this={storyCanvas}
+                        class="einkBordered"
+                        borderRadius={20}
+                        horizontalAlignment="center"
+                        margin={PAGER_PAGE_PADDING - 10}
+                        verticalAlignment="center"
+                        on:draw={onStoryDraw}>
                         <image bind:this={storyCoverImage} borderRadius={20} {colorMatrix} sharedTransitionTag={$coverSharedTransitionTag} src={currentImage} />
                         {#if story?.images?.length > 1}
                             <stacklayout
@@ -559,7 +606,7 @@
             showMenuIcon={true}
             textAlignment="center"
             title={pack?.title || story?.name}
-            titleProps={{ id: 'actionBarTitle', fontWeight: 'bold', autoFontSize: true, sharedTransitionTag: 'title' }}>
+            titleProps={{ id: 'actionBarTitle', autoFontSize: true, sharedTransitionTag: 'title' }}>
             <mdbutton class="actionBarButton" defaultVisualState="secondary" text="mdi-playlist-music-outline" variant="text" on:tap={showPlaylist} />
             <mdbutton
                 class="actionBarButton"

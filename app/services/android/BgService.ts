@@ -11,7 +11,8 @@ import {
     PlayingInfo,
     StoryHandler,
     StoryStartEvent,
-    StoryStopEvent
+    StoryStopEvent,
+    imagesMatrix
 } from '~/handlers/StoryHandler';
 import { lc } from '~/helpers/locale';
 import { BgServiceBinder } from '~/services/android/BgServiceBinder';
@@ -205,16 +206,19 @@ export class BgService extends android.app.Service {
                 metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, playingInfo.description);
             }
             if (playingInfo.cover) {
-                const cover = playingInfo.cover();
+                const cover = playingInfo.cover;
                 // DEV_LOG && console.warn('updateMediaSessionMetadata cover', cover, playingInfo.name, playingInfo.description);
                 const imageSource = typeof cover === 'string' ? await ImageSource.fromFile(cover) : cover;
                 // metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, image || playingInfo.cover);
                 if (imageSource?.android) {
                     const originalBitmap = imageSource.android as android.graphics.Bitmap;
-                    // const newBitmap = modifyBitmap(originalBitmap, createColorMatrix(get(colors).colorPrimary));
-                    // originalBitmap.finalize();
-                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, originalBitmap);
-                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, originalBitmap);
+                    const colorMatrix = playingInfo.inverseImageColors ? imagesMatrix : null;
+                    const newBitmap = colorMatrix ? modifyBitmap(originalBitmap, colorMatrix) : originalBitmap;
+                    if (newBitmap !== originalBitmap) {
+                        originalBitmap.finalize();
+                    }
+                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, newBitmap);
+                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, newBitmap);
                 }
             } else {
                 const context = Utils.android.getApplicationContext();

@@ -81,6 +81,7 @@ export interface PackMetadata {
     description: string;
     category: string;
     nightModeAvailable: boolean;
+    official?: boolean;
     uri?: string;
     thumbnail?: string;
     age: number;
@@ -401,7 +402,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
         // }
     }
 
-    getCurrentStageImage(stage: S, selected: S, currentStageImage?: string): string | ImageSource {
+    getCurrentStageImage(stage: S, selected: S, currentStageImage?: string): string {
         // DEV_LOG && console.log('getStageImage', stage.uuid, selected.uuid, stage === selected, stageIsStory(stage), this.currentStageImage);
         if (stage === selected) {
             if (this.stageIsStory(stage)) {
