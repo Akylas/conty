@@ -1,0 +1,10 @@
+Features:
+- options to control app with volume buttons
+
+Bug fixes:
+- missing thumbnail for some packs
+- improved inverse image colors feature
+- improved eink style
+- prevent "double" taps on main list
+- selection error after deleting some packs
+- better structure for settings
