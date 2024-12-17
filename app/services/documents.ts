@@ -41,7 +41,6 @@ function cleanHTML(str: string) {
 }
 
 export async function getFileTextContentFromPackFile(folderPath, asset, compressed: boolean) {
-    DEV_LOG && console.log('getFileTextContentFromPackFile', folderPath, asset, compressed);
     if (compressed) {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -478,7 +477,8 @@ export class DocumentsService extends Observable {
             return;
         }
         this.started = false;
-        this.db && this.db.disconnect();
+        this.db?.disconnect();
+        this.db = null;
     }
 
     get supportsCompressedData() {

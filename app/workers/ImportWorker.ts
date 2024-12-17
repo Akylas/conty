@@ -259,6 +259,10 @@ export default class ImportWorker extends Observable {
     }
     async importFromCurrentDataFolderInternal({ showSnack }: { showSnack?: boolean }) {
         try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
             const supportsCompressedData = documentsService.supportsCompressedData;
             DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
             const entities = await this.dataFolder.getEntities();
@@ -272,7 +276,7 @@ export default class ImportWorker extends Observable {
             // we remove duplicates
             const existToTest = [...new Set(entities.map((e) => '"' + (e['extension'] ? e.name.slice(0, -e['extension'].length) : e.name) + '"'))];
             // DEV_LOG && console.log('existToTest', existToTest);
-            const r = (await documentsService.packRepository.database.query(new SqlQuery([`SELECT id,compressed,externalPath FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
+            const r = (await database.query(new SqlQuery([`SELECT id,compressed,externalPath FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
                 id: string;
                 externalPath?: string;
                 compressed: 1 | 0;
@@ -514,6 +518,10 @@ export default class ImportWorker extends Observable {
 
     async importFromFileInternal({ extraData, filePath, folderId, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folderId?: number }) {
         try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
             DEV_LOG && console.log('importFromFileInternal', extraData, filePath, folderId, id);
             const supportsCompressedData = documentsService.supportsCompressedData;
             const inputFilePath = filePath;
@@ -549,8 +557,12 @@ export default class ImportWorker extends Observable {
         }
     }
     async importFromFilesInternal({ files, folderId }: { files: string[]; folderId?: number }) {
-        DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
         try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
+            DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
             const supportsCompressedData = documentsService.supportsCompressedData;
             for (let index = 0; index < files.length; index++) {
                 const inputFilePath = files[index];
