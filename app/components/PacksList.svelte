@@ -345,9 +345,6 @@
         documentsService.on(EVENT_PACK_DELETED, onPacksDeleted);
         documentsService.on(EVENT_PACK_MOVED_FOLDER, onPackMovedFolder);
         documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
-
-        const permResult = await request('notification');
-        DEV_LOG && console.log('permResult', permResult);
     });
     onDestroy(() => {
         DEV_LOG && console.log('PackList', 'onDestroy');
@@ -421,6 +418,7 @@
                     throw new Error(lc('missing_manage_permission'));
                 }
                 await request('storage');
+                await request('notification');
                 const showFirstPresentation = ApplicationSettings.getBoolean('showFirstPresentation', true);
                 if (showFirstPresentation) {
                     const result = await confirm({
@@ -468,6 +466,7 @@
                 packs?.some((d, index) => {
                     if (d === item) {
                         nbSelected += 1;
+                        DEV_LOG && console.log('selecting pack', nbSelected);
                         d.selected = true;
                         packs.setItem(index, d);
                         return true;
