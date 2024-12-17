@@ -89,6 +89,9 @@
                     method: 'GET',
                     url: currentRemoteSource.url
                 });
+                if (!r.data) {
+                    throw new Error(lc('remote_source_wrong_format'));
+                }
                 DEV_LOG && console.log('got remote packs', r.data.length);
                 packs = new ObservableArray(
                     r.data.map((pack) => ({

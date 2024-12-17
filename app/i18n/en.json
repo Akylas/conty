@@ -123,6 +123,7 @@
     "proposed_sources": "proposed sources",
     "remote_source_already_added": "that source is already added",
     "remote_source_json_url": "url to JSON store of remote packs",
+    "remote_source_wrong_format": "the remote source does not seem to be in the right format",
     "remote_sources": "remote sources",
     "remote_sources_desc": "configure sources to get stories from",
     "restart": "restart",
