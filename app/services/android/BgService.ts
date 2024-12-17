@@ -18,7 +18,16 @@ import { BgServiceBinder } from '~/services/android/BgServiceBinder';
 import { BgServiceCommon } from '../BgService.common';
 import { MediaSessionCompatCallback } from './MediaSessionCompatCallback';
 import { FLAG_IMMUTABLE, NotificationHelper } from './NotificationHelper';
-import { DEFAULT_SHOW_SHUTDOWN_IN_NOTIF, SETTINGS_SHOW_SHUTDOWN_IN_NOTIF } from '~/utils/constants';
+import {
+    DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING,
+    DEFAULT_HANDLE_VOLUME_BUTTONS,
+    DEFAULT_SHOW_SHUTDOWN_IN_NOTIF,
+    SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING,
+    SETTINGS_HANDLE_VOLUME_BUTTONS,
+    SETTINGS_PODCAST_MODE,
+    SETTINGS_SHOW_SHUTDOWN_IN_NOTIF
+} from '~/utils/constants';
+import { prefs } from '../preferences';
 
 const PlaybackStateCompat = android.support.v4.media.session.PlaybackStateCompat;
 
@@ -59,6 +68,9 @@ function modifyBitmap(original, colorMatrix: number[]) {
 @JavaProxy('__PACKAGE__.BgService')
 export class BgService extends android.app.Service {
     // export const BgService = (android.app.Service as any).extend('com.akylas.conty.BgService', {
+
+    shouldHandleVolumeButtons: boolean;
+    forceLongPressVolumeWhenNotPlaying: boolean;
     storyHandler: StoryHandler;
     bounded: boolean;
     mNotificationBuilder: androidx.core.app.NotificationCompat.Builder;
@@ -82,6 +94,10 @@ export class BgService extends android.app.Service {
         // }
         return android.app.Service.START_STICKY;
     }
+    onVolumeSettingChanged() {
+        this.shouldHandleVolumeButtons = ApplicationSettings.getBoolean(SETTINGS_HANDLE_VOLUME_BUTTONS, DEFAULT_HANDLE_VOLUME_BUTTONS);
+        this.forceLongPressVolumeWhenNotPlaying = ApplicationSettings.getBoolean(SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING, DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING);
+    }
     onCreate() {
         if (!instance) {
             // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -92,8 +108,15 @@ export class BgService extends android.app.Service {
         this.bounded = false;
         // this.notificationManager = this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
         NotificationHelper.createNotificationChannels(this);
+
+        this.shouldHandleVolumeButtons = ApplicationSettings.getBoolean(SETTINGS_HANDLE_VOLUME_BUTTONS, DEFAULT_HANDLE_VOLUME_BUTTONS);
+        this.forceLongPressVolumeWhenNotPlaying = ApplicationSettings.getBoolean(SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING, DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING);
+        prefs.on(`key:${SETTINGS_HANDLE_VOLUME_BUTTONS}`, this.onVolumeSettingChanged, this);
+        prefs.on(`key:${SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING}`, this.onVolumeSettingChanged, this);
     }
     onDestroy() {
+        prefs.off(`key:${SETTINGS_HANDLE_VOLUME_BUTTONS}`, this.onVolumeSettingChanged, this);
+        prefs.off(`key:${SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING}`, this.onVolumeSettingChanged, this);
         DEV_LOG && console.log(TAG, 'onDestroy');
         this.mMediaSessionCompat = null;
         instance = null;

@@ -9,10 +9,10 @@ export class CustomMediaButtonReceiver extends androidx.media.session.MediaButto
         try {
             switch (action) {
                 case 'android.intent.action.MEDIA_BUTTON':
-                    getInstance().handleMediaIntent(intent);
+                    getInstance()?.handleMediaIntent(intent);
                     break;
                 case 'android.intent.action.MEDIA_CUSTOM_BUTTON':
-                    getInstance().storyHandler?.handleAction(intent.getType());
+                    getInstance()?.storyHandler?.handleAction(intent.getType());
                     break;
             }
         } catch (e) {

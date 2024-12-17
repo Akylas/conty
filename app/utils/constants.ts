@@ -17,11 +17,15 @@ export const SETTINGS_PODCAST_MODE = 'podcast_mode';
 export const SETTINGS_CURRENT_PLAYING = 'current_playing';
 export const SETTINGS_SHOW_SHUTDOWN_IN_NOTIF = 'shutdown_notif_button';
 export const SETTINGS_DRAW_FOLDERS_BACKGROUND = 'draw_folder_background';
+export const SETTINGS_HANDLE_VOLUME_BUTTONS = 'handle_volume_buttons';
+export const SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING = 'force_long_press_volume_when_not_playing';
 
 export const DEFAULT_LOCALE = 'auto';
 export const DEFAULT_COLOR_THEME = 'default';
 export const DEFAULT_PODCAST_MODE = false;
 export const DEFAULT_DRAW_FOLDERS_BACKGROUND = false;
+export const DEFAULT_HANDLE_VOLUME_BUTTONS = false;
+export const DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING = false;
 
 export const EVENT_PACK_ADDED = 'packAdded';
 export const EVENT_PACK_UPDATED = 'packUpdated';

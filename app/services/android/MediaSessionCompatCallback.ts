@@ -37,10 +37,24 @@ export class MediaSessionCompatCallback extends android.support.v4.media.session
     }
     onMediaButtonEvent(mediaButtonIntent) {
         const action = mediaButtonIntent.getAction();
-        const keyEvent = mediaButtonIntent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT);
-        DEV_LOG && console.log('onMediaButtonEvent', action, keyEvent);
         if (android.content.Intent.ACTION_MEDIA_BUTTON === action) {
-            // const event = mediaButtonIntent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT);
+            const instance = getInstance();
+            if (!instance.shouldHandleVolumeButtons) {
+                return false;
+            }
+            const keyEvent = mediaButtonIntent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT) as android.view.KeyEvent;
+            DEV_LOG && console.log('onMediaButtonEvent', action, keyEvent);
+            const keyCode = keyEvent.getKeyCode();
+            switch (keyCode) {
+                case 87:
+                    instance.storyHandler?.handleAction('next');
+                    break;
+                case 88:
+                    instance.storyHandler?.handleAction('previous');
+                    break;
+                default:
+                    break;
+            }
             return true;
         }
         return super.onMediaButtonEvent(mediaButtonIntent);

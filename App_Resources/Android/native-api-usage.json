@@ -44,7 +44,10 @@
         "android.text.format:DateFormat",
 
         "java.lang.reflect:Array",
-        "java.lang:Iterable"
+        "java.lang:Iterable",
+
+        "android.app:Dialog",
+        "android.content:DialogInterface.OnKeyListener"
     ],
     "blacklist": [
         "android.widget:DatePicker",
