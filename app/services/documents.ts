@@ -393,7 +393,7 @@ LEFT JOIN
             ...others
         });
         // needs to be done after so that pack.folderPath get get correct using extra.subPaths
-        pack.thumbnail = compressed ? thumbnail : path.join(pack.folderPath.path, thumbnail);
+        pack.thumbnail = compressed || thumbnail.startsWith('http') ? thumbnail : path.join(pack.folderPath.path, thumbnail);
         return pack;
     }
 }

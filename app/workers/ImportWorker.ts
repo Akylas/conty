@@ -450,12 +450,12 @@ export default class ImportWorker extends Observable {
                 File.fromPath(path.join(folderPath, LUNII_DATA_FILE)).writeTextSync(JSON.stringify(storyJSON));
             }
         }
-        const thumbnailFileName = storyJSON.image || storyJSON.thumbnail || 'thumbnail.png';
+        const thumbnailFileName = File.exists(path.join(folderPath, 'thumbnail.png')) ? 'thumbnail.png' : storyJSON.image || storyJSON.thumbnail;
         DEV_LOG && console.log('thumbnailFileName', folderPath, thumbnailFileName);
-        const thumbnailPath = path.join(folderPath, thumbnailFileName);
+        const thumbnailPath = thumbnailFileName.startsWith('http') ? thumbnailFileName : path.join(folderPath, thumbnailFileName);
         let colors;
         DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath);
-        if (__ANDROID__ && File.exists(thumbnailPath)) {
+        if (__ANDROID__ && !storyJSON.official && File.exists(thumbnailPath)) {
             const start = Date.now();
             const image = loadImageSync(thumbnailPath, { resizeThreshold: 20 });
             DEV_LOG && console.log('image', image.android);
@@ -479,7 +479,7 @@ export default class ImportWorker extends Observable {
                 subtitle,
                 keywords,
                 ...(externalPath ? { externalPath } : {}),
-                thumbnail: thumbnail || image,
+                thumbnail: thumbnailFileName,
                 ...(extraData ?? {}),
                 extra: {
                     colors,
