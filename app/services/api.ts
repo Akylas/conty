@@ -290,8 +290,12 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         // } else {
         showSnackMessage({ text: l('preparing_download'), progress: -1 });
         const headResult = await getHEAD(story.download);
-        const size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
-        DEV_LOG && console.log('downloadStories', size);
+        const contentLength = headResult['content-length'] || headResult['Content-Length'];
+        let size;
+        if (contentLength?.length) {
+            size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
+            DEV_LOG && console.log('downloadStories', size);
+        }
         // const toDownload = await Promise.all(
         //     stories.map(async (s) => {
         //         const pageContent = await (await https.request<string>({ method: 'GET', url: stories[0].download })).content.toStringAsync();
@@ -341,7 +345,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
             icon: 'mdi-download',
             smallIcon: 'mdi-download',
             title: lc('downloading_story') + '...',
-            message: filesize(size, { output: 'string' }),
+            message: size ? filesize(size, { output: 'string' }) : null,
             indeterminate: false,
             progress: 0,
             actions: [
