@@ -25,6 +25,7 @@
         DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING,
         DEFAULT_HANDLE_VOLUME_BUTTONS,
         DEFAULT_INVERSE_IMAGES,
+        DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES,
         DEFAULT_PODCAST_MODE,
         DEFAULT_SHOW_SHUTDOWN_IN_NOTIF,
         SETTINGS_DRAW_FOLDERS_BACKGROUND,
@@ -32,6 +33,7 @@
         SETTINGS_HANDLE_VOLUME_BUTTONS,
         SETTINGS_INVERSE_IMAGES,
         SETTINGS_LANGUAGE,
+        SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES,
         SETTINGS_PODCAST_MODE,
         SETTINGS_REMOTE_SOURCES,
         SETTINGS_SHOW_SHUTDOWN_IN_NOTIF
@@ -78,6 +80,10 @@
         switch (id) {
             case SETTINGS_REMOTE_SOURCES:
                 return lc('remote_sources');
+            case 'notifs_buttons':
+                return lc('notifs_buttons_settings');
+            case 'folders':
+                return lc('folders');
             default:
                 break;
         }
@@ -197,6 +203,58 @@
                                   }
                               ]
                     );
+
+            case 'folders':
+                return [
+                    {
+                        type: 'switch',
+                        id: SETTINGS_DRAW_FOLDERS_BACKGROUND,
+                        title: lc('folder_color_as_background'),
+                        description: lc('folder_color_as_background_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND)
+                    }
+                ];
+            case 'images':
+                return [
+                    {
+                        type: 'switch',
+                        id: SETTINGS_INVERSE_IMAGES,
+                        title: lc('inverse_images'),
+                        description: lc('inverse_images_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES)
+                    },
+                    {
+                        type: 'switch',
+                        id: SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES,
+                        title: lc('only_inverse_lunii_type_images'),
+                        description: lc('only_inverse_lunii_type_images_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_ONLY_INVERSE_LUNII_TYPE_IMAGES, DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES)
+                    }
+                ];
+            case 'notifs_buttons':
+                return [
+                    {
+                        type: 'switch',
+                        id: SETTINGS_SHOW_SHUTDOWN_IN_NOTIF,
+                        title: lc('notif_shutdown_button'),
+                        description: lc('notif_shutdown_button_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_SHOW_SHUTDOWN_IN_NOTIF, DEFAULT_SHOW_SHUTDOWN_IN_NOTIF)
+                    },
+                    {
+                        type: 'switch',
+                        id: SETTINGS_HANDLE_VOLUME_BUTTONS,
+                        title: lc('handle_volume_button'),
+                        description: lc('handle_volume_button_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_HANDLE_VOLUME_BUTTONS, DEFAULT_HANDLE_VOLUME_BUTTONS)
+                    },
+                    {
+                        type: 'switch',
+                        id: SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING,
+                        title: lc('force_long_press_volume_when_not_playing'),
+                        description: lc('force_long_press_volume_when_not_playing_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING, DEFAULT_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING)
+                    }
+                ];
             default:
                 break;
         }
@@ -237,24 +295,10 @@
                 },
                 {
                     type: 'switch',
-                    id: SETTINGS_INVERSE_IMAGES,
-                    title: lc('inverse_images'),
-                    description: lc('inverse_images_desc'),
-                    value: ApplicationSettings.getBoolean(SETTINGS_INVERSE_IMAGES, DEFAULT_INVERSE_IMAGES)
-                },
-                {
-                    type: 'switch',
                     id: SETTINGS_PODCAST_MODE,
                     title: lc('podcast_mode'),
                     description: lc('podcast_mode_desc'),
                     value: ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE, DEFAULT_PODCAST_MODE)
-                },
-                {
-                    id: 'sub_settings',
-                    settings: SETTINGS_REMOTE_SOURCES,
-                    icon: 'mdi-cloud-download-outline',
-                    title: getSubSettingsTitle(SETTINGS_REMOTE_SOURCES),
-                    description: lc('remote_sources_desc')
                 }
             ]
                 .concat(
@@ -269,42 +313,42 @@
                           ]
                         : ([] as any)
                 )
+                .concat([
+                    {
+                        id: 'sub_settings',
+                        settings: 'images',
+                        icon: 'mdi-image',
+                        title: getSubSettingsTitle('images'),
+                        description: lc('images_setings_desc')
+                    },
+                    {
+                        id: 'sub_settings',
+                        settings: SETTINGS_REMOTE_SOURCES,
+                        icon: 'mdi-cloud-download-outline',
+                        title: getSubSettingsTitle(SETTINGS_REMOTE_SOURCES),
+                        description: lc('remote_sources_desc')
+                    },
+                    {
+                        id: 'sub_settings',
+                        settings: 'folders',
+                        icon: 'mdi-folder',
+                        title: getSubSettingsTitle('folders'),
+                        description: lc('folders_settings_desc')
+                    }
+                ] as any)
                 .concat(
                     __ANDROID__
                         ? [
                               {
-                                  type: 'switch',
-                                  id: SETTINGS_SHOW_SHUTDOWN_IN_NOTIF,
-                                  title: lc('notif_shutdown_button'),
-                                  description: lc('notif_shutdown_button_desc'),
-                                  value: ApplicationSettings.getBoolean(SETTINGS_SHOW_SHUTDOWN_IN_NOTIF, DEFAULT_SHOW_SHUTDOWN_IN_NOTIF)
+                                  id: 'sub_settings',
+                                  settings: 'notifs_buttons',
+                                  icon: 'mdi-notification-clear-all',
+                                  title: getSubSettingsTitle('notifs_buttons'),
+                                  description: lc('notifs_buttons_settings_desc')
                               }
-                              //   {
-                              //       id: 'battery_optimisation',
-                              //       title: lc('battery_optimization'),
-                              //       description: lc('battery_optimization_desc'),
-                              //       rightValue: getBGServiceInstance().isBatteryOptimized() ? lc('enabled') : lc('disabled')
-                              //       //   rightBtnIcon: 'mdi-chevron-right'
-                              //   }
-                              //   {
-                              //       id: 'accessibility_service',
-                              //       title: lc('accessibility_service'),
-                              //       description: lc('accessibility_service_desc'),
-                              //       rightValue: getBGServiceInstance().isAccessibilityServiceEnabled() ? lc('enabled') : lc('disabled')
-                              //       //   rightBtnIcon: 'mdi-chevron-right'
-                              //   }
                           ]
                         : ([] as any)
                 )
-                .concat([
-                    {
-                        type: 'switch',
-                        id: SETTINGS_DRAW_FOLDERS_BACKGROUND,
-                        title: lc('folder_color_as_background'),
-                        description: lc('folder_color_as_background_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND)
-                    }
-                ] as any)
                 .concat([
                     {
                         id: 'third_party',
@@ -889,7 +933,7 @@
 </script>
 
 <page bind:this={page} id={title || $slc('settings.title')} actionBarHidden={true}>
-    <gridlayout rows="auto,*">
+    <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*">
         <collectionview
             bind:this={collectionView}
             accessibilityValue="settingsCV"
