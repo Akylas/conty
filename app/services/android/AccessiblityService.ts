@@ -23,7 +23,7 @@ export class AccessiblityService extends android.accessibilityservice.Accessibil
         const storyHandler = getBGServiceInstance().storyHandler;
         const action = event.getAction();
         const keyCode = event.getKeyCode();
-        DEV_LOG && console.log('handleKeyEvent', action, keyCode);
+        // DEV_LOG && console.log('handleKeyEvent', action, keyCode);
         if (!storyHandler.canOverrideButtons()) {
             return false;
         }

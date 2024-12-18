@@ -150,7 +150,7 @@ export class StoryHandler extends Handler {
                 let description = pack.subtitle || pack.description;
                 let isStory = false;
                 let inverseImageColors = !onlyInverseLuniiTypeImages || cover !== pack.getThumbnail();
-                DEV_LOG && console.log('playingInfo',cover, pack.getThumbnail(), inverseImageColors);
+                DEV_LOG && console.log('playingInfo', cover, pack.getThumbnail(), inverseImageColors);
                 if (currentStage) {
                     if (duration > 30000 || pack.stageIsStory(currentStage)) {
                         isStory = true;

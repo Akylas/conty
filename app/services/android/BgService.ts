@@ -368,14 +368,23 @@ export class BgService extends android.app.Service {
     }
     handleMediaIntent(intent: android.content.Intent) {
         const event = intent.getParcelableExtra(android.content.Intent.EXTRA_KEY_EVENT) as android.view.KeyEvent;
-        const keyCode = event.getKeyCode();
-        switch (event.getKeyCode()) {
-            case android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: {
-                this.storyHandler.togglePlayState();
-                break;
+        if (event.getAction() === 1) {
+            const keyCode = event.getKeyCode();
+            switch (keyCode) {
+                case 85 /* android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE */:
+                case 79 /* android.view.KeyEvent.KEYCODE_HEADSETHOOK */:
+                    this.storyHandler?.togglePlayState();
+                    break;
+                case 87 /* android.view.KeyEvent.KEYCODE_MEDIA_NEXT */:
+                    this.storyHandler?.handleAction('next');
+                    break;
+                case 88 /* android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS */:
+                    this.storyHandler?.handleAction('previous');
+                    break;
+                case 86 /* android.view.KeyEvent.KEYCODE_MEDIA_STOP */:
+                    this.storyHandler.stopPlaying();
+                    break;
             }
-            case android.view.KeyEvent.KEYCODE_MEDIA_STOP:
-                this.storyHandler.stopPlaying();
         }
     }
     updateAlbumArt(image) {

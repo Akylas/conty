@@ -15,7 +15,7 @@ function handleKey(activity: androidx.appcompat.app.AppCompatActivity, keyCode: 
     const action = event.getAction();
 
     const storyHandler = instance.storyHandler;
-    DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, storyHandler.id, keyCode, action);
+    // DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, storyHandler.id, keyCode, action);
     const playingInfo = storyHandler?.currentPlayingInfo;
 
     const { canNext, canPrev, isStory, pack, ...other } = playingInfo;

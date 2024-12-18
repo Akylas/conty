@@ -427,10 +427,6 @@
     }
 
     function onStoryDraw(event: { canvas: Canvas; object: CanvasView }) {
-        if (DEV_LOG) {
-            const { pack, ...others } = story;
-            console.log('onStoryDraw', JSON.stringify(others));
-        }
         if (story?.episode && story?.pack.extra?.episodeCount) {
             textPaint.color = colorOnTertiaryContainer;
             textPaint.fontWeight = 'bold';
