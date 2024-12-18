@@ -1,0 +1,3 @@
+Bug fixes:
+- report error if the remote source is not in the right format
+- allow to play/pause with headphones buttons
