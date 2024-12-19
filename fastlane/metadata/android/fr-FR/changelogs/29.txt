@@ -1,0 +1,4 @@
+Bug fixes:
+- error on back button with the new volume buttons option
+- global importing fix. Better handle of multiple sequential operations
+- delete cached zip after import finished
