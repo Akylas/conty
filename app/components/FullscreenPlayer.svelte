@@ -443,7 +443,7 @@
             staticLayout.draw(canvas);
         }
     }
-    function onPagerHolderLayoutChanged({ object }) {
+    function onPagerHolderLayoutChanged({ object }: EventData<View>) {
         if ($isLandscape) {
             pagerPeaking = (object.getMeasuredWidth() - object.getMeasuredHeight() / CARD_RATIO) / 2;
         } else {
