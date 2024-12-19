@@ -7,7 +7,7 @@ let shortPress = false;
 let longpressTimer;
 let audioManager: android.media.AudioManager;
 
-const SUPPORTED_KEY_CODES = [24, 25]
+const SUPPORTED_KEY_CODES = [24, 25];
 function handleKey(activity: androidx.appcompat.app.AppCompatActivity, keyCode: number, event: android.view.KeyEvent) {
     const instance = getInstance();
     // DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, keyCode);

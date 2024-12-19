@@ -27,9 +27,9 @@ export class ImportService extends Observable {
             nativeDatas?: { [k: string]: any };
         };
     }) {
-        // DEV_LOG && console.log('onWorkerMessage', event);
         const data = event.data;
         const id = data.id;
+        // DEV_LOG && console.log('onWorkerMessage', event);
         try {
             let messageData = data.messageData;
             if (typeof messageData === 'string') {
@@ -37,8 +37,9 @@ export class ImportService extends Observable {
                     messageData = JSON.parse(messageData);
                 } catch (error) {}
             }
-            // DEV_LOG && console.error(TAG, 'onWorkerMessage', id, data.type, id && this.messagePromises.hasOwnProperty(id), Object.keys(this.messagePromises), messageData);
+            // DEV_LOG && console.info('onWorkerMessage', id, data.type, id && this.messagePromises.hasOwnProperty(id), Object.keys(this.messagePromises), messageData);
             if (id && this.messagePromises.hasOwnProperty(id)) {
+                // DEV_LOG && console.log('worker response to promise',id);
                 this.messagePromises[id].forEach(function (executor) {
                     executor.timeoutTimer && clearTimeout(executor.timeoutTimer);
                     // if (isError) {
@@ -64,14 +65,14 @@ export class ImportService extends Observable {
             const eventData = messageData as any;
             switch (data.type) {
                 case 'event':
-                    DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData), JSON.stringify(eventData.pack));
+                    // DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData), JSON.stringify(eventData.pack));
                     if (eventData.target === 'documentsService') {
                         if (eventData.pack) {
                             eventData.pack = await documentsService.packRepository.get(eventData.pack.id);
                         }
                         documentsService.notify({ ...eventData, object: eventData.object || documentsService });
                     } else {
-                        DEV_LOG && console.info('notifying event from worker', documentsService.id, eventData.eventName, Object.keys(eventData));
+                        // DEV_LOG && console.info('notifying event from worker', documentsService.id, eventData.eventName, Object.keys(eventData));
                         this.notify({ ...eventData });
                     }
                     break;
@@ -191,25 +192,25 @@ export class ImportService extends Observable {
         this.worker = null;
         // this.services.forEach((service) => service.stop());
     }
-    async updateContentFromDataFolder({ showSnack = true }: { showSnack?: boolean } = {}) {
+    async updateContentFromDataFolder({ showSnack = true }: { showSnack?: boolean } = {}, shouldWait = false) {
         this.ensureWorker();
-        await this.sendMessageToWorker('import_data', { showSnack }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_data', { showSnack }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
-    async importContentFromFiles(files: { filePath: string; id?: string; extraData?: Partial<Pack> }[], folderId?: number) {
+    async importContentFromFiles(files: { filePath: string; id?: string; extraData?: Partial<Pack> }[], folderId?: number, shouldWait = false) {
         DEV_LOG && console.log('importContentFromFiles', files, folderId);
         this.ensureWorker();
-        await this.sendMessageToWorker('import_from_files', { files, folderId }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_from_files', { files, folderId }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
     // async importContentFromFile(data: { filePath: string; id?: string; extraData?; folderId?: number }) {
     //     DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
     //     this.ensureWorker();
     //     await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     // }
-    async deletePacks(packs: Pack[]) {
+    async deletePacks(packs: Pack[], shouldWait = false) {
         const data = packs.map((s) => ({ id: s.id, folders: s.folders }));
         DEV_LOG && console.log('deleteDocuments', JSON.stringify(data));
         this.ensureWorker();
-        await this.sendMessageToWorker('delete_packs', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('delete_packs', data, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
 }
 export const importService = new ImportService();

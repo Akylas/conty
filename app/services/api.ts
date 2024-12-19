@@ -253,41 +253,11 @@ export async function getHEAD<T>(arg: any) {
 
 export async function downloadStories(story: RemoteContent, folderId?: number) {
     let progressNotificationId;
-    let destinationFilePath;
     try {
         const name = Date.now() + '';
 
         const destinationFileName = `${name}.zip`;
-        const destinationFolderPath = __IOS__ ? knownFolders.temp().path : documentsService.dataFolder.path;
-        const androidUseContent = __ANDROID__ && destinationFolderPath.startsWith(ANDROID_CONTENT);
 
-        // let file: File;
-        // if (story.download.startsWith('blob:')) {
-        //     DEV_LOG && console.log('downloadStories', 'blob', story.download);
-        //     const destinationFilePath = path.join(knownFolders.temp().path, destinationFileName);
-        //     if (__IOS__) {
-        //         showSnackMessage({ text: l('downloading'), progress: -1 });
-        //         const url = NSURL.URLWithString(story.download);
-        //         DEV_LOG && console.log('downloadStories', 'url', url);
-        //         const data = NSData.alloc().initWithContentsOfURL(url);
-        //         DEV_LOG && console.log('downloadStories', 'data', data);
-        //         await new Promise((resolve, reject) => {
-        //             try {
-        //                 data.writeToFileAtomicallyCompletion(destinationFilePath, true, () => resolve);
-        //             } catch (error) {
-        //                 reject(error);
-        //             }
-        //         });
-        //         file = File.fromPath(destinationFilePath);
-        //     } else {
-        //         try {
-        //             com.akylas.conty.FileUtils.Companion.writeURLToFile(story.download, destinationFilePath);
-        //         } catch (e) {
-        //             showError(e);
-        //         }
-        //         file = File.fromPath(destinationFilePath);
-        //     }
-        // } else {
         showSnackMessage({ text: l('preparing_download'), progress: -1 });
         const headResult = await getHEAD(story.download);
         const contentLength = headResult['content-length'] || headResult['Content-Length'];
@@ -296,49 +266,9 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
             size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
             DEV_LOG && console.log('downloadStories', size);
         }
-        // const toDownload = await Promise.all(
-        //     stories.map(async (s) => {
-        //         const pageContent = await (await https.request<string>({ method: 'GET', url: stories[0].download })).content.toStringAsync();
-        //         const actualUrl = pageContent.match(/<meta http-equiv="refresh" content="0; url=(.*)">/)[1];
-        //         const size = parseInt((await getHEAD(actualUrl))['content-length'], 10);
-        //         return {
-        //             ...s,
-        //             download: actualUrl,
-        //             size
-        //         };
-        //     })
-        // );
-        // DEV_LOG &&
-        //     console.log(
-        //         'toDownload',
-        //         toDownload.map((s) => ({ size: s.size, download: s.download }))
-        //     );
-        // const totalSize = toDownload.reduce((acc, cur) => acc + cur.size, 0);
-        // const confirmed = await confirm({
-        //     title: lc('download_stories'),
-        //     message: lc(
-        //         'confirm_download_stories',
-        //         toDownload.length,
-        //         filesize(
-        //             toDownload.reduce((acc, cur) => acc + cur.size, 0),
-        //             { output: 'string' }
-        //         )
-        //     )
-        // });
-
-        // if (!confirmed) {
-        //     return;
-        // }
 
         progressNotificationId = 52346 + hashCode(story.download);
-        // const headers = await Promise.all(stories.map(getHEAD));
-
-        // const newContentSize = headers['content-length'];
-        // DEV_LOG && console.log('checkForStoryUpdate', url, storyId, workingDir, newContentSize, typeof newContentSize, lastSize !== newContentSize, Folder.exists(storyDirPath));
-
-        // if (forceReload || lastSize !== newContentSize || !Folder.exists(storyDirPath)) {
         const runningRequestTag: string = story.download;
-        // const name = cleanFilename(story.title);
 
         const progressNotification = ProgressNotifications.show({
             id: progressNotificationId, //required
@@ -381,7 +311,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
 
         const compressed = documentsService.supportsCompressedData;
 
-        const downloadFilePath = !compressed || androidUseContent ? path.join(knownFolders.temp().path, destinationFileName) : path.join(destinationFolderPath, destinationFileName);
+        const downloadFilePath = path.join(knownFolders.temp().path, destinationFileName);
         const file = await getFile(
             {
                 url: story.download,
@@ -402,29 +332,38 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
             // do it on a background thread
-            importService.importContentFromFiles(
-                [
-                    {
-                        filePath: file.path,
-                        id: name,
-                        extraData: {
-                            age: story.age,
-                            title: story.title,
-                            description: story.description,
-                            createdDate: dayjs(story.created_at).valueOf(),
-                            modifiedDate: dayjs(story.updated_at).valueOf()
-                        }
+            (async () => {
+                try {
+                    DEV_LOG && console.warn('about tot importContentFromFiles');
+                    await importService.importContentFromFiles(
+                        [
+                            {
+                                filePath: file.path,
+                                id: name,
+                                extraData: {
+                                    age: story.age,
+                                    title: story.title,
+                                    description: story.description,
+                                    createdDate: dayjs(story.created_at).valueOf(),
+                                    modifiedDate: dayjs(story.updated_at).valueOf()
+                                }
+                            }
+                        ],
+                        folderId,
+                        true
+                    );
+                    DEV_LOG && console.warn('aimportContentFromFiles done');
+                } finally {
+                    if (file && File.exists(file.path)) {
+                        DEV_LOG && console.log('removing downloading file', file.path);
+                        file.remove();
                     }
-                ],
-                folderId
-            );
+                }
+            })();
         }
     } catch (error) {
         showError(error);
         hideSnackMessage();
-        if (destinationFilePath && File.exists(destinationFilePath)) {
-            File.fromPath(destinationFilePath).remove();
-        }
     } finally {
         ProgressNotifications.dismiss(progressNotificationId);
     }
