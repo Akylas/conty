@@ -6,17 +6,22 @@ let shortPress = false;
 
 let longpressTimer;
 let audioManager: android.media.AudioManager;
+
+const SUPPORTED_KEY_CODES = [24, 25]
 function handleKey(activity: androidx.appcompat.app.AppCompatActivity, keyCode: number, event: android.view.KeyEvent) {
     const instance = getInstance();
     // DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, keyCode);
-    if (!instance.shouldHandleVolumeButtons) {
+    if (!instance.shouldHandleVolumeButtons || SUPPORTED_KEY_CODES.indexOf(keyCode) === -1) {
         return false;
     }
     const action = event.getAction();
 
     const storyHandler = instance.storyHandler;
-    // DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, storyHandler.id, keyCode, action);
+    // DEV_LOG && console.warn('handleKey', activity, instance, instance.shouldHandleVolumeButtons, storyHandler.id, keyCode, action, event);
     const playingInfo = storyHandler?.currentPlayingInfo;
+    if (!playingInfo) {
+        return false;
+    }
 
     const { canNext, canPrev, isStory, pack, ...other } = playingInfo;
     if (!pack) {
