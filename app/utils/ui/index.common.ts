@@ -437,17 +437,21 @@ export async function showFullscreenPlayer() {
 
 export async function playPack(pack: Pack, showFullscreen = true) {
     const storyHandler = getBGServiceInstance().storyHandler;
-    await storyHandler.playPack({ pack });
-    if (showFullscreen && storyHandler.playingPack) {
-        showFullscreenPlayer();
+    if (storyHandler) {
+        await storyHandler.playPack({ pack });
+        if (showFullscreen && storyHandler.playingPack) {
+            showFullscreenPlayer();
+        }
     }
 }
 
 export async function playStory(story: Story, showFullscreen = true, updatePlaylist = true) {
     const storyHandler = getBGServiceInstance().storyHandler;
-    await storyHandler.playStory({ story, updatePlaylist });
-    if (showFullscreen && storyHandler.playingStory) {
-        showFullscreenPlayer();
+    if (storyHandler) {
+        await storyHandler.playStory({ story, updatePlaylist });
+        if (showFullscreen && storyHandler.playingStory) {
+            showFullscreenPlayer();
+        }
     }
 }
 

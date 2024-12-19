@@ -402,18 +402,22 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
             // do it on a background thread
-            importService.importContentFromFile({
-                filePath: file.path,
-                id: name,
-                extraData: {
-                    age: story.age,
-                    title: story.title,
-                    description: story.description,
-                    createdDate: dayjs(story.created_at).valueOf(),
-                    modifiedDate: dayjs(story.updated_at).valueOf()
-                },
+            importService.importContentFromFiles(
+                [
+                    {
+                        filePath: file.path,
+                        id: name,
+                        extraData: {
+                            age: story.age,
+                            title: story.title,
+                            description: story.description,
+                            createdDate: dayjs(story.created_at).valueOf(),
+                            modifiedDate: dayjs(story.updated_at).valueOf()
+                        }
+                    }
+                ],
                 folderId
-            });
+            );
         }
     } catch (error) {
         showError(error);

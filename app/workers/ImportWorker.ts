@@ -1,23 +1,22 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
-import { time } from '@nativescript/core/profiling';
-import { ApplicationSettings, Color, type EventData, File, Folder, ImageSource, Observable, Utils, knownFolders, path } from '@nativescript/core';
+import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
+import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, path } from '@nativescript/core';
 import '@nativescript/core/globals';
+import { time } from '@nativescript/core/profiling';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
-import { LUNII_DATA_FILE, Pack, PackExtra, PackMetadata, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
+import { doInBatch } from '@shared/utils/batch';
+import { LUNII_DATA_FILE, Pack, PackExtra, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
 import { DocumentsService, PackDeletedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
 import Queue from './queue';
-import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
-import { copyFolderContent, removeFolderContent } from '~/utils/file';
-import { doInBatch } from '@shared/utils/batch';
 
 const context: Worker = self as any;
 
-export interface ImportStateEventData extends EventData {
+export interface ImportStateEventData extends Optional<EventData<Observable>, 'object'> {
     state: 'finished' | 'running';
     showSnack?: boolean;
-    type: 'file_import' | 'data_import' | 'delete_packs';
+    type: 'import_from_files' | 'import_data' | 'delete_packs';
 }
 export interface WorkerPostOptions {
     id?: number;
@@ -175,9 +174,6 @@ export default class ImportWorker extends Observable {
         if (!handled) {
             try {
                 const data = event.data;
-                if (this.queue.size === 0) {
-                    this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: data.type, showSnack: event.data?.messageData?.showSnack } as ImportStateEventData);
-                }
                 switch (data.type) {
                     case 'import_data':
                         await worker.handleStart(event);
@@ -187,44 +183,13 @@ export default class ImportWorker extends Observable {
                         await worker.handleStart(event);
                         this.importFromFilesQueue(event.data.messageData);
                         break;
-                    case 'import_from_file':
-                        await worker.handleStart(event);
-                        this.importFromFileQueue(event.data.messageData);
-                        break;
+                    // case 'import_from_file':
+                    //     await worker.handleStart(event);
+                    //     this.importFromFileQueue(event.data.messageData);
+                    //     break;
                     case 'delete_packs':
                         await worker.handleStart(event);
-                        const ids = event.data.messageData as { id: string; folders: number[] }[];
-                        DEV_LOG && console.log('deleteDocuments', ids);
-                        // await this.packRepository.delete(model);
-                        await doInBatch<{ id: string; folders: number[] }, void>(
-                            ids,
-                            async (d: { id: string; folders: number[] }) => {
-                                const id = d.id;
-                                await documentsService.removePack(id);
-                                const folderPathStr = path.join(documentsService.realDataFolderPath, id);
-                                if (Folder.exists(folderPathStr)) {
-                                    const docData = Folder.fromPath(folderPathStr, false);
-                                    DEV_LOG && console.log('deleteDocument', folderPathStr);
-                                    await docData.remove();
-                                }
-                                // we notify on each delete so that UI updates fast
-                                documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id], folders: d.folders } as PackDeletedEventData);
-                            },
-                            1
-                        );
-                        // await Promise.all(
-                        //     ids.map(async (id) => {
-                        //         await documentsService.packRepository.delete({ id } as any);
-                        //         const docData = Folder.fromPath(documentsService.realDataFolderPath).getFolder(id, false);
-                        //         DEV_LOG && console.log('deleteDocument', docData.path);
-                        //         await docData.remove();
-                        //         // we notify on each delete so that UI updates fast
-                        //         documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id] } as PackDeletedEventData);
-                        //     })
-                        // );
-                        if (this.queue.size === 0) {
-                            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
-                        }
+                        this.deletePacksQueue(event.data.messageData);
                         break;
                     case 'stop':
                         worker.stop(data.messageData?.error, data.id);
@@ -241,12 +206,44 @@ export default class ImportWorker extends Observable {
     async importFromCurrentDataFolderQueue(args: { showSnack?: boolean }) {
         return this.queue.add(() => this.importFromCurrentDataFolderInternal(args));
     }
-    async importFromFilesQueue({ files, folderId }: { files: string[]; folderId?: number }) {
-        return this.queue.add(() => this.importFromFilesInternal({ files, folderId }));
+    async importFromFilesQueue({ files, folderId, showSnack }: { files: { filePath: string; id?: string; extraData?: Partial<Pack> }[]; folderId?: number; showSnack?: boolean }) {
+        return this.queue.add(() => this.importFromFilesInternal({ files, folderId, showSnack }));
     }
-    async importFromFileQueue(data) {
-        return this.queue.add(() => this.importFromFileInternal(data));
+    async deletePacksQueue(data: { id: string; folders: number[] }[]) {
+        return this.queue.add(() => this.deletePacks(data));
     }
+    async deletePacks(ids: { id: string; folders: number[] }[]) {
+        DEV_LOG && console.log('deleteDocuments', ids);
+        // await this.packRepository.delete(model);
+        try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'delete_packs' } as ImportStateEventData);
+            await doInBatch<{ id: string; folders: number[] }, void>(
+                ids,
+                async (d: { id: string; folders: number[] }) => {
+                    const id = d.id;
+                    await documentsService.removePack(id);
+                    const folderPathStr = path.join(documentsService.realDataFolderPath, id);
+                    if (Folder.exists(folderPathStr)) {
+                        const docData = Folder.fromPath(folderPathStr, false);
+                        DEV_LOG && console.log('deleteDocument', folderPathStr);
+                        await docData.remove();
+                    }
+                    // we notify on each delete so that UI updates fast
+                    documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id], folders: d.folders } as PackDeletedEventData);
+                },
+                1
+            );
+        } catch (error) {
+            this.sendError(error);
+        }
+    }
+    // async importFromFileQueue(data) {
+    //     return this.queue.add(() => this.importFromFileInternal(data));
+    // }
 
     isFolderValid(folderPath: string) {
         let folderTotest = Folder.fromPath(folderPath);
@@ -263,6 +260,7 @@ export default class ImportWorker extends Observable {
             if (!database.isOpen()) {
                 return;
             }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_data', showSnack } as ImportStateEventData);
             const supportsCompressedData = documentsService.supportsCompressedData;
             DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
             const entities = await this.dataFolder.getEntities();
@@ -516,82 +514,66 @@ export default class ImportWorker extends Observable {
         // }
     }
 
-    async importFromFileInternal({ extraData, filePath, folderId, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folderId?: number }) {
+    // async importFromFileInternal({ extraData, filePath, folderId, id }: { filePath: string; id: string; extraData?: Partial<Pack>; folderId?: number }) {
+    //     try {
+    //         const database = documentsService.db;
+    //         if (!database.isOpen()) {
+    //             return;
+    //         }
+    //         DEV_LOG && console.log('importFromFileInternal', extraData, filePath, folderId, id);
+    //         const supportsCompressedData = documentsService.supportsCompressedData;
+    //         const inputFilePath = filePath;
+    //         let destinationFolderPath = inputFilePath;
+    //         id = id || Date.now() + '';
+    //         destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
+    //         if (!supportsCompressedData) {
+    //             destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+    //             await unzip(inputFilePath, destinationFolderPath);
+    //             const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+    //             if (subPaths) {
+    //                 extraData = extraData || {};
+    //                 extraData.extra = extraData.extra || {};
+    //                 extraData.extra.subPaths = subPaths;
+    //             }
+    //         } else {
+    //             await File.fromPath(inputFilePath).copy(destinationFolderPath);
+    //         }
+    //         await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData });
+    //     } catch (error) {
+    //         this.sendError(error);
+    //     }
+    // }
+    async importFromFilesInternal({ files, folderId, showSnack }: { files: { filePath: string; id?: string; extraData?: Partial<Pack> }[]; folderId?: number; showSnack?: boolean }) {
         try {
             const database = documentsService.db;
             if (!database.isOpen()) {
                 return;
             }
-            DEV_LOG && console.log('importFromFileInternal', extraData, filePath, folderId, id);
-            const supportsCompressedData = documentsService.supportsCompressedData;
-            const inputFilePath = filePath;
-            let destinationFolderPath = inputFilePath;
-            id = id || Date.now() + '';
-            destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
-            if (!supportsCompressedData) {
-                destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                // let tempPath;
-                // if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
-                //     tempPath = this.dataFolder.getFile(`${id}.zip`).path;
-                //     File.fromPath(inputFilePath).copySync(tempPath);
-                //     inputFilePath = tempPath;
-                // }
-                // if (!Folder.exists(destinationFolderPath)) {
-                await unzip(inputFilePath, destinationFolderPath);
-                // if (tempPath) {
-                //     File.fromPath(tempPath).removeSync();
-                // }
-                // }
-                const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
-                if (subPaths) {
-                    extraData = extraData || {};
-                    extraData.extra = extraData.extra || {};
-                    extraData.extra.subPaths = subPaths;
-                }
-            } else {
-                await File.fromPath(inputFilePath).copy(destinationFolderPath);
-            }
-            await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData });
-        } catch (error) {
-            this.sendError(error);
-        }
-    }
-    async importFromFilesInternal({ files, folderId }: { files: string[]; folderId?: number }) {
-        try {
-            const database = documentsService.db;
-            if (!database.isOpen()) {
-                return;
-            }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_from_files', showSnack } as ImportStateEventData);
             DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
             const supportsCompressedData = documentsService.supportsCompressedData;
             for (let index = 0; index < files.length; index++) {
-                const inputFilePath = files[index];
+                const fileData = files[index];
+                const inputFilePath = fileData.filePath;
                 let destinationFolderPath = inputFilePath;
-                let extraData: PackExtra;
+                let extraData: Partial<Pack> = fileData.extraData;
                 const id = Date.now() + '';
                 destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
                 if (!supportsCompressedData) {
                     destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                    // let tempPath;
-                    // if (inputFilePath.startsWith('content:/') && !destinationFolderPath.startsWith('content:/')) {
-                    //     tempPath = this.dataFolder.getFile(`${id}.zip`).path;
-                    //     File.fromPath(inputFilePath).copySync(tempPath);
-                    //     inputFilePath = tempPath;
-                    // }
-                    // if (!Folder.exists(destinationFolderPath)) {
                     await unzip(inputFilePath, destinationFolderPath);
                     DEV_LOG && console.log('unzip done');
                     const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
                     if (subPaths) {
                         extraData = extraData || {};
-                        extraData.subPaths = subPaths;
+                        extraData.extra = extraData.extra || {};
+                        extraData.extra.subPaths = subPaths;
                     }
-                    // }
                 } else {
                     await File.fromPath(inputFilePath).copy(destinationFolderPath);
                 }
 
-                await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData: extraData ? { extra: extraData } : undefined });
+                await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData });
             }
         } catch (error) {
             this.sendError(error);

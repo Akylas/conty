@@ -1,17 +1,17 @@
+import { setWorkerContextValue } from '@akylas/nativescript-app-utils';
+import { lc } from '@nativescript-community/l';
+import { EventData, Observable } from '@nativescript/core';
 import { time } from '@nativescript/core/profiling';
-import { EventData } from '@nativescript-community/ui-image';
-import { Observable } from '@nativescript/core';
-import { Pack } from '~/models/Pack';
-import { EVENT_IMPORT_STATE, EVENT_STATE } from '~/utils/constants';
+import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { CustomError } from '@shared/utils/error';
 import { showError } from '@shared/utils/showError';
+import { Pack } from '~/models/Pack';
+import { EVENT_IMPORT_STATE, EVENT_STATE } from '~/utils/constants';
+import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import ImportWorker, { ImportStateEventData, WorkerEventType } from '~/workers/ImportWorker';
 import { documentsService } from './documents';
-import { lc } from '@nativescript-community/l';
-import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
-import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 
-export interface ImportEnabledEventData extends EventData {
+export interface ImportEnabledEventData extends Optional<EventData<Observable>, 'object'> {
     enabled: boolean;
 }
 
@@ -152,6 +152,7 @@ export class ImportService extends Observable {
         }
     }
     onImportState(event: ImportStateEventData) {
+        this.importRunning = event.state === 'running';
         DEV_LOG && console.log('SyncService', 'onImportState', event.type, event.state, event.showSnack);
         if (event.showSnack === false) {
             return;
@@ -178,28 +179,32 @@ export class ImportService extends Observable {
             this.on(EVENT_IMPORT_STATE, this.onImportState);
         }
     }
+
+    importRunning = false;
     async stop() {
         this.off(EVENT_IMPORT_STATE, this.onImportState);
-        // if (this.syncRunning) {
-        //     // if sync is running wait for it to be finished
-        //     await new Promise((resolve) => this.once(EVENT_SYNC_STATE, resolve));
-        // }
+        if (this.importRunning) {
+            // if sync is running wait for it to be finished
+            await new Promise((resolve) => this.once(EVENT_IMPORT_STATE, resolve));
+        }
+        this.worker?.stop();
+        this.worker = null;
         // this.services.forEach((service) => service.stop());
     }
     async updateContentFromDataFolder({ showSnack = true }: { showSnack?: boolean } = {}) {
         this.ensureWorker();
         await this.sendMessageToWorker('import_data', { showSnack }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
-    async importContentFromFiles(files: string[], folderId?: number) {
+    async importContentFromFiles(files: { filePath: string; id?: string; extraData?: Partial<Pack> }[], folderId?: number) {
         DEV_LOG && console.log('importContentFromFiles', files, folderId);
         this.ensureWorker();
         await this.sendMessageToWorker('import_from_files', { files, folderId }, undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
-    async importContentFromFile(data: { filePath: string; id?: string; extraData?; folderId?: number }) {
-        DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
-        this.ensureWorker();
-        await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
-    }
+    // async importContentFromFile(data: { filePath: string; id?: string; extraData?; folderId?: number }) {
+    //     DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
+    //     this.ensureWorker();
+    //     await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+    // }
     async deletePacks(packs: Pack[]) {
         const data = packs.map((s) => ({ id: s.id, folders: s.folders }));
         DEV_LOG && console.log('deleteDocuments', JSON.stringify(data));

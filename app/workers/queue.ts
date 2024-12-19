@@ -7,6 +7,10 @@ export default class Queue extends Observable {
     get size() {
         return this.queue.length;
     }
+
+    get isRunning() {
+        return this.queue.length > 0 || this.workingOnPromise;
+    }
     add(promise) {
         return new Promise((resolve, reject) => {
             this.queue.push({

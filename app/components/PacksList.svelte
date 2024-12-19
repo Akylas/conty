@@ -389,7 +389,7 @@
                     showLoading('loading');
                     DEV_LOG && console.log('importContentFromFiles', files);
                     await importService.importContentFromFiles(
-                        files.map((f) => getRealPath(f)),
+                        files.map((f) => ({ filePath: getRealPath(f) })),
                         folder?.id
                     );
                 }
