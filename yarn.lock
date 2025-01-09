@@ -95,6 +95,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@akylas/nativescript-inapp-purchase@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@akylas/nativescript-inapp-purchase@npm:0.0.4"
+  checksum: 10/b03783e49ced38964ef802cdfb8b88c533188771552cd4ccf4fab61d0af7242ca4d70ab274763df8e69b9f968b0c84321c73c07895c952362fd4e2a04a5b71fd
+  languageName: node
+  linkType: hard
+
 "@akylas/nativescript-inappbrowser@npm:3.1.8":
   version: 3.1.8
   resolution: "@akylas/nativescript-inappbrowser@npm:3.1.8"
@@ -1116,22 +1123,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-canvas@npm:4.6.38":
-  version: 4.6.38
-  resolution: "@nativescript-community/ui-canvas@npm:4.6.38"
+"@nativescript-community/ui-canvas@npm:4.6.39":
+  version: 4.6.39
+  resolution: "@nativescript-community/ui-canvas@npm:4.6.39"
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
-  checksum: 10/92e5c834e95715f15114130fe31faffba3f2da30fecd8eb509d3e8e2bf7dae5718281c600406eb700a76de0227c87ff76abb428f263614c7deae7145f33b89dc
+  checksum: 10/4fea0819901b67ec9dc8df4657db4a20918d2932ea2855e817ee430d7a240f45f787df779904e5e80a80bf5e85c6959de321fe33528f0b4a39907d8fdd668f75
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-canvaslabel@npm:1.2.41":
-  version: 1.2.41
-  resolution: "@nativescript-community/ui-canvaslabel@npm:1.2.41"
+"@nativescript-community/ui-canvaslabel@npm:1.2.42":
+  version: 1.2.42
+  resolution: "@nativescript-community/ui-canvaslabel@npm:1.2.42"
   peerDependencies:
     "@nativescript-community/text": ^1.5.33
     "@nativescript-community/ui-canvas": ^4.5.1
-  checksum: 10/a95ac2311bbdf919effbb7e6720bfa8c27aad9f017364fd03024ba87c4f60e2adc6dc92e2adafc89cd41b6e23a7e7950ce6f2894763583aaf09c39018126f7cc
+  checksum: 10/dd316c3d6319841b9d6020a662edccd921a4310111fed72b7d7235d108afb0ea9fe3ab99c036f687816bbae8c41ba34039e6e3eafeffc4d91abead6291e8fe1c
   languageName: node
   linkType: hard
 
@@ -8944,6 +8951,7 @@ __metadata:
     "@akylas/nativescript-android-runtime": "npm:8.8.5"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.2.1"
+    "@akylas/nativescript-inapp-purchase": "npm:0.0.4"
     "@akylas/nativescript-inappbrowser": "npm:3.1.8"
     "@akylas/nativescript-ios-runtime": "npm:8.8.2"
     "@akylas/nativescript-webpack": "npm:5.0.22"
@@ -8965,8 +8973,8 @@ __metadata:
     "@nativescript-community/sqlite": "npm:3.5.1"
     "@nativescript-community/systemui": "npm:1.1.23"
     "@nativescript-community/text": "npm:1.6.7"
-    "@nativescript-community/ui-canvas": "npm:4.6.38"
-    "@nativescript-community/ui-canvaslabel": "npm:1.2.41"
+    "@nativescript-community/ui-canvas": "npm:4.6.39"
+    "@nativescript-community/ui-canvaslabel": "npm:1.2.42"
     "@nativescript-community/ui-checkbox": "npm:2.0.12"
     "@nativescript-community/ui-collectionview": "npm:6.0.4"
     "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.4"

@@ -79,6 +79,9 @@ try {
     SwipeMenuElement.register();
     PagerElement.register();
     // DrawerElement.register();
+    if (PLAY_STORE_BUILD) {
+        import('@shared/utils/inapp-purchase').then((r) => r.init());
+    }
 
     if (!PRODUCTION) {
         // Trace.addCategories(Trace.categories.Navigation);
