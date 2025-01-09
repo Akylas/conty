@@ -953,7 +953,7 @@
             android:paddingBottom={windowInsetBottom + bottomOffset}>
             <Template key="header" let:item>
                 <gridlayout rows="auto,auto">
-                    {#if __ANDROID__}
+                    {#if __ANDROID__ || inAppAvailable}
                         <gridlayout columns="*,auto,auto" margin="10 16 0 16">
                             <stacklayout
                                 backgroundColor="#ea4bae"
@@ -966,16 +966,24 @@
                                 <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
                                 <label color="white" fontSize={12} text={item.title} textWrap={true} verticalAlignment="center" />
                             </stacklayout>
-                            <image
-                                borderRadius={6}
-                                col={1}
-                                height={40}
-                                margin="0 10 0 10"
-                                rippleColor="white"
-                                src="~/assets/images/librepay.png"
-                                verticalAlignment="center"
-                                on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
-                            <image borderRadius={6} col={2} height={40} rippleColor="#f96754" src="~/assets/images/patreon.png" on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
+                            {#if __ANDROID__}
+                                <image
+                                    borderRadius={6}
+                                    col={1}
+                                    height={40}
+                                    margin="0 10 0 10"
+                                    rippleColor="white"
+                                    src="~/assets/images/librepay.png"
+                                    verticalAlignment="center"
+                                    on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
+                                <image
+                                    borderRadius={6}
+                                    col={2}
+                                    height={40}
+                                    rippleColor="#f96754"
+                                    src="~/assets/images/patreon.png"
+                                    on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
+                            {/if}
                         </gridlayout>
                     {/if}
 
