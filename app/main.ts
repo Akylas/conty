@@ -75,6 +75,7 @@ try {
     registerNativeViewElement('gesturerootview', () => require('@nativescript-community/gesturehandler').GestureRootView);
     registerNativeViewElement('webview', () => require('@nativescript-community/ui-webview').AWebView);
     registerNativeViewElement('checkbox', () => require('@nativescript-community/ui-checkbox').CheckBox);
+    registerNativeViewElement('lottie', () => require('@nativescript-community/ui-lottie').LottieView);
     CollectionViewElement.register();
     SwipeMenuElement.register();
     PagerElement.register();

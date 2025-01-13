@@ -162,6 +162,8 @@
     "stop": "stop",
     "stories": "%1$s stories",
     "story": "story",
+    "thank_you": "thank you !",
+    "thank_you_subtitle": "your donation will help the project grow and give me time to implement more features",
     "theme": {
         "auto": "auto",
         "black": "black",
