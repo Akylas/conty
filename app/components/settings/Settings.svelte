@@ -8,7 +8,7 @@
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { TextView } from '@nativescript-community/ui-material-textview';
     import { ApplicationSettings, File, ObservableArray, Page, Screen, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
-    import { SDK_VERSION } from '@nativescript/core/utils';
+    import { SDK_VERSION, copyToClipboard, openUrl } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
     import { Template } from 'svelte-native/components';
     import type { NativeViewElementNode } from 'svelte-native/dom';
