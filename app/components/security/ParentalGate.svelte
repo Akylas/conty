@@ -46,8 +46,12 @@
             selectedNumbers.push(n);
         }
         selectedNumbers = selectedNumbers; // for svelte update
-        if (selectedNumbers.length === 3 && JSON.stringify(selectedNumbers.map((n) => parseInt(n, 10)).sort()) === JSON.stringify(randomNumbers.sort())) {
-            onClose(true);
+        if (selectedNumbers.length === 3) {
+            if (JSON.stringify(selectedNumbers.map((n) => parseInt(n, 10)).sort()) === JSON.stringify(randomNumbers.sort())) {
+                onClose(true);
+            } else {
+                selectedNumbers = [];
+            }
         }
     }
     // technique for only specific properties to get updated on store change

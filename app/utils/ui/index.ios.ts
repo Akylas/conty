@@ -9,6 +9,9 @@ import { lc } from '@nativescript-community/l';
 export * from './index.common';
 
 export async function showParentalGate() {
+    if (!PRODUCTION) {
+        return true;
+    }
     const component = (await import('~/components/security/ParentalGate.svelte')).default;
     let componentInstanceInfo: ComponentInstanceInfo<GridLayout, ParentalGate__SvelteComponent_>;
     try {
