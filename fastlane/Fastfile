@@ -315,7 +315,8 @@ lane :get_changelog  do |params|
   puts "ignoredScopes "+  ignoredScopes.join(", ")
   isReleasable = analyze_commits(match: "\"#{tag_prefix}#{platform}/#{flavor}*\"", ignore_scopes: ignoredScopes, debug:true)
   logs = conventional_changelog(format: changelogFormat, title: "#{platform.capitalize} Beta", display_title:false, display_links:display_links, display_scopes:false, order:["feat", "fix", "refactor", "perf"], ignore_scopes: ignoredScopes, debug:true ) || ""
-  if (!logs.empty?)
+  # with github we keep full changelog weblate PRs to try and get contributors
+  if (!logs.empty? && flavor != 'github')
     logs = logs.split(/[\n]/).uniq
     translateLogs = logs.select {|v| v =~ /Translated using Weblate/ }
     logs = (logs - translateLogs).map {|l| 
