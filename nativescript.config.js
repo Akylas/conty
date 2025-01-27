@@ -22,7 +22,7 @@ module.exports = {
     },
     android: {
         runtimePackageName: '@akylas/nativescript-android-runtime',
-        gradleVersion: '8.4',
+        gradleVersion: '8.10.2',
         markingMode: 'none',
         codeCache: true,
         enableMultithreadedJavascript: false,
