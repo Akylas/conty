@@ -1,15 +1,15 @@
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
+import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
+import Queue from '@akylas/nativescript-app-utils/worker/queue';
 import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, path } from '@nativescript/core';
 import '@nativescript/core/globals';
-import { time } from '@nativescript/core/profiling';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
 import { doInBatch } from '@shared/utils/batch';
 import { LUNII_DATA_FILE, Pack, PackExtra, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
 import { DocumentsService, PackDeletedEventData, getFileTextContentFromPackFile } from '~/services/documents';
 import { getFileOrFolderSize, unzip } from '~/utils';
 import { EVENT_IMPORT_STATE, EVENT_PACK_DELETED } from '~/utils/constants';
-import Queue from './queue';
 
 const context: Worker = self as any;
 
@@ -18,137 +18,25 @@ export interface ImportStateEventData extends Optional<EventData<Observable>, 'o
     showSnack?: boolean;
     type: 'import_from_files' | 'import_data' | 'delete_packs';
 }
-export interface WorkerPostOptions {
-    id?: number;
-    messageData?: string;
-}
-
-export interface WorkerEvent {
-    data: { messageData?: any; error?: Error; nativeData?: { [k: string]: any }; type: string; id?: number };
-}
-export type WorkerEventType = 'event' | 'error' | 'terminate';
 
 let documentsService: DocumentsService;
 
 const TAG = '[importWorker]';
-export type WorkerPostEvent = { type: string; error?; id?: number; nativeData?: string[]; messageData?: string } & WorkerPostOptions;
 
-export default class ImportWorker extends Observable {
+export default class ImportWorker extends BaseWorker {
     constructor(protected context) {
         DEV_LOG && console.log(TAG, 'constructor');
 
-        super();
+        super(context);
 
         this.queue.on('done', () => {
             this.notify({ eventName: EVENT_IMPORT_STATE, state: 'finished' } as ImportStateEventData);
-            (global as any).postMessage({
-                type: 'terminate'
-            });
             // ensure we unregister preferences or it will crash once the worker is closed
-            this.context.close();
+            // prefs.destroy();
+            this.stop();
         });
     }
 
-    onmessage: Function;
-    postMessage: (event: WorkerPostEvent) => void; //official worker method
-
-    receivedMessageBase(event: WorkerEvent) {
-        const data = event.data;
-        const id = data.id;
-        // DEV_LOG && console.log(TAG, 'receivedMessage', data.type, id, id && this.messagePromises.hasOwnProperty(id), Object.keys(this.messagePromises), data);
-        if (data.type === 'terminate') {
-            this.context.close();
-            return true;
-        }
-
-        if (id && this.messagePromises.hasOwnProperty(id)) {
-            this.messagePromises[id].forEach(function (executor) {
-                executor.timeoutTimer && clearTimeout(executor.timeoutTimer);
-                const messageData = data.messageData;
-                if (!!messageData?.error) {
-                    executor.reject(messageData.error);
-                } else {
-                    executor.resolve(messageData);
-                }
-            });
-            delete this.messagePromises[id];
-            return true;
-        }
-    }
-
-    messagePromises: { [key: string]: { resolve: Function; reject: Function; timeoutTimer: number }[] } = {};
-    postPromiseMessage<T = any>(type: string, messageData, id = 0, timeout = 0, nativeData?): Promise<T> {
-        return new Promise((resolve, reject) => {
-            id = id || time();
-            // DEV_LOG && console.warn(TAG, 'postPromiseMessage', type, id, timeout, messageData);
-            if (id || timeout) {
-                this.messagePromises[id] = this.messagePromises[id] || [];
-                let timeoutTimer;
-                if (timeout > 0) {
-                    timeoutTimer = setTimeout(() => {
-                        // we need to try catch because the simple fact of creating a new Error actually throws.
-                        // so we will get an uncaughtException
-                        try {
-                            reject(new Error('timeout'));
-                        } catch {}
-                        delete this.messagePromises[id];
-                    }, timeout);
-                }
-                this.messagePromises[id].push({ reject, resolve, timeoutTimer });
-            }
-
-            // const result = worker.processImage(image, { width, height, rotation });
-            // handleContours(result.contours, rotation, width, height);
-            // const keys = Object.keys(nativeData);
-            // if (__ANDROID__) {
-            //     keys.forEach((k) => {
-            //         com.akylas.documentscanner.WorkersContext.setValue(`${id}_${k}`, nativeData[k]._native || nativeData[k]);
-            //     });
-            // }
-            const mData = {
-                id,
-                // nativeDataKeys: keys,
-                messageData: JSON.stringify(messageData),
-                type
-            };
-            // DEV_LOG && console.log(TAG, 'postMessage', mData, this.messagePromises[id]);
-            (global as any).postMessage(mData);
-        });
-    }
-
-    async stop(error?, id?) {
-        // const result = await super.stop(error, id);
-        // ensure everything is done first
-        // DEV_LOG && console.log('terminate worker');
-        this.context.close();
-        // return result;
-    }
-
-    notify<T extends Optional<EventData & { error?: Error }, 'object'>>(data: T): void {
-        DEV_LOG && console.log(TAG, 'notify', data.eventName);
-        //we are a fake observable
-        if (data.error) {
-            // Error is not really serializable so we need custom handling
-            const { nativeException, ...error } = data.error as any;
-            data.error = { message: data.error.toString(), stack: data.error.stack, ...data.error };
-        }
-        (global as any).postMessage({
-            messageData: JSON.stringify(data),
-            type: 'event'
-        });
-    }
-
-    async notifyAndAwait<T = any>(eventName, data) {
-        return this.postPromiseMessage<T>('event', { data, eventName });
-    }
-
-    async sendError(error) {
-        const { message, nativeException, stack, ...realError } = error;
-        (global as any).postMessage({
-            messageData: JSON.stringify({ error: { message: message || error.toString(), nativeException, stack, ...realError } }),
-            type: 'error'
-        });
-    }
     dataFolder: Folder;
     async handleStart(event: WorkerEvent) {
         if (!documentsService) {
@@ -177,42 +65,31 @@ export default class ImportWorker extends Observable {
         }
     }
     async receivedMessage(event: WorkerEvent) {
-        const handled = this.receivedMessageBase(event);
-        DEV_LOG && console.log(TAG, 'receivedMessage', handled, event.data.type);
-        if (!handled) {
-            try {
-                const data = event.data;
-                switch (data.type) {
-                    case 'import_data':
-                        await worker.handleStart(event);
-                        await this.importFromCurrentDataFolderQueue(event.data.messageData);
-                        DEV_LOG && console.log('importFromCurrentDataFolderQueue done');
-                        break;
-                    case 'import_from_files':
-                        await worker.handleStart(event);
-                        await this.importFromFilesQueue(event.data.messageData);
-                        break;
-                    // case 'import_from_file':
-                    //     await worker.handleStart(event);
-                    //     this.importFromFileQueue(event.data.messageData);
-                    //     break;
-                    case 'delete_packs':
-                        await worker.handleStart(event);
-                        await this.deletePacksQueue(event.data.messageData);
-                        DEV_LOG && console.log('deletePacksQueue done');
+        const data = event.data;
+        switch (data.type) {
+            case 'import_data':
+                await worker.handleStart(event);
+                await this.importFromCurrentDataFolderQueue(event.data.messageData);
+                DEV_LOG && console.log('importFromCurrentDataFolderQueue done');
+                break;
+            case 'import_from_files':
+                await worker.handleStart(event);
+                await this.importFromFilesQueue(event.data.messageData);
+                break;
+            // case 'import_from_file':
+            //     await worker.handleStart(event);
+            //     this.importFromFileQueue(event.data.messageData);
+            //     break;
+            case 'delete_packs':
+                await worker.handleStart(event);
+                await this.deletePacksQueue(event.data.messageData);
+                DEV_LOG && console.log('deletePacksQueue done');
 
-                        break;
-                    case 'stop':
-                        await worker.stop(data.messageData?.error, data.id);
-                        break;
-                }
-            } catch (error) {
-                this.sendError(error);
-            } finally {
-                this.replyToPromise(event.data);
-            }
+                break;
+            case 'stop':
+                await worker.stop(data.messageData?.error, data.id);
+                break;
         }
-        return true;
     }
 
     queue = new Queue();
