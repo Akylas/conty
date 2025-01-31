@@ -120,13 +120,12 @@ export class TagRepository extends BaseRepository<Tag, Tag> {
     }
 
     async createTables() {
-        await this.database.query(sql`
+        return this.database.query(sql`
         CREATE TABLE IF NOT EXISTS "Tag" (
             id BIGINT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL
         );
         `);
-        return this.applyMigrations();
     }
 }
 
@@ -141,14 +140,13 @@ export class FolderRepository extends BaseRepository<PackFolder, IPackFolder> {
     }
 
     async createTables() {
-        await this.database.query(sql`
+        return this.database.query(sql`
         CREATE TABLE IF NOT EXISTS "Folder" (
             id BIGINT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
             color TEXT
         );
         `);
-        return this.applyMigrations();
     }
 
     findFolders() {
@@ -189,7 +187,7 @@ export class PackRepository extends BaseRepository<Pack, IPack> {
     }
 
     async createTables() {
-        await Promise.all([
+        return Promise.all([
             this.database.query(sql`
             CREATE TABLE IF NOT EXISTS "Pack" (
                 id TEXT PRIMARY KEY NOT NULL,
@@ -229,17 +227,16 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
 );
 `)
         ]);
-        return this.applyMigrations();
     }
 
-    migrations = Object.assign({
+    migrations = {
         externalPath: sql`ALTER TABLE Pack ADD COLUMN externalPath TEXT`,
         addSubtitle: sql`ALTER TABLE Pack ADD COLUMN subtitle TEXT`,
         addKeywords: sql`ALTER TABLE Pack ADD COLUMN keywords TEXT`,
         addType: sql`ALTER TABLE Pack ADD COLUMN type TEXT`,
         addExtra: sql`ALTER TABLE Pack ADD COLUMN extra TEXT`,
         cleanGhostFolders: sql`DELETE FROM PacksFolders WHERE pack_id NOT IN (SELECT id FROM Pack)`
-    });
+    };
 
     async createPack(data: Partial<Pack>) {
         const { description, extra, folders, id, ...others } = data;
@@ -464,10 +461,17 @@ export class DocumentsService extends Observable {
         this.tagRepository = new TagRepository(this.db);
         this.folderRepository = new FolderRepository(this.db);
         this.packRepository = new PackRepository(this, this.db, this.tagRepository, this.folderRepository);
-        await this.packRepository.createTables();
-        await this.tagRepository.createTables();
-        await this.folderRepository.createTables();
-
+        if (!db) {
+            await this.packRepository.createTables();
+            await this.tagRepository.createTables();
+            await this.folderRepository.createTables();
+            try {
+                await this.db.migrate(Object.assign({}, this.packRepository.migrations, this.tagRepository.migrations, this.folderRepository.migrations));
+                // appliedMigrations.push(...Object.keys(migrations));
+            } catch (error) {
+                console.error('rrror applying migrations', error.stack);
+            }
+        }
         this.notify({ eventName: 'started' });
         this.started = true;
     }
