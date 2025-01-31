@@ -17,7 +17,7 @@ export interface ImportEnabledEventData extends Optional<EventData<Observable>, 
 
 export class ImportService extends BaseWorkerHandler<ImportWorker> {
     constructor() {
-        super(() => new Worker('~/workers/ImportWorkerBootstrap'));
+        super(() => new Worker('~/workers/ImportWorker'));
     }
     async onWorkerEvent(eventData: any) {
         if (eventData.target === 'documentsService') {

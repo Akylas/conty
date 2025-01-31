@@ -1,3 +1,4 @@
+import '@nativescript/core/globals';
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
 import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
@@ -461,26 +462,3 @@ export default class ImportWorker extends BaseWorker {
 }
 
 const worker = new ImportWorker(context);
-const receivedMessage = worker.receivedMessage.bind(worker);
-context.onmessage = (event) => {
-    // DEV_LOG && console.log(TAG, 'onmessage', Date.now(), event);
-    if (typeof event.data.messageData === 'string') {
-        try {
-            event.data.messageData = JSON.parse(event.data.messageData);
-        } catch (error) {}
-    }
-    if (Array.isArray(event.data.nativeData)) {
-        event.data.nativeData = (event.data.nativeData as string[]).reduce((acc, key) => {
-            const actualKey = key.split('$$$')[1];
-            acc[actualKey] = getWorkerContextValue(key);
-            setWorkerContextValue(key, null);
-            return acc;
-        }, {});
-    }
-    if (typeof event.data.error === 'string') {
-        try {
-            event.data.error = JSON.parse(event.data.error);
-        } catch (error) {}
-    }
-    receivedMessage(event);
-};

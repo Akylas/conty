@@ -353,6 +353,9 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
                         true
                     );
                     DEV_LOG && console.warn('aimportContentFromFiles done');
+                } catch (error) {
+                    showError(error);
+                    hideSnackMessage();
                 } finally {
                     if (file && File.exists(file.path)) {
                         DEV_LOG && console.log('removing downloading file', file.path);
