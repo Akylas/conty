@@ -469,7 +469,7 @@ export class DocumentsService extends Observable {
                 await this.db.migrate(Object.assign({}, this.packRepository.migrations, this.tagRepository.migrations, this.folderRepository.migrations));
                 // appliedMigrations.push(...Object.keys(migrations));
             } catch (error) {
-                console.error('rrror applying migrations', error.stack);
+                console.error('error applying migrations', error.stack);
             }
         }
         this.notify({ eventName: 'started' });
