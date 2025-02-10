@@ -18,12 +18,13 @@ import { startSentry } from '@shared/utils/sentry';
 import { showError } from '@shared/utils/showError';
 import { navigate } from '@shared/utils/svelte/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
-import PacksList from '~/components/App.svelte';
+import App from '~/components/App.svelte';
 import { getBGServiceInstance } from '~/services/BgService';
 import { setDocumentsService } from './models/Pack';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
+import { svelteNativeNoFrame } from 'svelte-native';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -161,45 +162,46 @@ try {
         }
     });
     sharedInit();
+    svelteNativeNoFrame(App, {});
 
-    let rootFrame;
-    let pageInstance;
-    // we use custom start cause we want gesturerootview as parent of it all to add snacK message view
-    new Promise((resolve, reject) => {
-        //wait for launch
-        Application.on(Application.launchEvent, () => {
-            DEV_LOG && console.log('launch', !!pageInstance);
-            resolve(pageInstance);
-        });
-        Application.on(Application.exitEvent, () => {
-            DEV_LOG && console.log('exit', !!pageInstance);
-            if (pageInstance) {
-                pageInstance.$destroy();
-                pageInstance = null;
-            }
-        });
-        try {
-            Application.run({
-                create: () => {
-                    const rootGridLayout = createElement('gesturerootview', window.document as any);
-                    const rootFrame = createElement('frame', rootGridLayout.ownerDocument);
-                    rootFrame.setAttribute('id', 'app-root-frame');
-                    //very important here to use svelte-native navigate
-                    // the throttle one wont return the pageInstance
-                    pageInstance = navigate({
-                        page: PacksList,
-                        props: {},
-                        frame: rootFrame as any
-                    });
-                    DEV_LOG && console.log('Application.run', !!pageInstance);
-                    rootGridLayout.appendChild(rootFrame);
-                    return rootGridLayout['nativeView'];
-                }
-            });
-        } catch (e) {
-            reject(e);
-        }
-    });
+    // let rootFrame;
+    // let pageInstance;
+    // // we use custom start cause we want gesturerootview as parent of it all to add snacK message view
+    // new Promise((resolve, reject) => {
+    //     //wait for launch
+    //     Application.on(Application.launchEvent, () => {
+    //         DEV_LOG && console.log('launch', !!pageInstance);
+    //         resolve(pageInstance);
+    //     });
+    //     Application.on(Application.exitEvent, () => {
+    //         DEV_LOG && console.log('exit', !!pageInstance);
+    //         if (pageInstance) {
+    //             pageInstance.$destroy();
+    //             pageInstance = null;
+    //         }
+    //     });
+    //     try {
+    //         Application.run({
+    //             create: () => {
+    //                 const rootGridLayout = createElement('gesturerootview', window.document as any);
+    //                 const rootFrame = createElement('frame', rootGridLayout.ownerDocument);
+    //                 rootFrame.setAttribute('id', 'app-root-frame');
+    //                 //very important here to use svelte-native navigate
+    //                 // the throttle one wont return the pageInstance
+    //                 pageInstance = navigate({
+    //                     page: App,
+    //                     props: {},
+    //                     frame: rootFrame as any
+    //                 });
+    //                 DEV_LOG && console.log('Application.run', !!pageInstance);
+    //                 rootGridLayout.appendChild(rootFrame);
+    //                 return rootGridLayout['nativeView'];
+    //             }
+    //         });
+    //     } catch (e) {
+    //         reject(e);
+    //     }
+    // });
 } catch (error) {
     console.error(error, error.stack);
 }

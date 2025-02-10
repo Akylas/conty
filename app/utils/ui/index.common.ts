@@ -246,11 +246,15 @@ export interface ShowSnackMessageOptions {
 }
 let snackMessage: ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
 let snackMessageVisible = false;
+
+function getSnackMessageParent(): GridLayout {
+    return Application.getRootView().getViewById('inner-frame-holder');
+}
 function getSnackMessage(props?) {
     if (!snackMessage) {
         try {
             snackMessage = resolveComponentElement(BottomSnack, props || {}) as ComponentInstanceInfo<GridLayout, BottomSnack__SvelteComponent_>;
-            (Application.getRootView() as GridLayout).addChild(snackMessage.element.nativeView);
+            getSnackMessageParent().addChild(snackMessage.element.nativeView);
         } catch (error) {
             console.error(error, error.stack);
         }
@@ -303,7 +307,7 @@ export async function hideSnackMessage() {
     if (snackMessage) {
         snackMessageVisible = false;
         await animateSnackMessage(100, false);
-        (Application.getRootView() as GridLayout).removeChild(snackMessage.element.nativeView);
+        getSnackMessageParent().removeChild(snackMessage.element.nativeView);
         snackMessage.element.nativeElement._tearDownUI();
         snackMessage.viewInstance.$destroy();
         snackMessage = null;
@@ -317,8 +321,8 @@ function getAudioPlayer(props?: BarPlayerOptions) {
     if (!barPlayer) {
         try {
             barPlayer = resolveComponentElement(BarAudioPlayer, props || {}) as ComponentInstanceInfo<GridLayout, BarAudioPlayer__SvelteComponent_>;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            (Application.getRootView().getViewById('inner-frame-holder') as GridLayout).addChild(barPlayer.element.nativeView);
+
+            getSnackMessageParent().addChild(barPlayer.element.nativeView);
         } catch (error) {
             console.error(error, error.stack);
         }
