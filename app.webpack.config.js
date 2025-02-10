@@ -93,7 +93,7 @@ module.exports = (env, params = {}) => {
         keep_classnames_functionnames = true,
         accessibility = true,
         startAccessibility = false,
-        locale = 'fr',
+        locale = 'en',
         theme = 'auto',
         adhoc
     } = env;
