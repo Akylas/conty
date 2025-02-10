@@ -95,16 +95,16 @@ export const onFolderBackgroundColorChanged = createGlobalEventListener(SETTINGS
 function updateSystemFontScale(value) {
     fontScale.set(value);
 }
-
-Application.on('orientationChanged', (event: OrientationChangedEventData) => {
-    const newOrientation = event.newValue;
-    orientation.set(newOrientation);
-    isLandscape.set(newOrientation === 'landscape');
-});
+function getRootViewStyle() {
+    let rootView = Application.getRootView();
+    if (rootView?.parent) {
+        rootView = rootView.parent as any;
+    }
+    return rootView?.style;
+}
 
 if (__ANDROID__) {
     Application.android.on(Application.android.activityCreateEvent, (event) => {
-        DEV_LOG && console.log('activityCreateEvent', useDynamicColors);
         AppUtilsAndroid.prepareActivity(event.activity, useDynamicColors);
     });
     Page.on('shownModally', function (event) {
@@ -114,10 +114,19 @@ if (__ANDROID__) {
         AppUtilsAndroid.prepareWindow(event.object['_dialogFragment'].getDialog().getWindow());
     });
 }
-const onInitRootView = function () {
+const initRootViewCalled = false;
+export function onInitRootViewFromEvent() {
+    onInitRootView();
+}
+export function onInitRootView(force = false) {
+    // DEV_LOG && console.log('onInitRootView', force, initRootViewCalled);
+    if (!force && initRootViewCalled) {
+        return;
+    }
     // we need a timeout to read rootView css variable. not 100% sure why yet
     if (__ANDROID__) {
         // setTimeout(() => {
+        const rootViewStyle = getRootViewStyle();
         const rootView = Application.getRootView();
         if (rootView) {
             AppUtilsAndroid.listenForWindowInsets((inset) => {
@@ -130,7 +139,6 @@ const onInitRootView = function () {
                 DEV_LOG && console.log('windowInset', get(windowInset));
             });
         }
-        const rootViewStyle = rootView?.style;
         fonts.set({ mdi: rootViewStyle.getCssVariable('--mdiFontFamily') });
         actionBarHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarHeight')));
         actionBarButtonHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarButtonHeight')));
@@ -184,14 +192,51 @@ const onInitRootView = function () {
         Application.on(Application.fontScaleChangedEvent, (event) => updateSystemFontScale(event.newValue));
         actionBarHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarHeight')));
         actionBarButtonHeight.set(parseFloat(rootViewStyle.getCssVariable('--actionBarButtonHeight')));
+        updateIOSWindowInset();
     }
     startThemeHelper();
     // updateThemeColors(getRealTheme(theme));
     // DEV_LOG && console.log('initRootView', get(navigationBarHeight), get(statusBarHeight), get(actionBarHeight), get(actionBarButtonHeight), get(fonts));
     Application.off(Application.initRootViewEvent, onInitRootView);
     // getRealThemeAndUpdateColors();
-};
-Application.on(Application.initRootViewEvent, onInitRootView);
+}
+
+function updateIOSWindowInset() {
+    if (__IOS__) {
+        setTimeout(() => {
+            const safeAreaInsets = Application.getRootView().nativeViewProtected.safeAreaInsets;
+            windowInset.set({
+                left: Utils.layout.round(Utils.layout.toDevicePixels(safeAreaInsets.left)),
+                top: Utils.layout.round(Utils.layout.toDevicePixels(safeAreaInsets.top)),
+                right: Utils.layout.round(Utils.layout.toDevicePixels(safeAreaInsets.right)),
+                bottom: Utils.layout.round(Utils.layout.toDevicePixels(safeAreaInsets.bottom))
+            });
+            DEV_LOG && console.log('updateIOSWindowInset', get(windowInset));
+        }, 0);
+    }
+}
+function onOrientationChanged(event: OrientationChangedEventData) {
+    const newOrientation = event.newValue;
+    orientation.set(newOrientation);
+    isLandscape.set(newOrientation === 'landscape');
+    if (__ANDROID__) {
+        const rootViewStyle = getRootViewStyle();
+        const context = Utils.android.getApplicationContext();
+
+        const nActionBarHeight = Utils.layout.toDeviceIndependentPixels(AppUtilsAndroid.getDimensionFromInt(context, 16843499 /* actionBarSize */));
+        if (nActionBarHeight > 0) {
+            actionBarHeight.set(nActionBarHeight);
+            rootViewStyle?.setUnscopedCssVariable('--actionBarHeight', nActionBarHeight + '');
+        }
+        const nActionBarButtonHeight = nActionBarHeight - 10;
+        actionBarButtonHeight.set(nActionBarButtonHeight);
+        rootViewStyle?.setUnscopedCssVariable('--actionBarButtonHeight', nActionBarButtonHeight + '');
+    } else {
+        updateIOSWindowInset();
+    }
+}
+Application.on(Application.initRootViewEvent, onInitRootViewFromEvent);
+Application.on(Application.orientationChangedEvent, onOrientationChanged);
 if (__ANDROID__) {
     Application.android.on(Application.android.activityStartedEvent, () => {
         const resources = Utils.android.getApplicationContext().getResources();
@@ -268,7 +313,7 @@ export function updateThemeColors(theme: string, colorTheme: ColorThemes = Appli
         });
         colors.set(currentColors);
         Application.notify({ eventName: 'colorsChange', colors: currentColors });
-        DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
+        // DEV_LOG && console.log('changed colors', theme, rootView, [...rootView?.cssClasses], theme, JSON.stringify(currentColors));
         rootView?._onCssStateChange();
         const rootModalViews = rootView?._getRootModalViews();
         rootModalViews.forEach((rootModalView) => rootModalView._onCssStateChange());

@@ -86,12 +86,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript-app-utils@npm:2.2.3":
-  version: 2.2.3
-  resolution: "@akylas/nativescript-app-utils@npm:2.2.3"
+"@akylas/nativescript-app-utils@npm:2.2.5":
+  version: 2.2.5
+  resolution: "@akylas/nativescript-app-utils@npm:2.2.5"
   dependencies:
     "@nativescript-community/ui-share-file": "npm:1.3.3"
-  checksum: 10/03a172cbd9455452e8cc533ef275551686100e910e2e45bc7c41c2e2718a1cd5eec7d5aa5b0c4a1aa0f68dad57edf5be1bd1f4dcb6865780e7095e4174743c74
+  checksum: 10/36825d5c64414676b8d00b165f99006dd2283b7a1c39e5b8984e31cba5d7bacae02f8122a4497bb6b94c2db7fd306f46726bcc822d7ffe4fe224695fbc4e8397
   languageName: node
   linkType: hard
 
@@ -1381,6 +1381,13 @@ __metadata:
   dependencies:
     url: "npm:^0.11.0"
   checksum: 10/ae4d6c2ef2549364f8a2dfda234670d6368c610c5f2ea4b75fcbd222a20bae6bbef93859e47c8cd4aac1be7f4aaece699ac65eb84b7540e437bca71a1842bab0
+  languageName: node
+  linkType: hard
+
+"@nativescript/android@file:/home/mguillon/Downloads/release(1)/nativescript-android-8.8.5.tgz::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 8.8.5
+  resolution: "@nativescript/android@file:/home/mguillon/Downloads/release(1)/nativescript-android-8.8.5.tgz#/home/mguillon/Downloads/release(1)/nativescript-android-8.8.5.tgz::hash=b4c651&locator=root-workspace-0b6124%40workspace%3A."
+  checksum: 10/3d7ed254c8e5c4620cf0902ed8bafca9c6c9c21802c41876a19841a04c7517a82da0a634d63e648cfeff61c790ab9e6e775bb4beaf53af2f8fc37d2efab72a54
   languageName: node
   linkType: hard
 
@@ -8964,7 +8971,7 @@ __metadata:
     "@akylas/nativescript": "npm:8.8.10"
     "@akylas/nativescript-android-runtime": "npm:8.8.5"
     "@akylas/nativescript-app-tools": "file:tools"
-    "@akylas/nativescript-app-utils": "npm:2.2.2"
+    "@akylas/nativescript-app-utils": "npm:2.2.5"
     "@akylas/nativescript-inapp-purchase": "npm:0.0.4"
     "@akylas/nativescript-inappbrowser": "npm:3.1.8"
     "@akylas/nativescript-ios-runtime": "npm:8.8.2"
@@ -9015,6 +9022,7 @@ __metadata:
     "@nativescript-community/ui-popover": "npm:0.1.21"
     "@nativescript-community/ui-share-file": "npm:1.3.3"
     "@nativescript-community/ui-webview": "npm:1.5.2"
+    "@nativescript/android": /home/mguillon/Downloads/release(1)/nativescript-android-8.8.5.tgz
     "@nativescript/core": "npm:8.8.6"
     "@nativescript/email": "npm:^2.1.0"
     "@nativescript/zip": "npm:^6.0.0"

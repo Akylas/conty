@@ -134,7 +134,6 @@ function handleKey(activity: androidx.appcompat.app.AppCompatActivity, keyCode: 
 }
 
 Application.android.on(Application.android.dialogOnCreateViewEvent, (event: any) => {
-    DEV_LOG && console.log('dialogOnCreateViewEvent', event.dialog);
     if (event.dialog) {
         (event.dialog as android.app.Dialog).setOnKeyListener(
             new android.content.DialogInterface.OnKeyListener({
@@ -156,8 +155,6 @@ export class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     public override onCreate(savedInstanceState: android.os.Bundle): void {
         DEV_LOG && console.log(TAG, 'onCreate');
-        // DynamicColors
-        // this.getWindow().setStatusBarColor(getThemeColor(this, 'colorPrimaryDark'));
         Application.android.init(this.getApplication());
         // Set the isNativeScriptActivity in onCreate (as done in the original NativeScript activity code)
         // The JS constructor might not be called because the activity is created from Android.
