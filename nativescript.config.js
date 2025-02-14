@@ -5,7 +5,9 @@ const playstoreBuild = process.env['PLAY_STORE_BUILD'] === '1';
 const appId = process.env['APP_ID'] || 'com.akylas.conty';
 // console.log('NativescriptConfig', `playstoreBuild:${playstoreBuild}`, `loggingEnabled:${loggingEnabled}`, `sentryEnabled:${sentryEnabled}`);
 module.exports = {
-    ignoredNativeDependencies: ['@nativescript/detox'].concat(sentryEnabled ? [] : ['@nativescript-community/sentry']).concat(playstoreBuild ? ['@akylas/non-playstore'] : []),
+    ignoredNativeDependencies: ['@nativescript/detox']
+        .concat(sentryEnabled ? [] : ['@nativescript-community/sentry'])
+        .concat(playstoreBuild ? ['@akylas/non-playstore'] : ['@akylas/nativescript-inapp-purchase']),
     id: appId,
     appResourcesPath: process.env['APP_RESOURCES'] || 'App_Resources',
     buildPath: process.env['APP_BUILD_PATH'] || 'platforms',
