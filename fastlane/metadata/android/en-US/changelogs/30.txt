@@ -1,0 +1,5 @@
+Bug fixes:
+- correctly report errors from worker loading
+- run db migrations only once
+- default locales to en to see default translations
+- crash fix while changing app language
