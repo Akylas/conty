@@ -1,0 +1,2 @@
+Bug fixes:
+- fdroid build should not have in app purchase lib (even if not used)
