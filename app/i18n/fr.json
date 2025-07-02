@@ -148,5 +148,10 @@
     "force_long_press_volume_when_not_playing_desc": "Permettre le réglage du volume via un appui long lors du choix d’une scène",
     "handle_volume_button": "Utilise les boutons volume",
     "handle_volume_button_desc": "Appuyez brièvement sur les boutons de volume pour modifier la scène sélectionnée, ou maintenez pour changer l’histoire en cours",
-    "images": "images"
+    "images": "Images",
+    "images_setings_desc": "Options concernant les images",
+    "inapp": {
+        "bigtip": "Un don très généreux",
+        "bigtip_desc": "De nouvelles fonctionnalités arrivent!"
+    }
 }
