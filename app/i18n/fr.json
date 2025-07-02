@@ -152,6 +152,11 @@
     "images_setings_desc": "Options concernant les images",
     "inapp": {
         "bigtip": "Un don très généreux",
-        "bigtip_desc": "De nouvelles fonctionnalités arrivent!"
+        "bigtip_desc": "De nouvelles fonctionnalités arrivent !",
+        "largertip_desc": "Les idées vont fuser !",
+        "largetip": "une bière",
+        "largetip_desc": "On se détend, et on s’y remet !",
+        "mediumtip": "un grand café",
+        "mediumtip_desc": "Mes yeux sont ouverts"
     }
 }
