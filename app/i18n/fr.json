@@ -58,12 +58,6 @@
     "importing": "importer",
     "inverse_images": "couleurs des images inversées",
     "inverse_images_desc": "peut améliorer le rendu des images sur les appareils eink",
-    "ios": {
-        "info": {
-            "plist": {
-            }
-        }
-    },
     "language": "langue",
     "later": "Plus tard",
     "list_used_third_parties": "liste des tiers utilisés",
@@ -145,5 +139,14 @@
     "three": "trois",
     "timeout_error": "la demande a expiré. \nVeuillez vérifier votre connexion Internet et réessayer",
     "two": "deux",
-    "welcome": "accueillir"
+    "welcome": "accueillir",
+    "audio_player_error": "Une erreur est survenue lors de la lecture du fichier audio : code %1$s",
+    "downloading": "téléchargement en cours",
+    "folders": "dossiers",
+    "folders_settings_desc": "tous les paramètres liés aux dossiers",
+    "force_long_press_volume_when_not_playing": "utiliser l’appui long pour régler le volume quand la lecture est arrêtée",
+    "force_long_press_volume_when_not_playing_desc": "Permettre le réglage du volume via un appui long lors du choix d’une scène",
+    "handle_volume_button": "Utilise les boutons volume",
+    "handle_volume_button_desc": "Appuyez brièvement sur les boutons de volume pour modifier la scène sélectionnée, ou maintenez pour changer l’histoire en cours",
+    "images": "images"
 }
