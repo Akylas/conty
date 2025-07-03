@@ -163,5 +163,8 @@
     },
     "notifs_buttons_settings": "notifications / boutons",
     "notifs_buttons_settings_desc": "Réglages des notifications et des boutons de volume",
-    "pack_unsupported": "Ce package ne semble être pas supporté.\nMerci de nous rapporter le problème en mentionnant le package utilisé."
+    "pack_unsupported": "Ce package ne semble être pas supporté.\nMerci de nous rapporter le problème en mentionnant le package utilisé",
+    "remote_source_wrong_format": "La source distante ne semble pas être au bon format",
+    "thank_you": "Merci !",
+    "thank_you_subtitle": "Votre don va me permettre de faire grandir le projet et de me donner le temps d’ajouter d’autres fonctionnalités"
 }
