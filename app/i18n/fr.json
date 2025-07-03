@@ -157,6 +157,11 @@
         "largetip": "une bière",
         "largetip_desc": "On se détend, et on s’y remet !",
         "mediumtip": "un grand café",
-        "mediumtip_desc": "Mes yeux sont ouverts"
-    }
+        "mediumtip_desc": "Mes yeux sont ouverts !",
+        "smalltip": "Un café",
+        "smalltip_desc": "Tout est bon pour travailler la nuit !"
+    },
+    "notifs_buttons_settings": "notifications / boutons",
+    "notifs_buttons_settings_desc": "Réglages des notifications et des boutons de volume",
+    "pack_unsupported": "Ce package ne semble être pas supporté.\nMerci de nous rapporter le problème en mentionnant le package utilisé."
 }
