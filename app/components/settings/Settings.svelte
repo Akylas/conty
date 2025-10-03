@@ -990,7 +990,7 @@
             </Template>
             <Template key="switch" let:item>
                 <ListItemAutoSize fontSize={20} item={{ ...item, subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
-                    <switch id="checkbox" checked={item.value} col={1} marginLeft={10} on:checkedChange={(e) => onCheckBox(item, e)} />
+                    <switch id="checkbox" checked={item.value} col={1} marginLeft={10} verticalAlignment="center" on:checkedChange={(e) => onCheckBox(item, e)} />
                 </ListItemAutoSize>
             </Template>
             <Template key="checkbox" let:item>

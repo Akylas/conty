@@ -14,8 +14,15 @@ mdbutton {
     ios-a11y-adjusts-font-size: true;
 }
 
+checkbox {
+    off-animation-type: 3;
+    on-animation-type: 3;
+    on-check-color: var(--colorOnPrimary);
+    on-tint-color: var(--colorPrimary);
+}
+
 mdswitch {
-    background-color: var(--colorPrimary);
+    on-background-color: var(--colorPrimary)
 }
 
 // mdbutton[variant=flat],mdbutton[variant=contained] {

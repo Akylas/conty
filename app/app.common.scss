@@ -3,6 +3,8 @@
 
 .ns-root {
 
+    --windowInsetLeft: 0;
+    --windowInsetRight: 0;
     --fontScale: 1;
     --colorPrimary: #006E25;
     --colorOnPrimary: #ffffff;
@@ -50,6 +52,11 @@
 // mdprogress {
 //     color: var(--colorPrimary);
 // }
+.pageContent {
+    padding-left:var(--windowInsetLeft);
+    padding-right:var(--windowInsetRight);
+}
+
 
 mdtextfield,
 mdtextview {
@@ -61,8 +68,6 @@ mdtextview {
 checkbox {
     color: var(--colorOnBackground);
     fill-color: var(--colorPrimary);
-    on-check-color: var(--colorOnPrimary);
-    on-tint-color: var(--colorPrimary);
 }
 
 
