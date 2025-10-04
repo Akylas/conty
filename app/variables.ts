@@ -238,8 +238,6 @@ export function onInitRootView(force = false) {
 }
 Application.on(Application.initRootViewEvent, onInitRootViewFromEvent);
 
-
-
 function onOrientationChanged(event: OrientationChangedEventData) {
     const newOrientation = event.newValue;
     orientation.set(newOrientation);

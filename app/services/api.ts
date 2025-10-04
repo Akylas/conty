@@ -4,7 +4,6 @@ import { l, lc } from '@nativescript-community/l';
 import { Application, ApplicationEventData, File, Folder, knownFolders, path } from '@nativescript/core';
 import { connectionType, getConnectionType, startMonitoring, stopMonitoring } from '@nativescript/core/connectivity';
 import { EventData, Observable } from '@nativescript/core/data/observable';
-import { getFile } from '@nativescript/core/http';
 import { throttle, wrapNativeException } from '@nativescript/core/utils';
 import { HTTPError, NoNetworkError, TimeoutError, wrapNativeHttpException } from '@shared/utils/error';
 import { showError } from '@shared/utils/showError';
@@ -124,7 +123,7 @@ class NetworkService extends Observable {
         }
     }
     monitoring = false;
-    start() {
+    async start() {
         if (this.monitoring) {
             return;
         }
@@ -312,7 +311,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         const compressed = documentsService.supportsCompressedData;
 
         const downloadFilePath = path.join(knownFolders.temp().path, destinationFileName);
-        const file = await getFile(
+        const file = await https.getFile(
             {
                 url: story.download,
                 tag: runningRequestTag,
