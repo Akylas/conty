@@ -181,7 +181,7 @@ dependencies {
             because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
         }
     }
-    implementation "androidx.profileinstaller:profileinstaller:1.3.1"
+    implementation "androidx.profileinstaller:profileinstaller:1.4.1"
     // baselineProfile project(':baselineprofile')
 
     implementation "com.anggrayudi:storage:2.0.0"

@@ -18,10 +18,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript-android-runtime@npm:8.8.5":
-  version: 8.8.5
-  resolution: "@akylas/nativescript-android-runtime@npm:8.8.5"
-  checksum: 10/752299a523e9414896296950ffc08b5f4c6173e91bbbd6916dec15dcb8ed4c0147bff50ad8880929b2bfdfc169d926b384c2bb96e94e8af71f62d664562d7f53
+"@akylas/nativescript-android-runtime@npm:8.9.2":
+  version: 8.9.2
+  resolution: "@akylas/nativescript-android-runtime@npm:8.9.2"
+  checksum: 10/3d1cd13b1a3e2256d139c97699097a8fe37e1a05771d17849b6b0a3b07c4784f1160c791e09aed023b14178cff70b6f305562e9e46a8e8594eda218a97dfc3af
   languageName: node
   linkType: hard
 
@@ -1324,23 +1324,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.8":
-  version: 6.0.8
-  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.8"
+"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.10":
+  version: 6.0.10
+  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.10"
   dependencies:
     "@nativescript-community/class-mixins": "npm:^1.0.0"
-    "@nativescript-community/ui-collectionview": "npm:^6.0.8"
-    "@nativescript-community/ui-drawer": "npm:^0.1.27"
-  checksum: 10/e9d6105cc354fd0935b97373f2d1564946cb529bec4f1c65b90af9dda31ae2a01286460e4be1de66a73a50f07144fd07caa1122aba200fed5b0350acc1efc138
+    "@nativescript-community/ui-collectionview": "npm:^6.0.10"
+    "@nativescript-community/ui-drawer": "npm:^0.1.31"
+  checksum: 10/7dd6dac230d1fda780394e6220a5021c69b5111f3e879b54ed468659f43625c185e3962e51ffd4ee5c1c68e8c67f9231fdc2de22160990023b0798ad22e71a4e
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:6.0.8, @nativescript-community/ui-collectionview@npm:^6.0.8":
-  version: 6.0.8
-  resolution: "@nativescript-community/ui-collectionview@npm:6.0.8"
+"@nativescript-community/ui-collectionview@npm:6.0.10, @nativescript-community/ui-collectionview@npm:^6.0.10":
+  version: 6.0.10
+  resolution: "@nativescript-community/ui-collectionview@npm:6.0.10"
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
-  checksum: 10/5983588a97bcb490e48421f66675263cf15aef977079481c7977f6100d256c6a4b7e83e617524953e967cc261f8603db15b25d8c3bdc6bc6553450c22bd30712
+  checksum: 10/ddc8b25252a25eab819cb777512a582cc5fb3db4f4a418b56967dc785fe3b42f744446f0d0a5903d14e89d7da119d5d10dda6102c90edbc3e94d1abdd36aa3c1
   languageName: node
   linkType: hard
 
@@ -1353,21 +1353,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-drawer@npm:0.1.31":
+"@nativescript-community/ui-drawer@npm:0.1.31, @nativescript-community/ui-drawer@npm:^0.1.31":
   version: 0.1.31
   resolution: "@nativescript-community/ui-drawer@npm:0.1.31"
   dependencies:
     "@nativescript-community/gesturehandler": "npm:^2.0.8"
   checksum: 10/9b872c1d4f8f590092a65c857c37a68588de4d82474067e0a30662a23424998c4d9d128adc35f2d26fc62414603646dfabbf052646374f77de30a8a16059949b
-  languageName: node
-  linkType: hard
-
-"@nativescript-community/ui-drawer@npm:^0.1.27":
-  version: 0.1.28
-  resolution: "@nativescript-community/ui-drawer@npm:0.1.28"
-  dependencies:
-    "@nativescript-community/gesturehandler": "npm:^2.0.8"
-  checksum: 10/5b843d18da348a7a9381efdd468160d4587b1d9f86d7211040b7a0b60c61cbed453db289c3edd2090fa2f8800e67f7bab0763dba807660d5026d494a6f157849
   languageName: node
   linkType: hard
 
@@ -9194,8 +9185,8 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@akylas/kiss-orm": "npm:2.1.11"
-    "@akylas/nativescript": "npm:8.9.9"
-    "@akylas/nativescript-android-runtime": "npm:8.8.5"
+    "@akylas/nativescript": "npm:8.9.10"
+    "@akylas/nativescript-android-runtime": "npm:8.9.2"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.2.7"
     "@akylas/nativescript-inapp-purchase": "npm:0.0.4"
@@ -9223,8 +9214,8 @@ __metadata:
     "@nativescript-community/ui-canvas": "npm:4.6.43"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.46"
     "@nativescript-community/ui-checkbox": "npm:2.0.14"
-    "@nativescript-community/ui-collectionview": "npm:6.0.8"
-    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.8"
+    "@nativescript-community/ui-collectionview": "npm:6.0.10"
+    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.10"
     "@nativescript-community/ui-document-picker": "npm:1.1.29"
     "@nativescript-community/ui-drawer": "npm:0.1.31"
     "@nativescript-community/ui-image": "npm:4.5.7"

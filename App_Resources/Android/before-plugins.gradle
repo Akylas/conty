@@ -1,14 +1,14 @@
 ext {
     compileSdk = 35
     targetSdk = 35
-    kotlinVersion = "2.0.0"
-    androidBuildToolsVersion = "8.3.2"
-    buildToolsVersion = "34.0.0"
+    kotlinVersion = "2.1.0"
+    androidBuildToolsVersion = "8.12.1"
+    buildToolsVersion = "35.0.0"
     androidxVersion = "1.15.0"
     androidXAppCompat = "1.7.0"
     androidXAppCompatVersion = "1.7.0"
     androidXFragment = "1.8.5"
-    androidXTransition = "1.5.0"
+    androidXTransition = "1.5.1"
     androidXRecyclerViewVersion = "1.4.0-rc01"
     androidxViewPager2Version = "1.1.0"
     androidXSwipeRefreshLayoutViewVersion = "1.2.0-alpha01"
@@ -17,6 +17,8 @@ ext {
     androidXPreferenceVersion = "1.2.1"
     okHttpVersion = "4.12.0"
     frescoVersion = "3.4.0"
+    frescoVersion = "3.4.0"
+    lottieVersion = "6.2.0"
     ndkVersion = "27.2.12479018"
     licenseReporterVersion = "2.4"
     sentryVersion = "7.15.0"

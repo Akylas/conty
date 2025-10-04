@@ -38,7 +38,7 @@
     },
     "dependencies": {
         "@akylas/kiss-orm": "2.1.11",
-        "@akylas/nativescript": "8.9.9",
+        "@akylas/nativescript": "8.9.10",
         "@akylas/nativescript-app-tools": "file:tools",
         "@akylas/nativescript-app-utils": "2.2.7",
         "@akylas/nativescript-inapp-purchase": "0.0.4",
@@ -64,8 +64,8 @@
         "@nativescript-community/ui-canvas": "4.6.43",
         "@nativescript-community/ui-canvaslabel": "1.2.46",
         "@nativescript-community/ui-checkbox": "2.0.14",
-        "@nativescript-community/ui-collectionview": "6.0.8",
-        "@nativescript-community/ui-collectionview-swipemenu": "6.0.8",
+        "@nativescript-community/ui-collectionview": "6.0.10",
+        "@nativescript-community/ui-collectionview-swipemenu": "6.0.10",
         "@nativescript-community/ui-document-picker": "1.1.29",
         "@nativescript-community/ui-drawer": "0.1.31",
         "@nativescript-community/ui-image": "4.5.7",
@@ -97,7 +97,7 @@
         "svelte-native": "1.0.29"
     },
     "devDependencies": {
-        "@akylas/nativescript-android-runtime": "8.8.5",
+        "@akylas/nativescript-android-runtime": "8.9.2",
         "@akylas/nativescript-ios-runtime": "8.8.2",
         "@akylas/nativescript-webpack": "5.0.24",
         "@nativescript/core": "8.9.9",
