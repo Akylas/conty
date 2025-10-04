@@ -44,7 +44,7 @@
     import { share } from '@akylas/nativescript-app-utils/share';
     import { showError } from '@shared/utils/showError';
     import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover } from '~/utils/ui';
-    import { colors, fonts, windowInset } from '~/variables';
+    import { colors, fonts, onFontScaleChanged, windowInset } from '~/variables';
     import IconButton from '../common/IconButton.svelte';
     import { getJSON } from '@nativescript-community/https';
     import { inappItems, presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
@@ -937,6 +937,10 @@
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
     }
+    function refreshCollectionViewVisibleItems() {
+        collectionView?.nativeView?.refreshVisibleItems();
+    }
+    onFontScaleChanged(refreshCollectionViewVisibleItems);
     onThemeChanged(refreshCollectionView);
     onColorThemeChanged(refreshCollectionView);
 </script>
