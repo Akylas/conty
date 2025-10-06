@@ -93,6 +93,7 @@ module.exports = (env, params = {}) => {
         keep_classnames_functionnames = true,
         accessibility = true,
         startAccessibility = false,
+        testParentalGate = false,
         locale = 'en',
         theme = 'auto',
         adhoc
@@ -240,6 +241,7 @@ module.exports = (env, params = {}) => {
         SENTRY_ENABLED: !!sentry,
         START_ACCESSIBILITY: !!startAccessibility,
         NO_CONSOLE: noconsole,
+        TEST_PARENTAL_GATE: testParentalGate,
         SENTRY_DSN: `"${process.env.SENTRY_DSN}"`,
         SENTRY_PREFIX: `"${!!sentry ? process.env.SENTRY_PREFIX : ''}"`,
         GIT_URL: `"${package.repository}"`,
