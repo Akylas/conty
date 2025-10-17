@@ -2,7 +2,7 @@
     import { lc } from '@nativescript-community/l';
     import { alert } from '@nativescript-community/ui-material-dialogs';
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { closeModal } from 'svelte-native';
+    import { closeModal } from '@nativescript-community/svelte-native';
     import { colors } from '~/variables';
     import IconButton from './common/IconButton.svelte';
     import { openUrl } from '@nativescript/core/utils';

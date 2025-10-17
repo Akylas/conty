@@ -17,14 +17,14 @@ import { init as sharedInit } from '@shared/index';
 import { startSentry } from '@shared/utils/sentry';
 import { showError } from '@shared/utils/showError';
 import { navigate } from '@shared/utils/svelte/ui';
-import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from 'svelte-native/dom';
+import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from '@nativescript-community/svelte-native/dom';
 import App from '~/components/App.svelte';
 import { getBGServiceInstance } from '~/services/BgService';
 import { setDocumentsService } from './models/Pack';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
-import { svelteNativeNoFrame } from 'svelte-native';
+import { svelteNativeNoFrame } from '@nativescript-community/svelte-native';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {

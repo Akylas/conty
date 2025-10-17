@@ -4,7 +4,7 @@
     import { lc } from '@nativescript-community/l';
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Screen } from '@nativescript/core';
-    import { Template } from 'svelte-native/components';
+    import { Template } from '@nativescript-community/svelte-native/components';
     import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
     import { PlaylistItem } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';

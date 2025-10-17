@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { NativeViewElementNode } from 'svelte-native/dom';
+    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import CActionBar from './CActionBar.svelte';
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { showError } from '@shared/utils/showError';

@@ -10,8 +10,8 @@
     import { ApplicationSettings, File, ObservableArray, Page, Screen, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
     import { SDK_VERSION, copyToClipboard, openUrl } from '@nativescript/core/utils';
     import dayjs from 'dayjs';
-    import { Template } from 'svelte-native/components';
-    import type { NativeViewElementNode } from 'svelte-native/dom';
+    import { Template } from '@nativescript-community/svelte-native/components';
+    import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
     import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
     import { getLocaleDisplayName, l, lc, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
