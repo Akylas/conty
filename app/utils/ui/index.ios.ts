@@ -1,15 +1,13 @@
-import { showModal } from '@shared/utils/svelte/ui';
-import { showSettings as showSettingsCommon } from './index.common';
-import type ParentalGate__SvelteComponent_ from '~/components/security/ParentalGate.svelte';
-import { ComponentInstanceInfo, resolveComponentElement } from 'svelte-native/dom';
-import { GridLayout, View } from '@nativescript/core';
 import { alert } from '@nativescript-community/ui-material-dialogs';
-import { lc } from '@nativescript-community/l';
+import { GridLayout, View } from '@nativescript/core';
+import { ComponentInstanceInfo, resolveComponentElement } from 'svelte-native/dom';
+import type ParentalGate__SvelteComponent_ from '~/components/security/ParentalGate.svelte';
+import { showSettings as showSettingsCommon } from './index.common';
 
 export * from './index.common';
 
 export async function showParentalGate() {
-    if (!PRODUCTION) {
+    if (!PRODUCTION && !TEST_PARENTAL_GATE) {
         return true;
     }
     const component = (await import('~/components/security/ParentalGate.svelte')).default;

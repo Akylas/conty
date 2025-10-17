@@ -53,5 +53,5 @@
 <gesturerootview {...$$restProps} height={400} rows="auto,*">
     <label fontSize={16} margin="10 40 10 40" text={lc('download_webview_description')} textAlignment="center" />
     <IconButton horizontalAlignment="right" text="mdi-open-in-new" on:tap={openInExternal} />
-    <webview domStorage={true} row={1} src={url} userAgent="desktop" on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} on:loadFinished={onLoadFinished} />
+    <awebview domStorage={true} row={1} src={url} userAgent="desktop" on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} on:loadFinished={onLoadFinished} />
 </gesturerootview>

@@ -6,4 +6,5 @@
 /// <reference path="../node_modules/@nativescript/types-ios/lib/ios/objc-x86_64/objc!MediaPlayer.d.ts" />
 /// <reference path="../node_modules/@nativescript/types-ios/lib/ios/objc-x86_64/objc!AVFAudio.d.ts" />
 
+declare const TEST_PARENTAL_GATE: boolean;
 declare const START_ACCESSIBILITY: boolean;

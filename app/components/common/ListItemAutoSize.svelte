@@ -23,6 +23,7 @@
     export let columns: string = '*,auto';
     export let mainCol = 0;
     export let onLinkTap: (event) => void = null;
+    export let onLongPress: (event) => void = null;
     export let onDraw: (item: ListItem, event: { canvas: Canvas; object: CanvasView }) => void = null;
 
     function draw(event: { canvas: Canvas; object: CanvasView }) {
@@ -77,6 +78,7 @@
     on:tap={(event) => dispatch('tap', event)}
     on:longPress={(event) => dispatch('longPress', event)}
     on:draw={draw}
+    use:conditionalEvent={{ condition: !!(item.onLongPress || onLongPress), event: 'longPress', callback: item.onLongPress || onLongPress }}
     {...$$restProps}>
     <!-- <label
         fontFamily={leftIconFonFamily}
@@ -90,7 +92,6 @@
         col={mainCol}
         color={item.titleColor || item.color || colorOnSurface}
         disableCss={true}
-        fontSize={fontSize * $fontScale}
         {fontWeight}
         html={item.html}
         paddingBottom={addedPadding}
@@ -100,7 +101,7 @@
         verticalTextAlignment="center"
         {...item.titleProps || $$restProps?.titleProps}
         use:conditionalEvent={{ condition: !!(item.onLinkTap || onLinkTap), event: 'linkTap', callback: item.onLinkTap || onLinkTap }}>
-        <cspan text={item.title || item.name} />
+        <cspan fontSize={fontSize * $fontScale} text={item.title || item.name} />
         <cspan color={item.subtitleColor || colorOnSurfaceVariant} fontSize={(item.subtitleFontSize || subtitleFontSize) * $fontScale} text={item.subtitle ? '\n' + item.subtitle : null} />
     </label>
 

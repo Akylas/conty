@@ -74,6 +74,8 @@ export const fontScale = writable(1);
 export const isRTL = writable(false);
 export const coverSharedTransitionTag = writable('cover_0');
 
+export const onFontScaleChanged = createGlobalEventListener('fontscale');
+
 export const podcastMode = writable(ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE, DEFAULT_PODCAST_MODE));
 prefs.on(`key:${SETTINGS_PODCAST_MODE}`, () => {
     podcastMode.set(ApplicationSettings.getBoolean(SETTINGS_PODCAST_MODE));
@@ -235,8 +237,6 @@ export function onInitRootView(force = false) {
     // getRealThemeAndUpdateColors();
 }
 Application.on(Application.initRootViewEvent, onInitRootViewFromEvent);
-
-
 
 function onOrientationChanged(event: OrientationChangedEventData) {
     const newOrientation = event.newValue;

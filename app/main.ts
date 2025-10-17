@@ -74,7 +74,7 @@ try {
     // registerNativeViewElement('svg', () => require('@nativescript-community/ui-svg').SVG);
     registerNativeViewElement('bottomsheet', () => require('@nativescript-community/ui-persistent-bottomsheet').PersistentBottomSheet);
     registerNativeViewElement('gesturerootview', () => require('@nativescript-community/gesturehandler').GestureRootView);
-    registerNativeViewElement('webview', () => require('@nativescript-community/ui-webview').AWebView);
+    registerNativeViewElement('awebview', () => require('@nativescript-community/ui-webview').AWebView);
     registerNativeViewElement('checkbox', () => require('@nativescript-community/ui-checkbox').CheckBox);
     registerNativeViewElement('lottie', () => require('@nativescript-community/ui-lottie').LottieView);
     CollectionViewElement.register();
