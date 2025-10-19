@@ -396,7 +396,7 @@ export class StoryHandler extends Handler {
     }
     currentStoryAudioIndex = 0;
     async playAudios({ audios, autoPlay = true, onDone, seek, updatePlayingInfo = true }: { audios: string[]; seek?: number; autoPlay?: boolean; updatePlayingInfo?: boolean; onDone?: Function }) {
-        TEST_LOG && console.log(TAG + this.id, 'playAudios', updatePlayingInfo, autoPlay, seek);
+        DEV_LOG && console.log(TAG + this.id, 'playAudios', updatePlayingInfo, autoPlay, seek);
         try {
             // we use throwErrorUp to ensure the loops stop and we dont play other audios
             for (let index = 0; index < audios.length; index++) {
@@ -685,7 +685,7 @@ export class StoryHandler extends Handler {
             index: number;
         };
     }) {
-        TEST_LOG && console.log(TAG + this.id, 'playPack', pack.id, pack.title, this.isPlaying, autoPlay, seek, startData);
+        DEV_LOG && console.log(TAG + this.id, 'playPack', pack.id, pack.title, this.isPlaying, autoPlay, seek, startData);
         if (this.isPlaying) {
             await this.stopPlaying({ closeFullscreenPlayer: false });
             // return new Promise<void>((resolve) => {
@@ -700,7 +700,7 @@ export class StoryHandler extends Handler {
         }
         try {
             this.isPlaying = true;
-            TEST_LOG && console.log(TAG + this.id, 'playPack1', this.isPlaying);
+            DEV_LOG && console.log(TAG + this.id, 'playPack1', this.isPlaying);
             this.playingPack = pack;
             await pack.initData();
             // this.actions = data.actions;
@@ -732,7 +732,7 @@ export class StoryHandler extends Handler {
         }
     }
     async playStory({ autoPlay = true, seek, story, updatePlaylist = true }: { story: Story; updatePlaylist?: boolean; autoPlay?: boolean; seek?: number }) {
-        TEST_LOG && console.log(TAG + this.id, 'playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
+        DEV_LOG && console.log(TAG + this.id, 'playStory', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
         if (!story.pack) {
             story.pack = await documentsService.packRepository.get(story.packId);
         }
@@ -750,7 +750,7 @@ export class StoryHandler extends Handler {
         }
         try {
             this.isPlaying = true;
-            // TEST_LOG && console.log(TAG + this.id, 'playStory1', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
+            // DEV_LOG && console.log(TAG + this.id, 'playStory1', this.isPlaying, story.name, JSON.stringify(story.audioFiles), JSON.stringify(story.images), JSON.stringify(story.names));
             this.playingStory = story;
             this.currentPlayingInfo = this.playingInfo();
             this.notify({ eventName: StoryStartEvent, story } as StoryStartEventData);
@@ -788,7 +788,7 @@ export class StoryHandler extends Handler {
         }
     }
     async stopPlaying({ clearCurrentSaved = true, closeFullscreenPlayer = true, fade = false, updatePlaylist = false } = {}) {
-        TEST_LOG && console.log(TAG + this.id, 'stopPlaying', this.isPlaying, fade, closeFullscreenPlayer, updatePlaylist, clearCurrentSaved);
+        DEV_LOG && console.log(TAG + this.id, 'stopPlaying', this.isPlaying, fade, closeFullscreenPlayer, updatePlaylist, clearCurrentSaved);
         if (!this.isPlaying) {
             return;
         }
@@ -836,7 +836,7 @@ export class StoryHandler extends Handler {
                 showError(error);
             }
 
-            TEST_LOG && console.warn(TAG + this.id, 'stopPlaying');
+            DEV_LOG && console.warn(TAG + this.id, 'stopPlaying');
             // if (this.lyric) {
             //     this.lyric.pause();
             //     this.lyric = null;
