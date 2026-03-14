@@ -1,0 +1,4 @@
+Bug fixes:
+- make sure we import even if it has no thumbnail
+- start error
+- monochrome icon
