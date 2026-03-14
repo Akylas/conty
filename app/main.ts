@@ -122,7 +122,8 @@ try {
             Application.servicesStarted = false;
             DEV_LOG && console.log('start');
             setDocumentsService(documentsService);
-            await Promise.all([networkService.start(), bgService.start(), documentsService.start()]);
+            await documentsService.start();
+            await Promise.all([networkService.start(), bgService.start() ]);
             Application.servicesStarted = true;
             DEV_LOG && console.log('servicesStarted');
             Application.notify({ eventName: 'servicesStarted' });
