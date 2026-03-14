@@ -660,10 +660,9 @@ export class StoryHandler extends Handler {
                 await this.onStageOk();
             }
         } catch (error) {
-            DEV_LOG && console.error(error, error.stacl);
             if (error) {
-                showError(error);
                 this.stopPlaying();
+                throw error;
             } else {
                 //cancelled (could be on ok or home)
             }
@@ -724,7 +723,7 @@ export class StoryHandler extends Handler {
             // this.playedStory(index + '', markAsPlayedOnMap);
             // this.notify({ eventName: PlaybackEvent, data: 'stopped' });
         } catch (error) {
-            console.error(error, error.stack);
+            console.error('error playing pack', error, error.stack);
             throw error;
         } finally {
             // DEV_LOG && console.log('finished playing story');
