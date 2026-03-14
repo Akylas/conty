@@ -278,6 +278,7 @@ export default class ImportWorker extends BaseWorker {
                     await this.prepareAndImportUncompressedPack({ destinationFolderPath: entity.path, externalPath: entity.path, id: entity.path, supportsCompressedData: false });
                 }
             } catch (error) {
+                DEV_LOG && console.error('error importing zip', error, error.stack);
                 await Folder.fromPath(entity.path).remove();
                 throw error;
             }
@@ -289,10 +290,12 @@ export default class ImportWorker extends BaseWorker {
         destinationFolderPath,
         externalPath,
         extraData,
+        fileName,
         folderId,
         id,
         supportsCompressedData
     }: {
+        fileName?: string;
         destinationFolderPath: string;
         externalPath?: string;
         id: string;
@@ -308,7 +311,7 @@ export default class ImportWorker extends BaseWorker {
         }
         const telmiMetadataPath = path.join(folderPath, TELMI_DATA_FILE);
         const isTelmi = !!telmiMetadataPath && File.exists(telmiMetadataPath);
-        // DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, isTelmi);
+        DEV_LOG && console.log('prepareAndImportUncompressedPack', id, destinationFolderPath, telmiMetadataPath, isTelmi);
         const storyJSON = JSON.parse(await getFileTextContentFromPackFile(folderPath, isTelmi ? TELMI_DATA_FILE : LUNII_DATA_FILE, supportsCompressedData)) as StoryJSON;
         if (__IOS__ && !isTelmi) {
             // no compressed on iOS!
@@ -338,10 +341,10 @@ export default class ImportWorker extends BaseWorker {
         }
         const thumbnailFileName = File.exists(path.join(folderPath, 'thumbnail.png')) ? 'thumbnail.png' : storyJSON.image || storyJSON.thumbnail;
         DEV_LOG && console.log('thumbnailFileName', folderPath, thumbnailFileName);
-        const thumbnailPath = thumbnailFileName.startsWith('http') ? thumbnailFileName : path.join(folderPath, thumbnailFileName);
+        const thumbnailPath = thumbnailFileName ? (thumbnailFileName.startsWith('http') ? thumbnailFileName : path.join(folderPath, thumbnailFileName)) : null;
         let colors;
         DEV_LOG && console.log('prepareAndImportUncompressedPack', thumbnailPath);
-        if (__ANDROID__ && !storyJSON.official && File.exists(thumbnailPath)) {
+        if (__ANDROID__ && thumbnailPath && !storyJSON.official && File.exists(thumbnailPath)) {
             const start = Date.now();
             const image = loadImageSync(thumbnailPath, { resizeThreshold: 20 });
             DEV_LOG && console.log('image', image.android);
@@ -357,7 +360,7 @@ export default class ImportWorker extends BaseWorker {
             {
                 size: getFileOrFolderSize(folderPath),
                 type: isTelmi ? 'telmi' : 'studio',
-                title,
+                title: title || fileName,
                 description,
                 format,
                 age,
@@ -386,7 +389,7 @@ export default class ImportWorker extends BaseWorker {
             folderTotest = folderTotest.getFolder(entities[0].name, false);
             entities = await folderTotest.getEntities();
         }
-        DEV_LOG && console.log('getUnzippedStorySubPaths', destinationFolderPath, subPaths);
+        DEV_LOG && console.log('getUnzippedStorySubPaths', destinationFolderPath, subPaths, entities);
         return subPaths.length ? subPaths : undefined;
         // const children = await Folder.fromPath(destinationFolderPath).getEntities();
         // const needsFixing = children.length === 1 && children[0].isFolder === true;
@@ -441,6 +444,7 @@ export default class ImportWorker extends BaseWorker {
             let destinationFolderPath = inputFilePath;
             let extraData: Partial<Pack> = fileData.extraData;
             const id = Date.now() + '';
+            const fileName = inputFilePath.split('/').pop().replace('.zip', 'replaceValue');
             destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
             if (!supportsCompressedData) {
                 destinationFolderPath = this.dataFolder.getFolder(id, true).path;
@@ -456,7 +460,7 @@ export default class ImportWorker extends BaseWorker {
                 await File.fromPath(inputFilePath).copy(destinationFolderPath);
             }
 
-            await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData });
+            await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData, fileName });
         }
     }
 }
