@@ -46,7 +46,7 @@
     <key>LSSupportsOpeningDocumentsInPlace</key>
     <true/>
     <key>LSMinimumSystemVersion</key>
-    <string>12.0</string>
+    <string>14.0</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
     <key>NSAppTransportSecurity</key>
