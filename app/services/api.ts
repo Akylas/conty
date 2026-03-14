@@ -5,7 +5,7 @@ import { Application, ApplicationEventData, File, Folder, knownFolders, path } f
 import { connectionType, getConnectionType, startMonitoring, stopMonitoring } from '@nativescript/core/connectivity';
 import { EventData, Observable } from '@nativescript/core/data/observable';
 import { throttle, wrapNativeException } from '@nativescript/core/utils';
-import { HTTPError, NoNetworkError, TimeoutError, wrapNativeHttpException } from '@shared/utils/error';
+import { HTTPError, NoNetworkError, TimeoutError, wrapNativeHttpException } from '@akylas/nativescript-app-utils/error';
 import { showError } from '@shared/utils/showError';
 import dayjs from 'dayjs';
 import { filesize } from 'filesize';

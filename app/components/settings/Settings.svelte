@@ -38,7 +38,7 @@
         SETTINGS_REMOTE_SOURCES,
         SETTINGS_SHOW_SHUTDOWN_IN_NOTIF
     } from '~/utils/constants';
-    import { CustomError, NoNetworkError, NoSpaceLeftError, SilentError } from '@shared/utils/error';
+    import { CustomError, NoNetworkError, NoSpaceLeftError, SilentError } from '@akylas/nativescript-app-utils/error';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { Sentry } from '@shared/utils/sentry';
     import { share } from '@akylas/nativescript-app-utils/share';

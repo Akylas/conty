@@ -1,6 +1,5 @@
-import '@nativescript/core/globals';
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
-import { getWorkerContextValue, loadImageSync, setWorkerContextValue } from '@akylas/nativescript-app-utils';
+import { loadImageSync } from '@akylas/nativescript-app-utils';
 import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
 import Queue from '@akylas/nativescript-app-utils/worker/queue';
 import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, path } from '@nativescript/core';

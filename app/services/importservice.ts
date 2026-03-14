@@ -3,7 +3,7 @@ import { lc } from '@nativescript-community/l';
 import { EventData, Observable } from '@nativescript/core';
 import { time } from '@nativescript/core/profiling';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
-import { CustomError } from '@shared/utils/error';
+import { CustomError } from '@akylas/nativescript-app-utils/error';
 import { showError } from '@shared/utils/showError';
 import { Pack } from '~/models/Pack';
 import { EVENT_IMPORT_STATE, EVENT_STATE } from '~/utils/constants';
