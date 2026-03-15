@@ -9,6 +9,7 @@ import { ALERT_OPTION_MAX_HEIGHT, DEFAULT_LOCALE, SETTINGS_LANGUAGE } from '~/ut
 import { showError } from '@shared/utils/showError';
 import { createGlobalEventListener, globalObservable } from '@shared/utils/svelte/ui';
 import { showAlertOptionSelect } from '~/utils/ui';
+import { clearCurrentLocale, getCurrentLocale } from '@shared/helpers/lang';
 const supportedLanguages = SUPPORTED_LOCALES;
 dayjs.extend(LocalizedFormat);
 
@@ -61,7 +62,7 @@ function setLang(newLang) {
     DEV_LOG && console.log('setLang', newLang, actualNewLang);
     if (__IOS__) {
         overrideNativeLocale(actualNewLang);
-        currentLocale = null;
+        clearCurrentLocale();
     } else {
         // Application.android.foregroundActivity?.recreate();
         try {
@@ -83,7 +84,7 @@ function setLang(newLang) {
             DEV_LOG && console.log('appLocale', appLocale.toLanguageTags(), actualNewLang);
             // Call this on the main thread as it may require Activity.restart()
             androidx.appcompat.app.AppCompatDelegate['setApplicationLocales'](appLocale);
-            currentLocale = null;
+            clearCurrentLocale();
             // TODO: check why getEmptyLocaleList does not reset the locale to system
             actualNewLang = getActualLanguage(newLang);
         } catch (error) {
@@ -161,7 +162,8 @@ prefs.on(`key:${SETTINGS_LANGUAGE}`, () => {
     const newLanguage = ApplicationSettings.getString(SETTINGS_LANGUAGE, DEFAULT_LOCALE);
     DEV_LOG && console.log('language changed', newLanguage);
     // on pref change we are updating
-    if (newLanguage === lang) {
+    // if "auto" then getActualLanguage will return lang value and we still need to update
+    if (newLanguage !== 'auto' && getActualLanguage(newLanguage) === lang) {
         return;
     }
     setLang(newLanguage);
@@ -176,19 +178,12 @@ prefs.on('key:clock_24', () => {
     globalObservable.notify({ eventName: SETTINGS_LANGUAGE, data: lang, clock_24: true });
 });
 
-let currentLocale: any = null;
 export function getLocaleDisplayName(locale?, canReturnEmpty = false) {
     if (__IOS__) {
-        if (!currentLocale) {
-            currentLocale = NSLocale.alloc().initWithLocaleIdentifier(lang);
-        }
-        const localeStr = (currentLocale as NSLocale).displayNameForKeyValue(NSLocaleIdentifier, locale || lang);
+        const localeStr = (getCurrentLocale(lang) as NSLocale).displayNameForKeyValue(NSLocaleIdentifier, locale || lang);
         return localeStr ? capitalize(localeStr) : canReturnEmpty ? undefined : locale || lang;
     } else {
-        if (!currentLocale) {
-            currentLocale = java.util.Locale.forLanguageTag(lang);
-        }
-        return capitalize(java.util.Locale.forLanguageTag(locale || lang).getDisplayName(currentLocale as java.util.Locale));
+        return capitalize(java.util.Locale.forLanguageTag(locale || lang).getDisplayName(getCurrentLocale(lang) as java.util.Locale));
     }
 }
 export function getCurrentISO3Language() {
