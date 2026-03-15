@@ -3,7 +3,6 @@ import { loadImageSync } from '@akylas/nativescript-app-utils';
 import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
 import Queue from '@akylas/nativescript-app-utils/worker/queue';
 import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, path } from '@nativescript/core';
-import '@nativescript/core/globals';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
 import { doInBatch } from '@shared/utils/batch';
 import { LUNII_DATA_FILE, Pack, PackExtra, StoryJSON, TELMI_DATA_FILE, setDocumentsService } from '~/models/Pack';
