@@ -100,7 +100,7 @@ if (__ANDROID__) {
         console.error(error, error.stack);
     }
 } else {
-    NSURLProtocol.registerClass(MegaURLProtocol.self)
+    NSURLProtocol.registerClass(MegaURLProtocol.self);
 }
 
 class NetworkService extends Observable {
@@ -281,7 +281,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
 
         progressNotificationId = 52346 + hashCode(story.download);
         const runningRequestTag: string = story.download;
-
+        const customIOSMegaImpl = (__IOS__ && story.download.startsWith('https://mega.nz/')) ? (await import('~/ios/megadownloader')).MegaDownload : undefined;
         const progressNotification = ProgressNotifications.show({
             id: progressNotificationId, //required
             icon: 'mdi-download',
@@ -297,7 +297,11 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
                     notifText: lc('cancel'),
                     callback: () => {
                         DEV_LOG && console.log('cancelling downloading request', runningRequestTag);
-                        https.cancelRequest(runningRequestTag);
+                        if (customIOSMegaImpl) {
+                            customIOSMegaImpl.cancel(runningRequestTag)
+                        } else {
+                            https.cancelRequest(runningRequestTag);
+                        }
                     }
                 }
             ]
@@ -322,17 +326,28 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         }, 1000);
 
         const compressed = documentsService.supportsCompressedData;
-
         const downloadFilePath = path.join(knownFolders.temp().path, destinationFileName);
-        const file = await https.getFile(
-            {
-                url: story.download,
-                tag: runningRequestTag,
-                method: 'GET',
-                onProgress
-            },
-            downloadFilePath
-        );
+        let file: File;
+        if (customIOSMegaImpl) {
+            file = await customIOSMegaImpl.getFile(
+                {
+                    url: story.download,
+                    tag: runningRequestTag,
+                    onProgress
+                },
+                downloadFilePath
+            );
+        } else {
+            file = await https.getFile(
+                {
+                    url: story.download,
+                    tag: runningRequestTag,
+                    method: 'GET',
+                    onProgress
+                },
+                downloadFilePath
+            );
+        }
         // }
         // const existingStory = await documentsService.packRepository.search({
         //     where: sql`title = ${story.title}`

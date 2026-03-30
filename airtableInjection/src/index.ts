@@ -1,34 +1,35 @@
 (() => {
+    console.log('injectin')
     if ((window as any).__airtableExtractorInstalled) return;
     (window as any).__airtableExtractorInstalled = true;
-
+    console.log('injecting __airtableExtractorInstalled')
     interface AirtableCard {
-        age: number | null;
-        title: string | null;
-        description: string | null;
+        age: number;
+        title: string;
+        description: string;
         thumbs: {
-            small: string | null;
-            medium: string | null;
+            small: string;
+            medium: string;
         };
-        download: string | null;
-        created_at: string | null;
-        updated_at: string | null;
+        download: string;
+        created_at?: string;
+        updated_at?: string;
         awards: string[];
         tags: string[];
     }
 
-    const getText = (el: Element | null): string | null => el?.textContent?.trim() || null;
+    const getText = (el: Element): string => el?.textContent?.trim();
 
     /**
      * 🔥 CORE FIX: properly locate the VALUE container
      */
-    const getFieldContainer = (card: Element, label: string): Element | null => {
+    const getFieldContainer = (card: Element, label: string): Element => {
         const labelEl = card.querySelector(`[title="${label}"]`);
         if (!labelEl) return null;
 
         // go to the block wrapper
         const block = labelEl.closest('div[style*="padding-top"]');
-        if (!block) return null;
+        if (!block) return;
 
         // THIS is the reliable container
         return block.querySelector('.cellContainer .cell');
@@ -37,9 +38,9 @@
     /**
      * TEXT FIELD (description, age, etc.)
      */
-    const getFieldText = (card: Element, label: string): string | null => {
+    const getFieldText = (card: Element, label: string): string => {
         const container = getFieldContainer(card, label);
-        if (!container) return null;
+        if (!container) return;
 
         // grab deepest meaningful text node
         const valueEl = container.querySelector('.truncate-block-4-lines, .flex-auto, .truncate') || container;
@@ -62,17 +63,17 @@
     /**
      * DATE FIELD (special case: split date + time)
      */
-    const getFieldDateTime = (card: Element, label: string): string | null => {
+    const getFieldDateTime = (card: Element, label: string): string => {
         const container = getFieldContainer(card, label);
         if (!container) return null;
 
         const parts = Array.from(container.querySelectorAll('div'))
             .map((el) => el.textContent?.trim())
             .filter(Boolean);
-        return parts.slice(1).join(' ') || null;
+        return parts.slice(1).join(' ');
     };
 
-    const extractCardFromLink = (link: HTMLAnchorElement): AirtableCard | null => {
+    const extractCardFromLink = (link: HTMLAnchorElement): AirtableCard => {
         const card = link.closest('[role="presentation"]');
         if (!card) return null;
 
@@ -84,32 +85,23 @@
                 const val = getFieldText(card, 'Âge');
                 return val ? Number(val) : null;
             })(),
-
             title: getText(titleEl),
-
             description: getFieldText(card, 'Description'),
-
             thumbs: {
-                small: img?.getAttribute('src') || null,
-                medium: img?.getAttribute('src') || null
+                small: img?.getAttribute('src'),
+                medium: img?.getAttribute('src')
             },
-
             download: link.href,
-
-            created_at: null,
-
             updated_at: getFieldDateTime(card, 'Dernière modification'),
-
             awards: getFieldMulti(card, 'Award'),
-
             tags: getFieldMulti(card, 'Mots-clés')
         };
     };
 
-    const findMegaLink = (url: string): HTMLAnchorElement | null => {
+    const findMegaLink = (url: string): HTMLAnchorElement => {
         const links = Array.from(document.querySelectorAll('a[href*="mega.nz"]'));
 
-        return links.find((l) => l.href === url) || null;
+        return links.find((l) => l['href'] === url) as any;
     };
 
     (window as any).__extractAirtableCardFromMega = (url: string): string => {

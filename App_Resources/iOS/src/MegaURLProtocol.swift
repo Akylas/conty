@@ -4,13 +4,13 @@ import CommonCrypto
 @objc(MegaURLProtocol)
 class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
 
-    private var task: URLSessionDataTask?
+    private var dataTask: URLSessionDataTask?
     private var cryptor: CCCryptorRef?
 
     private var aesKey = Data(count: 16)
     private var iv = Data(count: 16)
 
-    // MARK: - Intercept
+    // MARK: - Interception
 
     override class func canInit(with request: URLRequest) -> Bool {
         return request.url?.absoluteString.contains("mega.nz/file/") == true
@@ -39,13 +39,14 @@ class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
             let req = URLRequest(url: URL(string: downloadUrl)!)
             let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
 
-            self.task = session.dataTask(with: req)
-            self.task?.resume()
+            self.dataTask = session.dataTask(with: req)
+            self.dataTask?.resume()
         }
     }
 
     override func stopLoading() {
-        task?.cancel()
+        dataTask?.cancel()
+
         if let cryptor = cryptor {
             CCCryptorRelease(cryptor)
         }
@@ -101,6 +102,8 @@ class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
         setupCryptor()
     }
 
+    // MARK: - Cryptor setup (PERSISTENT)
+
     private func setupCryptor() {
         let keyBytes = [UInt8](aesKey)
         let ivBytes = [UInt8](iv)
@@ -116,7 +119,7 @@ class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
             nil,
             0,
             0,
-            CCModeOptions(kCCModeOptionCTR_BE),
+            CCModeOptions(0), // IMPORTANT
             &cryptor
         )
 
@@ -150,23 +153,27 @@ class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
         }.resume()
     }
 
-    // MARK: - Streaming
+    // MARK: - Streaming (DECRYPTION)
 
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+    func urlSession(_ session: URLSession,
+                    dataTask: URLSessionDataTask,
+                    didReceive response: URLResponse,
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
 
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         completionHandler(.allow)
     }
 
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+    func urlSession(_ session: URLSession,
+                    dataTask: URLSessionDataTask,
+                    didReceive data: Data) {
 
         guard let cryptor = cryptor else { return }
 
         var outLength = data.count
         var outData = Data(count: data.count)
 
-        data.withUnsafeBytes { inBytes in
+        _ = data.withUnsafeBytes { inBytes in
             outData.withUnsafeMutableBytes { outBytes in
                 CCCryptorUpdate(
                     cryptor,
@@ -179,10 +186,16 @@ class MegaURLProtocol: URLProtocol, URLSessionDataDelegate {
             }
         }
 
+        if outLength != outData.count {
+            outData.count = outLength
+        }
+
         client?.urlProtocol(self, didLoad: outData)
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    func urlSession(_ session: URLSession,
+                    task: URLSessionTask,
+                    didCompleteWithError error: Error?) {
 
         if let error = error {
             client?.urlProtocol(self, didFailWithError: error)

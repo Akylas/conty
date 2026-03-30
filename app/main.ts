@@ -107,8 +107,8 @@ try {
         // Trace.addCategories(Trace.categories.Navigation);
         // Trace.addCategories(Trace.categories.Transition);
         // Trace.addCategories(Trace.categories.Layout);
-        // Trace.addCategories(WebViewTraceCategory);
-        // Trace.enable();
+        Trace.addCategories(WebViewTraceCategory);
+        Trace.enable();
     }
 
     themer.createShape('round', {

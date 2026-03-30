@@ -51,7 +51,7 @@
         "@nativescript-community/css-theme": "1.2.14",
         "@nativescript-community/extendedinfo": "1.3.1",
         "@nativescript-community/gesturehandler": "2.0.43",
-        "@nativescript-community/https": "4.1.30",
+        "@nativescript-community/https": "4.1.31",
         "@nativescript-community/l": "4.3.11",
         "@nativescript-community/licenses": "2.0.9",
         "@nativescript-community/observable": "2.0.11",
@@ -105,8 +105,5 @@
         "mini-css-extract-plugin": "^2.9.4",
         "svelte-loader": "3.2.4"
     },
-    "packageManager": "yarn@4.9.4+sha512.7b1cb0b62abba6a537b3a2ce00811a843bea02bcf53138581a6ae5b1bf563f734872bd47de49ce32a9ca9dcaff995aa789577ffb16811da7c603dcf69e73750b",
-    "resolutions": {
-        "@nativescript-community/ui-webview": "portal:../ui-webview/packages/webview"
-    }
+    "packageManager": "yarn@4.9.4+sha512.7b1cb0b62abba6a537b3a2ce00811a843bea02bcf53138581a6ae5b1bf563f734872bd47de49ce32a9ca9dcaff995aa789577ffb16811da7c603dcf69e73750b"
 }

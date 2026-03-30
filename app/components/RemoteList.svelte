@@ -283,14 +283,22 @@
     }
 
     async function onLoadFinished({ url }: { url }) {
+        DEV_LOG && console.log('onLoadFinished', url);
         try {
-            if (currentRemoteSource.url.startsWith('https://airtable.com')) {
+            if (url.startsWith('https://airtable.com')) {
                 // DEV_LOG && console.log('onLoadFinished', url);
-                await webView?.nativeView.loadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
+                // setTimeout(() => {
+                // webView?.nativeView.autoLoadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
+                // }, 1000);
             }
         } catch (error) {
             console.error(error, error.stackF);
         }
+    }
+
+    function onWebViewLoaded() {
+        DEV_LOG && console.log('onWebViewLoaded');
+        webView?.nativeView.autoLoadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
     }
 
     async function handleMegaLink(url) {
@@ -299,16 +307,18 @@
             closeModal(JSON.parse(result));
             // DEV_LOG && console.log('__extractAirtableCardFromMega', result);
         } catch (error) {
-            console.error(error, error.stackF);
+            console.error(error, error.stack);
         }
     }
     function onShouldOverrideUrlLoading(args: { url; httpMethod; cancel }) {
         // try {
         const isMega = args.url.startsWith('https://mega.nz/');
-        // DEV_LOG && console.log('onShouldOverrideUrlLoading', args.url.endsWith('.zip'), args.url, currentRemoteSource.url.startsWith('https://airtable.com') && isMega);
+        DEV_LOG && console.log('onShouldOverrideUrlLoading', args.url);
         if (currentRemoteSource.url.startsWith('https://airtable.com') && isMega) {
             args.cancel = true;
             handleMegaLink(args.url);
+        } else if (args.url.startsWith('https://js.stripe.com/') || args.url.startsWith('https://m.stripe.com/')) {
+            args.cancel = true;
         }
         // } catch (error) {
         //     console.error(error, error.stackF);
@@ -333,11 +343,14 @@
             <awebview
                 bind:this={webView}
                 android:marginBottom={$windowInset.bottom}
+                debugMode={true}
                 domStorage={true}
                 row={2}
                 src={currentRemoteSource?.url}
+                userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:148.0) Gecko/20100101 Firefox/148.0"
                 visibility={useWebView ? 'visible' : 'hidden'}
                 on:loadFinished={onLoadFinished}
+                on:loaded={onWebViewLoaded}
                 on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} />
             <collectionView
                 bind:this={collectionView}

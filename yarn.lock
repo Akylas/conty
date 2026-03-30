@@ -1201,10 +1201,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/https@npm:4.1.30":
-  version: 4.1.30
-  resolution: "@nativescript-community/https@npm:4.1.30"
-  checksum: 10/b9b783516746c5749a0783b61823e054f176313ad5908961479ff6d65492ead89836042c6a3d6e0540b03567591d0a70f5af4fcee8cbfe8e60076e59739b5fd3
+"@nativescript-community/https@npm:4.1.31":
+  version: 4.1.31
+  resolution: "@nativescript-community/https@npm:4.1.31"
+  checksum: 10/3a2d11fee3a388b8c59f6a5aec477e9beabd47bc958f23d1e0fbf77e1f4c5ac378a672628552453927e00306348dfe7c6c3d722078471f6745647f7be6066066
   languageName: node
   linkType: hard
 
@@ -1595,13 +1595,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-webview@portal:../ui-webview/packages/webview::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@nativescript-community/ui-webview@portal:../ui-webview/packages/webview::locator=root-workspace-0b6124%40workspace%3A."
+"@nativescript-community/ui-webview@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@nativescript-community/ui-webview@npm:1.6.0"
   dependencies:
     url: "npm:^0.11.0"
+  checksum: 10/3228d2a5d5241616153d82cb17e706c23fa63d67123fa44d5e17f5cb11bca7b4e821afe0fea04676d0c54a74c6176c9a6501340f13b59628af51818e7372da98
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@nativescript/core@npm:8.9.9":
   version: 8.9.9
@@ -9376,7 +9377,7 @@ __metadata:
     "@nativescript-community/css-theme": "npm:1.2.14"
     "@nativescript-community/extendedinfo": "npm:1.3.1"
     "@nativescript-community/gesturehandler": "npm:2.0.43"
-    "@nativescript-community/https": "npm:4.1.30"
+    "@nativescript-community/https": "npm:4.1.31"
     "@nativescript-community/l": "npm:4.3.11"
     "@nativescript-community/licenses": "npm:2.0.9"
     "@nativescript-community/observable": "npm:2.0.11"

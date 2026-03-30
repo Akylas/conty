@@ -132,6 +132,11 @@ export default class ImportWorker extends BaseWorker {
             this.sendError(error);
         }
     }
+
+    sendError(error) {
+            DEV_LOG && console.log('import worker error', error, error.stack, new Error().stack);
+        return super.sendError(error)
+    }
     // async importFromFileQueue(data) {
     //     return this.queue.add(() => this.importFromFileInternal(data));
     // }
