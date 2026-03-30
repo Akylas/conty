@@ -10,6 +10,7 @@ import { EVENT_IMPORT_STATE, EVENT_STATE } from '~/utils/constants';
 import { hideSnackMessage, showSnackMessage } from '~/utils/ui';
 import ImportWorker, { ImportStateEventData } from '~/workers/ImportWorker';
 import { documentsService } from './documents';
+import DownloadWebview from '~/components/DownloadWebview.svelte';
 
 export interface ImportEnabledEventData extends Optional<EventData<Observable>, 'object'> {
     enabled: boolean;
@@ -20,6 +21,7 @@ export class ImportService extends BaseWorkerHandler<ImportWorker> {
         super(() => new Worker('~/workers/ImportWorker'));
     }
     async onWorkerEvent(eventData: any) {
+        DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData));
         if (eventData.target === 'documentsService') {
             if (eventData.pack) {
                 eventData.pack = await documentsService.packRepository.get(eventData.pack.id);

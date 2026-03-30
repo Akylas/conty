@@ -100,7 +100,7 @@ export async function unzip(srcPath: string, dstPath: string) {
             new com.akylas.conty.UnZip.ZipCallback({
                 onStart(worker, mode) {},
                 onUnzipComplete(worker, zipFile) {
-                    DEV_LOG && console.log('onUnzipComplete', worker, zipFile);
+                    DEV_LOG && console.log('onUnzipComplete', worker, zipFile, Folder.fromPath(dstPath).getEntitiesSync());
                     resolve();
                 },
                 onError(worker, e, mode) {

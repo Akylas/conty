@@ -644,5 +644,5 @@ module.exports = (env, params = {}) => {
             }
         })
     ];
-    return config;
+    return [require('./airtableInjection/webpack.config.js')({ ...env}, params), config];
 };

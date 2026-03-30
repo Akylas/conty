@@ -23,6 +23,7 @@
     import ActionBarSearch from './common/ActionBarSearch.svelte';
     import { openUrl } from '@akylas/nativescript/utils';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { AWebView } from '@nativescript-community/ui-webview';
 
     const textPaint = new Paint();
     const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
@@ -58,13 +59,14 @@
     let showNoPack = false;
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
+    let webView: NativeViewElementNode<AWebView>;
     let search: ActionBarSearch;
     let loading = false;
     let sources: RemoteContentProvider[] = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
     let currentRemoteSource: RemoteContentProvider = sources[0];
 
     const viewStyle: string = ApplicationSettings.getString('packs_list_view_style', 'normal');
-    $: condensed = viewStyle === 'condensed';
+    const condensed = viewStyle === 'condensed';
     // let items: ObservableArray<{
     //     doc: Pack; selected: boolean
     // }> = null;
@@ -76,13 +78,18 @@
             filteredPacks = packs;
         }
     }
-
+    let useWebView = false;
     async function refresh(force = true, filter?: string) {
         if (loading || !currentRemoteSource || (!force && lastRefreshFilter === filter)) {
             return;
         }
+        useWebView = !currentRemoteSource.url.endsWith('.json');
+        if (useWebView) {
+            return;
+        }
         lastRefreshFilter = filter;
         loading = true;
+
         try {
             if (force || !packs) {
                 const r = await request({
@@ -261,6 +268,52 @@
             closeModal();
         }
     }
+
+    function callJSFunction<T>(method: string, ...args) {
+        // DEV_LOG && console.log('callJSFunction', method, `${method}(${args ? args.map((s) => (typeof s === 'string' ? `"${s}"` : s)).join(',') : ''})`);
+        const nView = webView?.nativeView;
+        if (!nView) {
+            return;
+        }
+        try {
+            return nView.executeJavaScript<T>(`${method}(${args ? args.map((s) => (typeof s === 'string' ? `"${s}"` : s)).join(',') : ''})`);
+        } catch (err) {
+            showError(err);
+        }
+    }
+
+    async function onLoadFinished({ url }: { url }) {
+        try {
+            if (currentRemoteSource.url.startsWith('https://airtable.com')) {
+                // DEV_LOG && console.log('onLoadFinished', url);
+                await webView?.nativeView.loadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
+            }
+        } catch (error) {
+            console.error(error, error.stackF);
+        }
+    }
+
+    async function handleMegaLink(url) {
+        try {
+            const result = await callJSFunction<string>('__extractAirtableCardFromMega', url);
+            closeModal(JSON.parse(result));
+            // DEV_LOG && console.log('__extractAirtableCardFromMega', result);
+        } catch (error) {
+            console.error(error, error.stackF);
+        }
+    }
+    function onShouldOverrideUrlLoading(args: { url; httpMethod; cancel }) {
+        // try {
+        const isMega = args.url.startsWith('https://mega.nz/');
+        // DEV_LOG && console.log('onShouldOverrideUrlLoading', args.url.endsWith('.zip'), args.url, currentRemoteSource.url.startsWith('https://airtable.com') && isMega);
+        if (currentRemoteSource.url.startsWith('https://airtable.com') && isMega) {
+            args.cancel = true;
+            handleMegaLink(args.url);
+        }
+        // } catch (error) {
+        //     console.error(error, error.stackF);
+        // }
+    }
 </script>
 
 <frame id="download">
@@ -277,12 +330,22 @@
                 visibility={currentRemoteSource ? 'visible' : 'collapsed'}
                 on:tap={(e) => selectSource(e)} />
             <!-- {/if} -->
+            <awebview
+                bind:this={webView}
+                android:marginBottom={$windowInset.bottom}
+                domStorage={true}
+                row={2}
+                src={currentRemoteSource?.url}
+                visibility={useWebView ? 'visible' : 'hidden'}
+                on:loadFinished={onLoadFinished}
+                on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} />
             <collectionView
                 bind:this={collectionView}
                 iosOverflowSafeArea={true}
                 items={filteredPacks}
                 row={2}
                 rowHeight={getItemRowHeight(viewStyle) * $fontScale}
+                visibility={useWebView ? 'hidden' : 'visible'}
                 android:paddingBottom={$windowInset.bottom}>
                 <Template let:item>
                     <canvasview class="card" borderWidth={viewStyle === 'card' || isEInk ? 1 : 0} on:tap={() => onItemTap(item)} on:draw={(e) => onCanvasDraw(item, e)}>
@@ -316,7 +379,7 @@
             {/if}
 
             <CActionBar modalWindow={true} {onGoBack} title={l('download_packs')}>
-                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
+                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" visibility={useWebView ? 'hidden' : 'visible'} on:tap={() => search.showSearch()} />
                 <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={addSource} />
 
                 <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />

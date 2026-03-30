@@ -147,17 +147,14 @@
                 DEV_LOG && console.log('sources', sources);
                 const defaultSource = {
                     name: 'Raconte moi une histoire',
-                    url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
+                    url: 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R',
+                    // url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
+                    // url: 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json',
                     attribution:
                         'La communauté <a href="https://monurl.ca/lunii.creations">Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
                     image: 'https://cdn.discordapp.com/icons/911349645752541244/2300753397affc590b981bcb582f2a65.png'
                 } as RemoteContentProvider;
-                const hasDefaultSource =
-                    sources.findIndex(
-                        (s) =>
-                            s.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
-                            s.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
-                    ) !== -1;
+                const hasDefaultSource = sources.findIndex((s) => s.url === 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R') !== -1;
                 return []
                     .concat(
                         hasDefaultSource
@@ -441,10 +438,24 @@
                         },
                         cancelButtonText: lc('delete')
                     });
+                    DEV_LOG && console.log('result', result);
                     if (result?.result) {
                         // update source
-                        const data = await getJSON<any>(result.password);
-                        updateRemoteSource(source, { name: result.userName, url: result.password, image: data.image || data.banner?.image, attribution: data.attribution || data.banner?.attribution });
+                        const data = {
+                            name: result.userName,
+                            url: result.password
+                        };
+                        if (result.password.endsWith('.json')) {
+                            const newData = await getJSON<any>(result.password);
+                            Object.assign(data, {
+                                image: newData.image || newData.banner?.image,
+                                attribution: newData.attribution || newData.banner?.attribution
+                            });
+                        }
+                        updateRemoteSource(
+                            source,
+                            data
+                        );
                     } else if (result && result.result === false) {
                         removeRemoteSource(source);
                     }

@@ -257,6 +257,8 @@ CREATE TABLE IF NOT EXISTS "PacksFolders" (
             }
             pack.folders = folders;
         }
+
+        DEV_LOG && console.log('createPack done', id, folders, JSON.stringify(others), extra);
         this.documentsService.notify({ eventName: EVENT_PACK_ADDED, pack, folder: folders ? { id: folders[0] } : undefined } as PackAddedEventData);
 
         return pack;

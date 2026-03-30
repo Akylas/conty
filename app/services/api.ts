@@ -93,6 +93,16 @@ interface NetworkService {
     on(eventNames: 'connection', callback: (e: EventData & { connectionType: connectionType; connected: boolean }) => void, thisArg?: any);
 }
 
+if (__ANDROID__) {
+    try {
+        https.addInterceptor(new com.akylas.conty.MegaInterceptor());
+    } catch (error) {
+        console.error(error, error.stack);
+    }
+} else {
+    NSURLProtocol.registerClass(MegaURLProtocol.self)
+}
+
 class NetworkService extends Observable {
     _connectionType: connectionType = connectionType.none;
     _connected = true;
@@ -258,12 +268,15 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         const destinationFileName = `${name}.zip`;
 
         showSnackMessage({ text: l('preparing_download'), progress: -1 });
-        const headResult = await getHEAD(story.download);
-        const contentLength = headResult['content-length'] || headResult['Content-Length'];
+        DEV_LOG && console.log('downloadStories', story.download);
         let size;
-        if (contentLength?.length) {
-            size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
-            DEV_LOG && console.log('downloadStories', size);
+        if (story.download.endsWith('.zip')) {
+            const headResult = await getHEAD(story.download);
+            const contentLength = headResult['content-length'] || headResult['Content-Length'];
+            if (contentLength?.length) {
+                size = parseInt(headResult['content-length'] || headResult['Content-Length'], 10);
+                DEV_LOG && console.log('downloadStories', size);
+            }
         }
 
         progressNotificationId = 52346 + hashCode(story.download);
@@ -328,12 +341,12 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
         //     throw new Error(`existing story ${story.title}`);
         // }
 
-        DEV_LOG && console.log('downloaded', story.download, File.exists(file.path), file.size);
+        DEV_LOG && console.log('downloaded', story.download, file.path, File.exists(file.path), file.size);
         if (File.exists(file.path) && file.size > 0) {
             // do it on a background thread
             (async () => {
                 try {
-                    DEV_LOG && console.warn('about tot importContentFromFiles');
+                    DEV_LOG && console.warn('about tot importContentFromFiles', file.path, JSON.stringify(story));
                     await importService.importContentFromFiles(
                         [
                             {
@@ -343,8 +356,8 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
                                     age: story.age,
                                     title: story.title,
                                     description: story.description,
-                                    createdDate: dayjs(story.created_at).valueOf(),
-                                    modifiedDate: dayjs(story.updated_at).valueOf()
+                                    createdDate: dayjs(story.created_at)?.valueOf() || Date.now(),
+                                    modifiedDate: dayjs(story.updated_at)?.valueOf() || Date.now()
                                 }
                             }
                         ],

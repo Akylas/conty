@@ -1,6 +1,7 @@
+import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
+// new line to enforce import order
 import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { loadImageSync } from '@akylas/nativescript-app-utils';
-import { BaseWorker, WorkerEvent } from '@akylas/nativescript-app-utils/worker/BaseWorker';
 import Queue from '@akylas/nativescript-app-utils/worker/queue';
 import { ApplicationSettings, type EventData, File, Folder, ImageSource, Observable, path } from '@nativescript/core';
 import type { Optional } from '@nativescript/core/utils/typescript-utils';
@@ -46,7 +47,7 @@ export default class ImportWorker extends BaseWorker {
                     return;
                 }
                 const { object, ...other } = e;
-                this.notify({ ...e, target: 'documentsService' });
+                this.notify({ ...other, target: 'documentsService', object: object === this ? undefined : object });
             };
             setDocumentsService(documentsService);
             await documentsService.start(event.data.nativeData.db);
@@ -102,30 +103,34 @@ export default class ImportWorker extends BaseWorker {
         return this.queue.add(() => this.deletePacks(data));
     }
     async deletePacks(ids: { id: string; folders: number[] }[]) {
-        DEV_LOG && console.log('deletePacks', ids);
-        // await this.packRepository.delete(model);
-        const database = documentsService.db;
-        if (!database.isOpen()) {
-            return;
+        try {
+            DEV_LOG && console.log('deletePacks', ids);
+            // await this.packRepository.delete(model);
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'delete_packs' } as ImportStateEventData);
+            await doInBatch<{ id: string; folders: number[] }, void>(
+                ids,
+                async (d: { id: string; folders: number[] }) => {
+                    const id = d.id;
+                    await documentsService.removePack(id);
+                    const folderPathStr = path.join(documentsService.realDataFolderPath, id);
+                    if (Folder.exists(folderPathStr)) {
+                        const docData = Folder.fromPath(folderPathStr, false);
+                        DEV_LOG && console.log('deleteDocument', folderPathStr);
+                        await docData.remove();
+                    }
+                    // we notify on each delete so that UI updates fast
+                    documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id], folders: d.folders } as PackDeletedEventData);
+                },
+                1
+            );
+            DEV_LOG && console.log('deletePacks done', ids);
+        } catch (error) {
+            this.sendError(error);
         }
-        this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'delete_packs' } as ImportStateEventData);
-        await doInBatch<{ id: string; folders: number[] }, void>(
-            ids,
-            async (d: { id: string; folders: number[] }) => {
-                const id = d.id;
-                await documentsService.removePack(id);
-                const folderPathStr = path.join(documentsService.realDataFolderPath, id);
-                if (Folder.exists(folderPathStr)) {
-                    const docData = Folder.fromPath(folderPathStr, false);
-                    DEV_LOG && console.log('deleteDocument', folderPathStr);
-                    await docData.remove();
-                }
-                // we notify on each delete so that UI updates fast
-                documentsService.notify({ eventName: EVENT_PACK_DELETED, packIds: [id], folders: d.folders } as PackDeletedEventData);
-            },
-            1
-        );
-        DEV_LOG && console.log('deletePacks done', ids);
     }
     // async importFromFileQueue(data) {
     //     return this.queue.add(() => this.importFromFileInternal(data));
@@ -141,147 +146,151 @@ export default class ImportWorker extends BaseWorker {
         return entities.findIndex((e) => e.name === LUNII_DATA_FILE || e.name === TELMI_DATA_FILE) !== -1;
     }
     async importFromCurrentDataFolderInternal({ showSnack }: { showSnack?: boolean }) {
-        const database = documentsService.db;
-        if (!database.isOpen()) {
-            return;
-        }
-        this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_data', showSnack } as ImportStateEventData);
-        const supportsCompressedData = documentsService.supportsCompressedData;
-        DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
-        const entities = await this.dataFolder.getEntities();
-        // DEV_LOG &&
-        //     console.log(
-        //         'updateContentFromDataFolder',
-        //         supportsCompressedData,
-        //         entities.map((e) => e.name)
-        //     );
+        try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
+            }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_data', showSnack } as ImportStateEventData);
+            const supportsCompressedData = documentsService.supportsCompressedData;
+            DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal', this.dataFolder.path);
+            const entities = await this.dataFolder.getEntities();
+            // DEV_LOG &&
+            //     console.log(
+            //         'updateContentFromDataFolder',
+            //         supportsCompressedData,
+            //         entities.map((e) => e.name)
+            //     );
 
-        // we remove duplicates
-        const existToTest = [...new Set(entities.map((e) => '"' + (e['extension'] ? e.name.slice(0, -e['extension'].length) : e.name) + '"'))];
-        // DEV_LOG && console.log('existToTest', existToTest);
-        const r = (await database.query(new SqlQuery([`SELECT id,compressed,externalPath FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
-            id: string;
-            externalPath?: string;
-            compressed: 1 | 0;
-        }[];
-        // DEV_LOG && console.log('updateContentFromDataFolder1 in db', r);
-        for (let index = 0; index < entities.length; index++) {
-            const entity = entities[index];
-            try {
-                if (!this.isFolderValid(entity.path)) {
-                    console.error(`invalid folder : ${entity.path}`);
-                    await Folder.fromPath(entity.path).remove();
-                    continue;
-                }
-                let id = entity['extension'] ? entity.name.slice(0, -entity['extension']?.length) : entity.name;
-                const compressed = entity.name.endsWith('.zip');
-                const existing = r.find((i) => i.id === id);
-                let inputFilePath = entity.path;
-                // DEV_LOG && console.log('updateContentFromDataFolder handling', id, compressed, JSON.stringify(existing));
-                if (!existing) {
-                    let extraData: PackExtra;
-                    DEV_LOG && console.log('importing from data folder', entity.name, compressed, supportsCompressedData);
-                    // we need to clean up the name because some char will break android ZipFile
-                    const realId = Date.now() + '';
-                    let destinationFolderPath = inputFilePath;
-                    if (compressed && realId !== id && supportsCompressedData) {
-                        inputFilePath = path.join(this.dataFolder.path, `${realId}.zip`);
-                        if (compressed && supportsCompressedData) {
-                            await File.fromPath(destinationFolderPath).rename(inputFilePath);
-                        }
-                        id = realId;
-                        destinationFolderPath = inputFilePath;
+            // we remove duplicates
+            const existToTest = [...new Set(entities.map((e) => '"' + (e['extension'] ? e.name.slice(0, -e['extension'].length) : e.name) + '"'))];
+            // DEV_LOG && console.log('existToTest', existToTest);
+            const r = (await database.query(new SqlQuery([`SELECT id,compressed,externalPath FROM Pack WHERE id IN (${existToTest.join(',')})`]))) as {
+                id: string;
+                externalPath?: string;
+                compressed: 1 | 0;
+            }[];
+            // DEV_LOG && console.log('updateContentFromDataFolder1 in db', r);
+            for (let index = 0; index < entities.length; index++) {
+                const entity = entities[index];
+                try {
+                    if (!this.isFolderValid(entity.path)) {
+                        console.error(`invalid folder : ${entity.path}`);
+                        await Folder.fromPath(entity.path).remove();
+                        continue;
                     }
-                    //TODO: for now we ignore compressed!
-                    if (compressed && !supportsCompressedData) {
-                        // continue;
-                        id = realId;
-                        destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                        DEV_LOG && console.log('importing from zip', id, inputFilePath, destinationFolderPath, Folder.exists(destinationFolderPath));
-                        await unzip(inputFilePath, destinationFolderPath);
+                    let id = entity['extension'] ? entity.name.slice(0, -entity['extension']?.length) : entity.name;
+                    const compressed = entity.name.endsWith('.zip');
+                    const existing = r.find((i) => i.id === id);
+                    let inputFilePath = entity.path;
+                    // DEV_LOG && console.log('updateContentFromDataFolder handling', id, compressed, JSON.stringify(existing));
+                    if (!existing) {
+                        let extraData: PackExtra;
+                        DEV_LOG && console.log('importing from data folder', entity.name, compressed, supportsCompressedData);
+                        // we need to clean up the name because some char will break android ZipFile
+                        const realId = Date.now() + '';
+                        let destinationFolderPath = inputFilePath;
+                        if (compressed && realId !== id && supportsCompressedData) {
+                            inputFilePath = path.join(this.dataFolder.path, `${realId}.zip`);
+                            if (compressed && supportsCompressedData) {
+                                await File.fromPath(destinationFolderPath).rename(inputFilePath);
+                            }
+                            id = realId;
+                            destinationFolderPath = inputFilePath;
+                        }
+                        //TODO: for now we ignore compressed!
+                        if (compressed && !supportsCompressedData) {
+                            // continue;
+                            id = realId;
+                            destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                            DEV_LOG && console.log('importing from zip', id, inputFilePath, destinationFolderPath, Folder.exists(destinationFolderPath));
+                            await unzip(inputFilePath, destinationFolderPath);
+                            const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                            if (subPaths) {
+                                extraData = extraData || {};
+                                extraData.subPaths = subPaths;
+                            }
+                            DEV_LOG && console.log('deleting zip', inputFilePath);
+                            await File.fromPath(inputFilePath).remove();
+                        }
+                        if (!supportsCompressedData) {
+                            DEV_LOG && console.log('sizetest', destinationFolderPath, Folder.exists(destinationFolderPath), Folder.fromPath(destinationFolderPath).getEntitiesSync());
+                            const test1Path = path.join(destinationFolderPath, LUNII_DATA_FILE);
+                            const test2Path = path.join(destinationFolderPath, TELMI_DATA_FILE);
+                            const sizeTest = (test1Path && File.exists(test1Path) && File.fromPath(test1Path).size) || (test2Path && File.exists(test2Path) && File.fromPath(test2Path).size);
+                            if (!sizeTest) {
+                                // broken folder, let s remove it
+                                await Folder.fromPath(destinationFolderPath).remove();
+                                continue;
+                            }
+                        }
+                        await this.prepareAndImportUncompressedPack({
+                            destinationFolderPath,
+                            id,
+                            supportsCompressedData: supportsCompressedData && compressed,
+                            extraData: extraData ? { extra: extraData } : undefined
+                        });
+                    } else if (compressed && !supportsCompressedData) {
+                        // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
+                        const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                        DEV_LOG && console.log('we need to unzip existing entry in db', entity.path, destinationFolderPath);
+                        // if (!Folder.exists(destinationFolderPath)) {
+                        await unzip(entity.path, destinationFolderPath);
+                        let extraData: PackExtra;
                         const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
                         if (subPaths) {
                             extraData = extraData || {};
                             extraData.subPaths = subPaths;
                         }
-                        DEV_LOG && console.log('deleting zip', inputFilePath);
-                        await File.fromPath(inputFilePath).remove();
-                    }
-                    if (!supportsCompressedData) {
-                        DEV_LOG && console.log('sizetest', destinationFolderPath, Folder.exists(destinationFolderPath), Folder.fromPath(destinationFolderPath).getEntitiesSync());
-                        const test1Path = path.join(destinationFolderPath, LUNII_DATA_FILE);
-                        const test2Path = path.join(destinationFolderPath, TELMI_DATA_FILE);
-                        const sizeTest = (test1Path && File.exists(test1Path) && File.fromPath(test1Path).size) || (test2Path && File.exists(test2Path) && File.fromPath(test2Path).size);
-                        if (!sizeTest) {
-                            // broken folder, let s remove it
-                            await Folder.fromPath(destinationFolderPath).remove();
-                            continue;
-                        }
-                    }
-                    await this.prepareAndImportUncompressedPack({
-                        destinationFolderPath,
-                        id,
-                        supportsCompressedData: supportsCompressedData && compressed,
-                        extraData: extraData ? { extra: extraData } : undefined
-                    });
-                } else if (compressed && !supportsCompressedData) {
-                    // we have an entry in db using a zip. Let s unzip and update the existing pack to use the unzipped Version
-                    const destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                    DEV_LOG && console.log('we need to unzip existing entry in db', entity.path, destinationFolderPath);
-                    // if (!Folder.exists(destinationFolderPath)) {
-                    await unzip(entity.path, destinationFolderPath);
-                    let extraData: PackExtra;
-                    const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
-                    if (subPaths) {
-                        extraData = extraData || {};
-                        extraData.subPaths = subPaths;
-                    }
-                    const pack = await documentsService.packRepository.get(id);
+                        const pack = await documentsService.packRepository.get(id);
 
-                    pack.save({
-                        compressed: 0,
-                        extra: Object.assign({}, pack.extra, extraData)
-                    });
-                    // }
-                    await File.fromPath(entity.path).remove();
-                } else if (supportsCompressedData && compressed && existing.compressed === 0) {
-                    (await documentsService.packRepository.get(id)).save({
-                        compressed: 1
-                    });
+                        pack.save({
+                            compressed: 0,
+                            extra: Object.assign({}, pack.extra, extraData)
+                        });
+                        // }
+                        await File.fromPath(entity.path).remove();
+                    } else if (supportsCompressedData && compressed && existing.compressed === 0) {
+                        (await documentsService.packRepository.get(id)).save({
+                            compressed: 1
+                        });
+                    }
+                } catch (error) {
+                    await Folder.fromPath(entity.path).remove();
+                    throw error;
                 }
-            } catch (error) {
-                await Folder.fromPath(entity.path).remove();
-                throw error;
             }
-        }
 
-        const externalPaths = JSON.parse(JSON.stringify(ApplicationSettings.getString('external_paths', '[]')));
-        const externalEntities = [];
-        for (let index = 0; index < externalPaths.length; index++) {
-            const pathStr = externalPaths[index];
-            if (Folder.exists(externalPaths[index])) {
-                externalEntities.push(await Folder.fromPath(pathStr).getEntities());
+            const externalPaths = JSON.parse(JSON.stringify(ApplicationSettings.getString('external_paths', '[]')));
+            const externalEntities = [];
+            for (let index = 0; index < externalPaths.length; index++) {
+                const pathStr = externalPaths[index];
+                if (Folder.exists(externalPaths[index])) {
+                    externalEntities.push(await Folder.fromPath(pathStr).getEntities());
+                }
             }
-        }
 
-        for (let index = 0; index < externalEntities.length; index++) {
-            const entity = externalEntities[index];
-            try {
-                if (!this.isFolderValid(entity.path)) {
-                    console.error(`invalid folder : ${entity.path}`);
-                    continue;
+            for (let index = 0; index < externalEntities.length; index++) {
+                const entity = externalEntities[index];
+                try {
+                    if (!this.isFolderValid(entity.path)) {
+                        console.error(`invalid folder : ${entity.path}`);
+                        continue;
+                    }
+                    const existing = r.find((i) => i.externalPath === entity.path);
+                    if (!existing) {
+                        await this.prepareAndImportUncompressedPack({ destinationFolderPath: entity.path, externalPath: entity.path, id: entity.path, supportsCompressedData: false });
+                    }
+                } catch (error) {
+                    DEV_LOG && console.error('error importing zip', error, error.stack);
+                    await Folder.fromPath(entity.path).remove();
+                    throw error;
                 }
-                const existing = r.find((i) => i.externalPath === entity.path);
-                if (!existing) {
-                    await this.prepareAndImportUncompressedPack({ destinationFolderPath: entity.path, externalPath: entity.path, id: entity.path, supportsCompressedData: false });
-                }
-            } catch (error) {
-                DEV_LOG && console.error('error importing zip', error, error.stack);
-                await Folder.fromPath(entity.path).remove();
-                throw error;
             }
+            DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal done', this.dataFolder.path);
+        } catch (error) {
+            this.sendError(error);
         }
-        DEV_LOG && console.log(TAG, 'importFromCurrentDataFolderInternal done', this.dataFolder.path);
     }
 
     async prepareAndImportUncompressedPack({
@@ -345,10 +354,10 @@ export default class ImportWorker extends BaseWorker {
         if (__ANDROID__ && thumbnailPath && !storyJSON.official && File.exists(thumbnailPath)) {
             const start = Date.now();
             const image = loadImageSync(thumbnailPath, { resizeThreshold: 20 });
-            DEV_LOG && console.log('image', image.android);
+            // DEV_LOG && console.log('image', image.android);
             // image.saveToFile(knownFolders.externalDocuments().getFile(thumbnailFileName).path, 'png');
             colors = JSON.parse(com.akylas.conty.Colors.Companion.getDominantColorsSync(image.android, 3));
-            DEV_LOG && console.log('palette', `"${colors}"`, Date.now() - start, 'ms');
+            // DEV_LOG && console.log('palette', `"${colors}"`, Date.now() - start, 'ms');
         }
 
         const { actionNodes, age, description, format, image, keywords, stageNodes, subtitle, thumbnail, title, version, ...extra } = storyJSON;
@@ -429,36 +438,40 @@ export default class ImportWorker extends BaseWorker {
     //     }
     // }
     async importFromFilesInternal({ files, folderId, showSnack }: { files: { filePath: string; id?: string; extraData?: Partial<Pack> }[]; folderId?: number; showSnack?: boolean }) {
-        const database = documentsService.db;
-        if (!database.isOpen()) {
-            return;
-        }
-        this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_from_files', showSnack } as ImportStateEventData);
-        DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
-        const supportsCompressedData = documentsService.supportsCompressedData;
-        for (let index = 0; index < files.length; index++) {
-            const fileData = files[index];
-            const inputFilePath = fileData.filePath;
-            let destinationFolderPath = inputFilePath;
-            let extraData: Partial<Pack> = fileData.extraData;
-            const id = Date.now() + '';
-            const fileName = inputFilePath.split('/').pop().replace('.zip', 'replaceValue');
-            destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
-            if (!supportsCompressedData) {
-                destinationFolderPath = this.dataFolder.getFolder(id, true).path;
-                await unzip(inputFilePath, destinationFolderPath);
-                DEV_LOG && console.log('unzip done');
-                const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
-                if (subPaths) {
-                    extraData = extraData || {};
-                    extraData.extra = extraData.extra || {};
-                    extraData.extra.subPaths = subPaths;
-                }
-            } else {
-                await File.fromPath(inputFilePath).copy(destinationFolderPath);
+        try {
+            const database = documentsService.db;
+            if (!database.isOpen()) {
+                return;
             }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_from_files', showSnack } as ImportStateEventData);
+            DEV_LOG && console.log(TAG, 'importFromFilesInternal', this.dataFolder.path, JSON.stringify(files));
+            const supportsCompressedData = documentsService.supportsCompressedData;
+            for (let index = 0; index < files.length; index++) {
+                const fileData = files[index];
+                const inputFilePath = fileData.filePath;
+                let destinationFolderPath = inputFilePath;
+                let extraData: Partial<Pack> = fileData.extraData;
+                const id = Date.now() + '';
+                const fileName = inputFilePath.split('/').pop().replace('.zip', 'replaceValue');
+                destinationFolderPath = path.join(this.dataFolder.path, `${id}.zip`);
+                if (!supportsCompressedData) {
+                    destinationFolderPath = this.dataFolder.getFolder(id, true).path;
+                    await unzip(inputFilePath, destinationFolderPath);
+                    DEV_LOG && console.log('unzip done');
+                    const subPaths = await this.getUnzippedStorySubPaths(destinationFolderPath);
+                    if (subPaths) {
+                        extraData = extraData || {};
+                        extraData.extra = extraData.extra || {};
+                        extraData.extra.subPaths = subPaths;
+                    }
+                } else {
+                    await File.fromPath(inputFilePath).copy(destinationFolderPath);
+                }
 
-            await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData, fileName });
+                await this.prepareAndImportUncompressedPack({ destinationFolderPath, id, supportsCompressedData, folderId, extraData, fileName });
+            }
+        } catch (error) {
+            this.sendError(error);
         }
     }
 }

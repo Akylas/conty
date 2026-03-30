@@ -11,7 +11,7 @@ import { installMixins as installColorFilters } from '@nativescript-community/ui
 import { install as installBottomSheets } from '@nativescript-community/ui-material-bottomsheet';
 import { installMixins, themer } from '@nativescript-community/ui-material-core';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
-import { Application, Trace } from '@nativescript/core';
+import { Application, ApplicationSettings, Trace } from '@nativescript/core';
 import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { init as sharedInit } from '@shared/index';
 import { startSentry } from '@shared/utils/sentry';
@@ -20,11 +20,12 @@ import { navigate } from '@shared/utils/svelte/ui';
 import { FrameElement, PageElement, createElement, registerElement, registerNativeViewElement } from '@nativescript-community/svelte-native/dom';
 import App from '~/components/App.svelte';
 import { getBGServiceInstance } from '~/services/BgService';
-import { setDocumentsService } from './models/Pack';
+import { RemoteContentProvider, setDocumentsService } from './models/Pack';
 import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
 import { svelteNativeNoFrame } from '@nativescript-community/svelte-native';
+import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -32,6 +33,23 @@ declare module '@nativescript/core/application/application-common' {
     }
 }
 try {
+    const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+    let needsUpdate = false;
+    for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        if (
+            source.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
+            source.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
+        ) {
+            source.url = 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R';
+            needsUpdate = true;
+            break;
+        }
+    }
+    if (needsUpdate) {
+        ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
+    }
+
     createSharedDocumentsService();
     startSentry();
     installGestures(true);
@@ -123,7 +141,7 @@ try {
             DEV_LOG && console.log('start');
             setDocumentsService(documentsService);
             await documentsService.start();
-            await Promise.all([networkService.start(), bgService.start() ]);
+            await Promise.all([networkService.start(), bgService.start()]);
             Application.servicesStarted = true;
             DEV_LOG && console.log('servicesStarted');
             Application.notify({ eventName: 'servicesStarted' });
