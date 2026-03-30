@@ -452,10 +452,7 @@
                                 attribution: newData.attribution || newData.banner?.attribution
                             });
                         }
-                        updateRemoteSource(
-                            source,
-                            data
-                        );
+                        updateRemoteSource(source, data);
                     } else if (result && result.result === false) {
                         removeRemoteSource(source);
                     }
