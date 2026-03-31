@@ -2,12 +2,14 @@ import { getManager } from '@nativescript-community/https';
 import { File } from '@nativescript/core';
 
 export class MegaDownload {
+    //@ts-expect-error MegaDownloaderBridge needs typings
     private static bridge: MegaDownloaderBridge;
     private static initialized = false;
 
     private static init() {
         if (!this.initialized) {
             const manager = getManager();
+            //@ts-expect-error MegaDownloaderBridge needs typings
             this.bridge = MegaDownloaderBridge.alloc().initWithManager(manager);
             this.initialized = true;
         }

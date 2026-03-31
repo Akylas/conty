@@ -95,11 +95,13 @@ interface NetworkService {
 
 if (__ANDROID__) {
     try {
+        //@ts-expect-error MegaInterceptor needs typings
         https.addInterceptor(new com.akylas.conty.MegaInterceptor());
     } catch (error) {
         console.error(error, error.stack);
     }
 } else {
+    //@ts-expect-error MegaInterceptor needs typings
     NSURLProtocol.registerClass(MegaURLProtocol.self);
 }
 
@@ -281,7 +283,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
 
         progressNotificationId = 52346 + hashCode(story.download);
         const runningRequestTag: string = story.download;
-        const customIOSMegaImpl = (__IOS__ && story.download.startsWith('https://mega.nz/')) ? (await import('~/ios/megadownloader')).MegaDownload : undefined;
+        const customIOSMegaImpl = __IOS__ && story.download.startsWith('https://mega.nz/') ? (await import('~/ios/megadownloader')).MegaDownload : undefined;
         const progressNotification = ProgressNotifications.show({
             id: progressNotificationId, //required
             icon: 'mdi-download',
@@ -298,7 +300,7 @@ export async function downloadStories(story: RemoteContent, folderId?: number) {
                     callback: () => {
                         DEV_LOG && console.log('cancelling downloading request', runningRequestTag);
                         if (customIOSMegaImpl) {
-                            customIOSMegaImpl.cancel(runningRequestTag)
+                            customIOSMegaImpl.cancel(runningRequestTag);
                         } else {
                             https.cancelRequest(runningRequestTag);
                         }
