@@ -148,7 +148,7 @@ module.exports = (env, params = {}) => {
     const isIOS = platform === 'ios';
     const isAndroid = platform === 'android';
 
-    config.resolve.conditionNames = config.resolve.conditionNames || [];
+    config.resolve.conditionNames = config.resolve.conditionNames || ['import', 'require', 'node', 'default'];
     config.resolve.conditionNames.push('svelte');
 
     if (profile) {
