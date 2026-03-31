@@ -343,12 +343,13 @@
             <awebview
                 bind:this={webView}
                 android:marginBottom={$windowInset.bottom}
-                debugMode={true}
+                debugMode={false}
                 domStorage={true}
                 row={2}
                 src={currentRemoteSource?.url}
                 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:148.0) Gecko/20100101 Firefox/148.0"
                 visibility={useWebView ? 'visible' : 'hidden'}
+                webConsoleEnabled={false}
                 on:loadFinished={onLoadFinished}
                 on:loaded={onWebViewLoaded}
                 on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} />

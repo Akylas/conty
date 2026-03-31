@@ -33,23 +33,25 @@ declare module '@nativescript/core/application/application-common' {
     }
 }
 try {
-    const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
-    let needsUpdate = false;
-    for (let i = 0; i < sources.length; i++) {
-        const source = sources[i];
-        if (
-            source.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
-            source.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
-        ) {
-            source.url = 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R';
-            needsUpdate = true;
-            break;
+    {
+        // TODO: remove this after a while
+        const sources = JSON.parse(ApplicationSettings.getString(SETTINGS_REMOTE_SOURCES, '[]')) as RemoteContentProvider[];
+        let needsUpdate = false;
+        for (let i = 0; i < sources.length; i++) {
+            const source = sources[i];
+            if (
+                source.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
+                source.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
+            ) {
+                source.url = 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R';
+                needsUpdate = true;
+                break;
+            }
+        }
+        if (needsUpdate) {
+            ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
         }
     }
-    if (needsUpdate) {
-        ApplicationSettings.setString(SETTINGS_REMOTE_SOURCES, JSON.stringify(sources));
-    }
-
     createSharedDocumentsService();
     startSentry();
     installGestures(true);
@@ -107,8 +109,8 @@ try {
         // Trace.addCategories(Trace.categories.Navigation);
         // Trace.addCategories(Trace.categories.Transition);
         // Trace.addCategories(Trace.categories.Layout);
-        Trace.addCategories(WebViewTraceCategory);
-        Trace.enable();
+        // Trace.addCategories(WebViewTraceCategory);
+        // Trace.enable();
     }
 
     themer.createShape('round', {

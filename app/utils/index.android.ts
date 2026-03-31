@@ -38,6 +38,7 @@ export async function askForManagePermission() {
     });
 }
 export async function requestManagePermission() {
+    DEV_LOG && console.log('requestManagePermission', PLAY_STORE_BUILD, SDK_VERSION);
     if (!PLAY_STORE_BUILD && SDK_VERSION >= 30) {
         if (checkManagePermission()) {
             return true;
