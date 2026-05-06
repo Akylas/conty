@@ -171,7 +171,6 @@
         const thePack = pack || story?.pack;
         return thePack?.description || thePack?.subtitle || ' ';
     }
-
     function onPackStart(event) {
         // state = 'play';
         pack = event.pack;
@@ -191,6 +190,11 @@
         // story.pack.getThumbnail().then((r) => (currentImage = r));
         currentImage = story.thumbnail;
         colorMatrix = null;
+        DEV_LOG && console.log('Fullscreen', 'onStoryStart', story.pack);
+        if (!pack && story.pack) {
+            pack = story.pack;
+            packHasStories = pack.hasStories();
+        }
         DEV_LOG && console.log('Fullscreen', 'onStoryStart', !!story, currentImage, JSON.stringify(playingInfo));
     }
 
@@ -444,7 +448,7 @@
         }
     }
     function onPagerHolderLayoutChanged({ object }: EventData<View>) {
-        if ($isLandscape) {
+        if ($isLandscape && object) {
             pagerPeaking = (object.getMeasuredWidth() - object.getMeasuredHeight() / CARD_RATIO) / 2;
         } else {
             pagerPeaking = 30;
@@ -526,7 +530,7 @@
                                 visibility={story.images?.length ? 'visible' : 'hidden'}>
                                 {#each story.images as image}
                                     <gridlayout borderColor={colorOutline} borderRadius={10} borderWidth={1} horizontalAlignment="center" margin={3} verticalAlignment="center">
-                                        <image borderRadius={10} {colorMatrix} opacity={0.6} src={story.pack.getImage(image)} />
+                                        <image borderRadius={10} {colorMatrix} opacity={0.6} src={story.pack?.getImage(image)} />
                                     </gridlayout>
                                 {/each}
                             </stacklayout>

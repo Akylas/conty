@@ -269,7 +269,12 @@ export class StoryHandler extends Handler {
                             break;
                         }
                         case 'story': {
-                            const { currentAudioTime, type, ...story } = current;
+                            const { currentAudioTime, type, ...story } = current as Story & { currentAudioTime: number; type: string };
+                            if (story.packId) {
+                                story.pack = await documentsService.packRepository.get(story.packId);
+                                await story.pack.initData();
+                            }
+                            DEV_LOG && console.log('restoring story', story.packId, story.pack.hasStories());
                             firstData = { story };
                             updatePlaylist();
                             this.playStory({
