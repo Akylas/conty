@@ -63,7 +63,7 @@
 
     function updateFiltered(filter) {
         if (filter) {
-            filteredOptions = options.filter((d) => d.name.indexOf(filter) !== -1);
+            filteredOptions = options.filter((d) => d.name.toLowerCase().indexOf(filter) !== -1);
         } else {
             filteredOptions = options;
         }
@@ -210,7 +210,7 @@
                     verticalTextAlignment="center"
                     on:loaded={onTextFieldLoaded}
                     on:returnPress={blurTextField}
-                    on:textChange={(e) => (filter = e['value'])} />
+                    on:textChange={(e) => (filter = e['value']?.toLowerCase())} />
 
                 <IconButton
                     col={1}
