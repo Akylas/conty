@@ -1,0 +1,3 @@
+Bug fixes:
+- fix errors after changing language
+- default store now working again
