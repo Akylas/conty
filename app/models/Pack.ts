@@ -403,7 +403,10 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     }
 
     getCurrentStageImage(stage: S, selected: S, currentStageImage?: string): string {
-        // DEV_LOG && console.log('getStageImage', stage.uuid, selected.uuid, stage === selected, stageIsStory(stage), this.currentStageImage);
+        // DEV_LOG && console.log('getStageImage', stage.uuid, selected.uuid, stage === selected, this.stageIsStory(stage), this.getThumbnail());
+        // TODO: right now in pack mode we show pack thumbnail for story/stage play
+        // while in story mode we show the corresponding "option" Stage
+        // What s best?
         if (stage === selected) {
             if (this.stageIsStory(stage)) {
                 return this.getThumbnail();

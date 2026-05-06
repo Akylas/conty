@@ -190,7 +190,6 @@
         // story.pack.getThumbnail().then((r) => (currentImage = r));
         currentImage = story.thumbnail;
         colorMatrix = null;
-        DEV_LOG && console.log('Fullscreen', 'onStoryStart', story.pack);
         if (!pack && story.pack) {
             pack = story.pack;
             packHasStories = pack.hasStories();
@@ -566,7 +565,7 @@
             maxFontSize={20}
             maxLines={2}
             row={2}
-            text={(pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || story?.name || ' '}
+            text={story?.name || (pack ? getStageName(currentStage) : story?.names?.filter((s) => !!s).join(' / ')) || ' '}
             textAlignment="center" />
 
         <slider margin="0 10 0 10" maxValue=" 100" minValue={0} row={3} trackBackgroundColor={colorSurfaceContainerHigh} value={progress} verticalAlignment="bottom" on:valueChange={onSliderChange} />

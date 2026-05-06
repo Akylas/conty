@@ -274,7 +274,6 @@ export class StoryHandler extends Handler {
                                 story.pack = await documentsService.packRepository.get(story.packId);
                                 await story.pack.initData();
                             }
-                            DEV_LOG && console.log('restoring story', story.packId, story.pack.hasStories());
                             firstData = { story };
                             updatePlaylist();
                             this.playStory({
@@ -782,11 +781,11 @@ export class StoryHandler extends Handler {
             if (this.playlist.length > 0) {
                 const toPlay = this.playlist.getItem(0);
                 if (toPlay.pack) {
-                    this.playPack({ pack: toPlay.pack, updatePlaylist: false });
+                    return this.playPack({ pack: toPlay.pack, updatePlaylist: false });
                 } else if (toPlay.packId) {
-                    this.playPack({ pack: await documentsService.packRepository.get(toPlay.packId), updatePlaylist: false });
+                    return this.playPack({ pack: await documentsService.packRepository.get(toPlay.packId), updatePlaylist: false });
                 } else if (toPlay.story) {
-                    this.playStory({ story: toPlay.story, updatePlaylist: false });
+                    return this.playStory({ story: toPlay.story, updatePlaylist: false });
                 }
             }
         }
