@@ -1,0 +1,6 @@
+Bug fixes:
+- lowercase search for pack stories
+- correctly load pack on resume from app start
+- support deleting items from playlist
+- dark launcher icon and splash screen on dark theme
+- Translations update
