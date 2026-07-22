@@ -23,6 +23,7 @@ module.exports = {
         runtimePackageName: '@akylas/nativescript-ios-runtime'
     },
     android: {
+        ignoredNativeDependencies: ['@akylas/nativescript-inapp-purchase'],
         runtimePackageName: '@akylas/nativescript-android-runtime',
         gradleVersion: '8.14.3',
         markingMode: 'none',
