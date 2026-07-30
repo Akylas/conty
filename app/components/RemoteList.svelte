@@ -4,7 +4,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { ApplicationSettings, NavigatedData, ObservableArray, Page, Utils } from '@nativescript/core';
+    import { ApplicationSettings, File, NavigatedData, ObservableArray, Page, Utils } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import { closeModal, fade } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
@@ -17,7 +17,7 @@
     import { RemoteContent, RemoteContentProvider } from '~/models/Pack';
     import { request } from '~/services/api';
     import { documentsService } from '~/services/documents';
-    import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+    import { RMUH_URL, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import ActionBarSearch from './common/ActionBarSearch.svelte';
@@ -282,47 +282,77 @@
         }
     }
 
+    // `loadJavaScriptFile` goes through the plugin bridge, which appends a <script> element and gets blocked by the site CSP.
+    // `executeJavaScript` maps to `evaluateJavascript`, which is not subject to the page CSP.
+    async function injectExtractor() {
+        const nView = webView?.nativeView;
+        if (!nView) {
+            return;
+        }
+        const filepath = nView.resolveLocalResourceFilePath('~/assets/webview/rmuhInjection.js');
+        if (!filepath) {
+            return;
+        }
+        await nView.executeJavaScript(await File.fromPath(filepath).readText());
+    }
+
     async function onLoadFinished({ url }: { url }) {
         DEV_LOG && console.log('onLoadFinished', url);
         try {
-            if (url.startsWith('https://airtable.com')) {
-                // DEV_LOG && console.log('onLoadFinished', url);
-                // setTimeout(() => {
-                // webView?.nativeView.autoLoadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
-                // }, 1000);
+            if (url?.startsWith(RMUH_URL)) {
+                await injectExtractor();
             }
         } catch (error) {
-            console.error(error, error.stackF);
+            console.error(error, error.stack);
+        }
+    }
+
+    async function onLoadStarted({ url }: { url }) {
+        DEV_LOG && console.log('onLoadStarted', url);
+        // iOS does not run the navigation policy hook for a server redirect, it reports it here instead
+        if (__IOS__ && pendingRmuhPack && url && !url.startsWith(RMUH_URL)) {
+            await closeWithRmuhPack(url);
         }
     }
 
     function onWebViewLoaded() {
         DEV_LOG && console.log('onWebViewLoaded');
-        webView?.nativeView.autoLoadJavaScriptFile('airtableInjection', '~/assets/webview/airtableInjection.js');
+        // download links use target="_blank", which on iOS would open a separate popup WKWebView presented
+        // modally. Cancelling the navigation there would leave an empty modal on screen, so keep every
+        // navigation in this webview. Set imperatively: the plugin svelte typings don't expose it yet.
+        if (webView?.nativeView) {
+            webView.nativeView.supportPopups = false;
+        }
     }
 
-    async function handleMegaLink(url) {
+    // a `/download/` link redirects to the real (public) file url. We grab the metadata when the link is
+    // tapped, let the navigation run, then close with the metadata + the url it redirected to.
+    let pendingRmuhPack: Promise<any> = null;
+
+    async function closeWithRmuhPack(download: string) {
+        const pending = pendingRmuhPack;
+        pendingRmuhPack = null;
         try {
-            const result = await callJSFunction<string>('__extractAirtableCardFromMega', url);
-            closeModal(JSON.parse(result));
-            // DEV_LOG && console.log('__extractAirtableCardFromMega', result);
+            const pack = await pending;
+            DEV_LOG && console.log('closeWithRmuhPack', download, JSON.stringify(pack));
+            if (pack?.error) {
+                throw new Error(pack.error);
+            }
+            closeModal({ ...pack, download });
         } catch (error) {
-            console.error(error, error.stack);
+            showError(error);
         }
     }
     function onShouldOverrideUrlLoading(args: { url; httpMethod; cancel }) {
-        // try {
-        const isMega = args.url.startsWith('https://mega.nz/');
-        DEV_LOG && console.log('onShouldOverrideUrlLoading', args.url);
-        if (currentRemoteSource.url.startsWith('https://airtable.com') && isMega) {
+        DEV_LOG && console.log('onShouldOverrideUrlLoading', args.url, currentRemoteSource.url);
+        if (args.url.startsWith('https://js.stripe.com/') || args.url.startsWith('https://m.stripe.com/')) {
             args.cancel = true;
-            handleMegaLink(args.url);
-        } else if (args.url.startsWith('https://js.stripe.com/') || args.url.startsWith('https://m.stripe.com/')) {
+        } else if (currentRemoteSource.url.startsWith(RMUH_URL) && args.url.startsWith(RMUH_URL + '/download/')) {
+            pendingRmuhPack = callJSFunction<string>('__extractRmuhCardFromDownload', args.url)?.then(JSON.parse);
+        } else if (pendingRmuhPack && !args.url.startsWith(RMUH_URL)) {
             args.cancel = true;
+            closeWithRmuhPack(args.url);
         }
-        // } catch (error) {
-        //     console.error(error, error.stackF);
-        // }
     }
 </script>
 
@@ -338,21 +368,24 @@
                 text={currentRemoteSource?.name}
                 variant="outline"
                 visibility={currentRemoteSource ? 'visible' : 'collapsed'}
-                on:tap={(e) => selectSource(e)} />
+                on:tap={(e) => selectSource(e)}
+            />
             <!-- {/if} -->
             <awebview
                 bind:this={webView}
                 android:marginBottom={$windowInset.bottom}
-                debugMode={false}
+                debugMode={!PRODUCTION}
                 domStorage={true}
                 row={2}
                 src={currentRemoteSource?.url}
                 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:148.0) Gecko/20100101 Firefox/148.0"
                 visibility={useWebView ? 'visible' : 'hidden'}
-                webConsoleEnabled={false}
+                webConsoleEnabled={!PRODUCTION}
                 on:loadFinished={onLoadFinished}
+                on:loadStarted={onLoadStarted}
                 on:loaded={onWebViewLoaded}
-                on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading} />
+                on:shouldOverrideUrlLoading={onShouldOverrideUrlLoading}
+            />
             <collectionView
                 bind:this={collectionView}
                 iosOverflowSafeArea={true}
@@ -360,7 +393,8 @@
                 row={2}
                 rowHeight={getItemRowHeight(viewStyle) * $fontScale}
                 visibility={useWebView ? 'hidden' : 'visible'}
-                android:paddingBottom={$windowInset.bottom}>
+                android:paddingBottom={$windowInset.bottom}
+            >
                 <Template let:item>
                     <canvasview class="card" borderWidth={viewStyle === 'card' || isEInk ? 1 : 0} on:tap={() => onItemTap(item)} on:draw={(e) => onCanvasDraw(item, e)}>
                         <image
@@ -372,7 +406,8 @@
                             marginTop={getImageMargin(viewStyle)}
                             src={item.pack.thumbs.medium}
                             stretch="aspectFill"
-                            width={getItemImageHeight(viewStyle)} />
+                            width={getItemImageHeight(viewStyle)}
+                        />
                         <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
                     </canvasview>
                 </Template>
@@ -387,7 +422,8 @@
                         fontSize={19}
                         text={loading ? lc('loading') : !currentRemoteSource ? lc('no_remote_source') : lc('please_refresh')}
                         textAlignment="center"
-                        textWrap={true} />
+                        textWrap={true}
+                    />
                     <mdbutton text={lc('add_source')} visibility={!currentRemoteSource ? 'visible' : 'collapse'} on:tap={addSource} />
                 </flexlayout>
             {/if}
