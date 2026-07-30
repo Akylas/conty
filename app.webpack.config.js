@@ -1,8 +1,8 @@
 const webpackConfig = require('./webpack.config.js');
 const webpack = require('webpack');
-const { readFileSync, readdirSync } = require('fs');
+const { readdirSync, readFileSync } = require('fs');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const { dirname, join, isAbsolute, relative, resolve } = require('path');
+const { dirname, isAbsolute, join, relative, resolve } = require('path');
 const nsWebpack = require('@akylas/nativescript-webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -72,30 +72,30 @@ module.exports = (env, params = {}) => {
         );
     }
     const {
+        accessibility = true,
+        adhoc,
         appId,
         appPath,
         appResourcesPath,
-        production,
-        sourceMap,
-        hiddenSourceMap,
-        inlineSourceMap,
-        sentry,
-        uploadSentry,
-        uglify,
-        profile,
-        noconsole,
-        timeline,
         devlog,
         fork = true,
-        report,
-        playStoreBuild = !!process.env['PLAY_STORE_BUILD'],
+        hiddenSourceMap,
+        inlineSourceMap,
         keep_classnames_functionnames = true,
-        accessibility = true,
+        locale = 'en',
+        noconsole,
+        playStoreBuild = !!process.env['PLAY_STORE_BUILD'],
+        production,
+        profile,
+        report,
+        sentry,
+        sourceMap,
         startAccessibility = false,
         testParentalGate = false,
-        locale = 'en',
         theme = 'auto',
-        adhoc
+        timeline,
+        uglify,
+        uploadSentry
     } = env;
     console.log('env', playStoreBuild, env);
     env.appPath = appPath;
@@ -252,7 +252,7 @@ module.exports = (env, params = {}) => {
         SPONSOR_URL: '"https://github.com/sponsors/farfromrefug"',
         DEV_LOG: !!devlog
     };
-    Object.assign(config.plugins.find((p) => p.constructor.name === 'DefinePlugin').definitions, defines);
+    Object.assign(config.plugins.find((p) => p.constructor.name === 'CompatDefinePlugin').definitions, defines);
 
     const symbolsParser = require('scss-symbols-parser');
     const mdiSymbols = symbolsParser.parseSymbols(readFileSync(resolve(projectRoot, 'node_modules/@mdi/font/scss/_variables.scss')).toString());
@@ -436,6 +436,19 @@ module.exports = (env, params = {}) => {
     );
     config.plugins.push(new webpack.ContextReplacementPlugin(/dayjs[\/\\]locale$/, new RegExp(`(${supportedLocales.map((l) => l.replace('_', '-').toLowerCase()).join('|')}).\js`)));
 
+    config.externalsPresets = { node: false };
+    config.resolve.fallback = config.resolve.fallback || {};
+    // config.resolve.fallback.timers = require.resolve('timers/');
+    config.resolve.fallback.stream = false;
+    config.resolve.fallback.timers = false;
+    config.resolve.fallback.buffer = false;
+    config.resolve.fallback.util = false;
+    config.resolve.fallback.path = false;
+    config.resolve.fallback.crypto = false;
+    config.resolve.fallback.fs = false;
+    config.resolve.fallback.assert = false;
+    config.resolve.fallback.tty = false;
+    config.resolve.fallback.os = false;
     config.optimization.splitChunks.cacheGroups.defaultVendor.test = function (module) {
         const absPath = module.resource;
         if (absPath) {
@@ -644,5 +657,5 @@ module.exports = (env, params = {}) => {
             }
         })
     ];
-    return [require('./airtableInjection/webpack.config.js')({ ...env}, params), config];
+    return [require('./airtableInjection/webpack.config.js')({ ...env }, params), config];
 };

@@ -118,9 +118,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript-webpack@npm:5.0.24":
-  version: 5.0.24
-  resolution: "@akylas/nativescript-webpack@npm:5.0.24"
+"@akylas/nativescript-webpack@npm:5.0.35":
+  version: 5.0.35
+  resolution: "@akylas/nativescript-webpack@npm:5.0.35"
   dependencies:
     "@babel/core": "npm:^7.23.3"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:~0.6.1"
@@ -143,7 +143,7 @@ __metadata:
     postcss-import: "npm:^16.0.0"
     postcss-loader: "npm:^8.0.0"
     raw-loader: "npm:^4.0.0"
-    react-refresh: "npm:~0.17.0"
+    react-refresh: "npm:~0.18.0"
     sass: "npm:^1.0.0"
     sass-loader: "npm:^16.0.0"
     sax: "npm:^1.0.0"
@@ -160,13 +160,13 @@ __metadata:
     webpack-merge: "npm:^6.0.0"
     webpack-virtual-modules: "npm:^0.4.0"
   peerDependencies:
-    nativescript-vue-template-compiler: ^2.8.1
+    nativescript-vue-template-compiler: ^2.9.3
   peerDependenciesMeta:
     nativescript-vue-template-compiler:
       optional: true
   bin:
     nativescript-webpack: dist/bin/index.js
-  checksum: 10/62ed665ff592fc9f8b1d2a6baf8c1d04446cfc82b56fe46c29674de079d2ed96b1a83d11afaa7f1e017387ff47dfa21cf8feec4b5e6bb0fc9899acec397d3c9c
+  checksum: 10/f68b978152c8aa891e9e33a1145d4359e98e66bf594ee0e3d9b7822e94fe3c04c14b10211d898b0a87c994156ad93b98459535b478ee84023823aec384dceaa7
   languageName: node
   linkType: hard
 
@@ -9017,10 +9017,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-refresh@npm:~0.17.0":
-  version: 0.17.0
-  resolution: "react-refresh@npm:0.17.0"
-  checksum: 10/5e94f07d43bb1cfdc9b0c6e0c8c73e754005489950dcff1edb53aa8451d1d69a47b740b195c7c80fb4eb511c56a3585dc55eddd83f0097fb5e015116a1460467
+"react-refresh@npm:~0.18.0":
+  version: 0.18.0
+  resolution: "react-refresh@npm:0.18.0"
+  checksum: 10/504c331c19776bf8320c23bad7f80b3a28de03301ed7523b0dd21d3f02bf2b53bbdd5aa52469b187bc90f358614b2ba303c088a0765c95f4f0a68c43a7d67b1d
   languageName: node
   linkType: hard
 
@@ -9365,7 +9365,7 @@ __metadata:
     "@akylas/nativescript-inapp-purchase": "npm:0.0.5"
     "@akylas/nativescript-inappbrowser": "npm:3.1.8"
     "@akylas/nativescript-ios-runtime": "npm:8.9.6"
-    "@akylas/nativescript-webpack": "npm:5.0.24"
+    "@akylas/nativescript-webpack": "npm:5.0.35"
     "@akylas/non-playstore": "portal:plugin_non_playstore"
     "@mdi/font": "npm:7.4.47"
     "@nativescript-community/additween": "npm:4.0.9"
