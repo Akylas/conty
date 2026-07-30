@@ -170,22 +170,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript@npm:8.9.14":
-  version: 8.9.14
-  resolution: "@akylas/nativescript@npm:8.9.14"
+"@akylas/nativescript@npm:9.0.23":
+  version: 9.0.23
+  resolution: "@akylas/nativescript@npm:9.0.23"
   dependencies:
-    "@csstools/css-calc": "npm:~2.1.2"
-    "@csstools/css-color-parser": "npm:^3.0.8"
-    "@csstools/css-parser-algorithms": "npm:^3.0.4"
-    "@csstools/css-tokenizer": "npm:^3.0.3"
-    "@nativescript/hook": "npm:~2.0.0"
-    acorn: "npm:^8.7.0"
-    css-tree: "npm:^1.1.2"
+    "@csstools/css-calc": "npm:~2.1.4"
+    "@csstools/css-color-parser": "npm:^3.0.10"
+    "@csstools/css-parser-algorithms": "npm:^3.0.5"
+    "@csstools/css-tokenizer": "npm:^3.0.4"
+    "@nativescript/hook": "npm:~3.0.4"
+    acorn: "npm:^8.15.0"
+    css-tree: "npm:^3.1.0"
     css-what: "npm:^6.1.0"
-    emoji-regex: "npm:^10.3.0"
-    reduce-css-calc: "npm:^2.1.8"
-    tslib: "npm:^2.6.3"
-  checksum: 10/891689c6f402f341eda340c4818fc7f95f36d4449fcb3bbe0925ad186035fdbb3042df761a89ab8f7952f2cf47a71aefcb0b0c34852daa82f9b4f1ed1cf1fdd4
+    emoji-regex: "npm:^10.2.1"
+    source-map: "npm:0.7.6"
+    source-map-js: "npm:^1.2.1"
+    tslib: "npm:^2.0.0"
+  checksum: 10/976b2e07b7088a48856f95162395e6470874c3d89f5250ec467a221630594089e3c456579e0d747981c6aefe11f01453c2fff00c995cdc60b64ecccd8f9480ca
   languageName: node
   linkType: hard
 
@@ -415,7 +416,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-calc@npm:^2.1.4, @csstools/css-calc@npm:~2.1.2":
+"@csstools/css-calc@npm:^2.1.4, @csstools/css-calc@npm:~2.1.2, @csstools/css-calc@npm:~2.1.4":
   version: 2.1.4
   resolution: "@csstools/css-calc@npm:2.1.4"
   peerDependencies:
@@ -425,7 +426,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-color-parser@npm:^3.0.8":
+"@csstools/css-color-parser@npm:^3.0.10, @csstools/css-color-parser@npm:^3.0.8":
   version: 3.1.0
   resolution: "@csstools/css-color-parser@npm:3.1.0"
   dependencies:
@@ -438,7 +439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-parser-algorithms@npm:^3.0.4":
+"@csstools/css-parser-algorithms@npm:^3.0.4, @csstools/css-parser-algorithms@npm:^3.0.5":
   version: 3.0.5
   resolution: "@csstools/css-parser-algorithms@npm:3.0.5"
   peerDependencies:
@@ -447,7 +448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-tokenizer@npm:^3.0.3":
+"@csstools/css-tokenizer@npm:^3.0.3, @csstools/css-tokenizer@npm:^3.0.4":
   version: 3.0.4
   resolution: "@csstools/css-tokenizer@npm:3.0.4"
   checksum: 10/eb6c84c086312f6bb8758dfe2c85addd7475b0927333c5e39a4d59fb210b9810f8c346972046f95e60a721329cffe98895abe451e51de753ad1ca7a8c24ec65f
@@ -1633,6 +1634,13 @@ __metadata:
     glob: "npm:^7.1.0"
     mkdirp: "npm:^1.0.4"
   checksum: 10/fbc93d6e9e7585febd59f0aed0ca3f39d94edbff623b308046fa0e74ef4c1643dbeda921d507bd5a5d54f2c8457d4a6b6bf4c1eaffe5f151c178d03d8083b8ca
+  languageName: node
+  linkType: hard
+
+"@nativescript/hook@npm:~3.0.4":
+  version: 3.0.5
+  resolution: "@nativescript/hook@npm:3.0.5"
+  checksum: 10/ff2b1bc85a88e51e4d0b271d4c043b23bc640f47936dd65c9473be1a8faf8e5835504ac4430669c32f1e6cfb0e5c2a5eb3c363f9717c530e17f70ba2e8cfd829
   languageName: node
   linkType: hard
 
@@ -4782,6 +4790,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"css-tree@npm:^3.1.0":
+  version: 3.2.1
+  resolution: "css-tree@npm:3.2.1"
+  dependencies:
+    mdn-data: "npm:2.27.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10/9945b387bdec756738c34d64b8287f05ca6645f51d1c8abaaa5822ec3e74533604103aaad164b8100afd8495e92120be7c1c6afbe5be89f867acc5b456ddd79c
+  languageName: node
+  linkType: hard
+
 "css-tree@npm:~2.2.0":
   version: 2.2.1
   resolution: "css-tree@npm:2.2.1"
@@ -4789,13 +4807,6 @@ __metadata:
     mdn-data: "npm:2.0.28"
     source-map-js: "npm:^1.0.1"
   checksum: 10/1959c4b0e268bf8db1b3a1776a5ba9ae3a464ccd1226bfa62799cb0a3d0039006e21fb95cec4dec9d687a9a9b90f692dff2d230b631527ece700f4bfb419aaf3
-  languageName: node
-  linkType: hard
-
-"css-unit-converter@npm:^1.1.1":
-  version: 1.1.2
-  resolution: "css-unit-converter@npm:1.1.2"
-  checksum: 10/1058d7ce913caa07ae441f0536bb34a7ef0cfd7eb5e5194d440e7a4f4261cbb320720546db345d0e34b842e114d7b7e3817433e9b3efaee3ba25340627ed52e5
   languageName: node
   linkType: hard
 
@@ -5193,7 +5204,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-regex@npm:^10.2.1, emoji-regex@npm:^10.3.0":
+"emoji-regex@npm:^10.2.1":
   version: 10.4.0
   resolution: "emoji-regex@npm:10.4.0"
   checksum: 10/76bb92c5bcf0b6980d37e535156231e4a9d0aa6ab3b9f5eabf7690231d5aa5d5b8e516f36e6804cbdd0f1c23dfef2a60c40ab7bb8aedd890584281a565b97c50
@@ -7403,6 +7414,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mdn-data@npm:2.27.1":
+  version: 2.27.1
+  resolution: "mdn-data@npm:2.27.1"
+  checksum: 10/5046dc83a961b8ea82a5d6d8331d07df6b15faec61519ce2f83e49766702358e7e6af96413be977ff89080534be6762c1d5963b5dd1180c208a47c0a663226b2
+  languageName: node
+  linkType: hard
+
 "memfs@npm:^3.4.1":
   version: 3.5.3
   resolution: "memfs@npm:3.5.3"
@@ -8786,13 +8804,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-value-parser@npm:^3.3.0":
-  version: 3.3.1
-  resolution: "postcss-value-parser@npm:3.3.1"
-  checksum: 10/e8bc676092ad0c4a628e8d7b06ef1844a157bcce22e489d72ac661d6d47b8e8e7c342e5e0da807056a0a2fced1372fff0f67fbfd6e06fd8509828ac6190b54ae
-  languageName: node
-  linkType: hard
-
 "postcss-value-parser@npm:^4.0.0, postcss-value-parser@npm:^4.1.0, postcss-value-parser@npm:^4.2.0":
   version: 4.2.0
   resolution: "postcss-value-parser@npm:4.2.0"
@@ -9107,16 +9118,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reduce-css-calc@npm:^2.1.8":
-  version: 2.1.8
-  resolution: "reduce-css-calc@npm:2.1.8"
-  dependencies:
-    css-unit-converter: "npm:^1.1.1"
-    postcss-value-parser: "npm:^3.3.0"
-  checksum: 10/ad0269e4f32e80d184faa76746db825917c9482a5aa2d455c249261515916e3607d053667444269b6b8f21d0952bd29f6e24a1fb811838f55d91404bea3d2c1d
-  languageName: node
-  linkType: hard
-
 "regenerate@npm:^1.2.1":
   version: 1.4.2
   resolution: "regenerate@npm:1.4.2"
@@ -9357,7 +9358,7 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@akylas/kiss-orm": "npm:2.1.14"
-    "@akylas/nativescript": "npm:8.9.14"
+    "@akylas/nativescript": "npm:9.0.23"
     "@akylas/nativescript-android-runtime": "npm:8.9.2"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.2.13"
@@ -9842,6 +9843,13 @@ __metadata:
   version: 0.6.1
   resolution: "source-map@npm:0.6.1"
   checksum: 10/59ef7462f1c29d502b3057e822cdbdae0b0e565302c4dd1a95e11e793d8d9d62006cdc10e0fd99163ca33ff2071360cf50ee13f90440806e7ed57d81cba2f7ff
+  languageName: node
+  linkType: hard
+
+"source-map@npm:0.7.6":
+  version: 0.7.6
+  resolution: "source-map@npm:0.7.6"
+  checksum: 10/c8d2da7c57c14f3fd7568f764b39ad49bbf9dd7632b86df3542b31fed117d4af2fb74a4f886fc06baf7a510fee68e37998efc3080aacdac951c36211dc29a7a3
   languageName: node
   linkType: hard
 
@@ -10591,7 +10599,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.6.3":
+"tslib@npm:^2.0.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
