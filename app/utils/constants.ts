@@ -6,6 +6,7 @@ export const CARD_RATIO = 0.629;
 
 export const ALERT_OPTION_MAX_HEIGHT = Screen.mainScreen.heightDIPs * 0.47;
 export const ANDROID_CONTENT = 'content://';
+export const RMUH_URL = 'https://rmuh.pages.dev';
 export const DEFAULT_INVERSE_IMAGES = false;
 export const DEFAULT_SHOW_SHUTDOWN_IN_NOTIF = false;
 

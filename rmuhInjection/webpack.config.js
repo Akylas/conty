@@ -19,7 +19,7 @@ module.exports = (env = {}, params = {}) => {
     const mode = production !== undefined ? (!!production ? 'production' : 'development') : process.env.NODE_ENV || 'development';
     const platform = env && ((env.android && 'android') || (env.ios && 'ios'));
     const prod = mode === 'production';
-    console.log('distFolder', env.distFolder)
+    console.log('distFolder', env.distFolder);
     return {
         mode,
         entry: ENTRY,
@@ -31,7 +31,7 @@ module.exports = (env = {}, params = {}) => {
         output: {
             path: env.distFolder || DIST_FOLDER,
             // publicPath: DIST_FOLDER,
-            filename: 'airtableInjection.js',
+            filename: 'rmuhInjection.js',
             clean: true
         },
         module: {
