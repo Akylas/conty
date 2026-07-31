@@ -472,7 +472,7 @@ module.exports = (env, params = {}) => {
             config.plugins.push(
                 new webpack.NormalModuleReplacementPlugin(/accessibility$/, (resource) => {
                     if (resource.context.match(nativescriptReplace)) {
-                        resource.request = '~/shims/accessibility';
+                        resource.request = '@shared/shims/accessibility';
                     }
                 })
             );
@@ -480,7 +480,7 @@ module.exports = (env, params = {}) => {
         config.plugins.push(
             new webpack.NormalModuleReplacementPlugin(/action-bar$/, (resource) => {
                 if (resource.context.match(nativescriptReplace)) {
-                    resource.request = '~/shims/action-bar';
+                    resource.request = '@shared/shims/action-bar';
                 }
             })
         );
@@ -495,7 +495,7 @@ module.exports = (env, params = {}) => {
         config.plugins.push(
             new webpack.NormalModuleReplacementPlugin(/profiling$/, (resource) => {
                 if (resource.context.match(nativescriptReplace)) {
-                    resource.request = '~/shims/profile';
+                    resource.request = '@shared/shims/profile';
                 }
             })
         );
@@ -503,7 +503,7 @@ module.exports = (env, params = {}) => {
             config.plugins.push(
                 new webpack.NormalModuleReplacementPlugin(/trace$/, (resource) => {
                     if (resource.context.match(nativescriptReplace)) {
-                        resource.request = '~/shims/trace';
+                        resource.request = '@shared/shims/trace';
                     }
                 })
             );
