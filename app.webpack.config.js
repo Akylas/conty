@@ -657,5 +657,5 @@ module.exports = (env, params = {}) => {
             }
         })
     ];
-    return [require('./airtableInjection/webpack.config.js')({ ...env }, params), config];
+    return [require('./rmuhInjection/webpack.config.js')({ ...env }, params), config];
 };
