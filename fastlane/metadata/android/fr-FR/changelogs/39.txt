@@ -1,0 +1,5 @@
+Features:
+- read pack metadata from the rmuh.pages.dev remote source
+
+Bug fixes:
+- Translations update
