@@ -18,10 +18,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript-android-runtime@npm:9.0.4":
-  version: 9.0.4
-  resolution: "@akylas/nativescript-android-runtime@npm:9.0.4"
-  checksum: 10/a40fa73f455a027162e8fa9ba6b9f85c3fd20886e3a6d1325e42ae41aa7a9fa76c9ce06ac9557378bde2e6eece569737a85671a13bc6aa2989adfd7b1cf33cc7
+"@akylas/nativescript-android-runtime@npm:9.0.5":
+  version: 9.0.5
+  resolution: "@akylas/nativescript-android-runtime@npm:9.0.5"
+  checksum: 10/46233a96a633deb3d1b7b7240a7d312e62fe625155a35b7ad26f706863cc9f399204b69784bc795248b733b9922ce572ebe4a361ab9cdfd1a85d611a250798ed
   languageName: node
   linkType: hard
 
@@ -8798,7 +8798,7 @@ __metadata:
   dependencies:
     "@akylas/kiss-orm": "npm:2.1.14"
     "@akylas/nativescript": "npm:9.0.23"
-    "@akylas/nativescript-android-runtime": "npm:9.0.4"
+    "@akylas/nativescript-android-runtime": "npm:9.0.5"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.2.14"
     "@akylas/nativescript-inapp-purchase": "npm:0.0.5"
