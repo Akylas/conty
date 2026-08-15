@@ -12,8 +12,8 @@
     import dayjs from 'dayjs';
     import { Template } from '@nativescript-community/svelte-native/components';
     import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
-    import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { getLocaleDisplayName, l, lc, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
     import { getColorThemeDisplayName, getThemeDisplayName, onColorThemeChanged, onThemeChanged, selectColorTheme, selectTheme } from '~/helpers/theme';
     import { RemoteContentProvider } from '~/models/Pack';
@@ -45,7 +45,7 @@
     import { showError } from '@shared/utils/showError';
     import { createView, currentBottomOffset, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover } from '~/utils/ui';
     import { colors, fonts, onFontScaleChanged, windowInset } from '~/variables';
-    import IconButton from '../common/IconButton.svelte';
+    import IconButton from '@shared/components/IconButton.svelte';
     import { getJSON } from '@nativescript-community/https';
     import { inappItems, presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;

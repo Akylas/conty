@@ -4,7 +4,7 @@
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { closeModal } from '@nativescript-community/svelte-native';
     import { colors } from '~/variables';
-    import IconButton from './common/IconButton.svelte';
+    import IconButton from '@shared/components/IconButton.svelte';
     import { openUrl } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
 </script>

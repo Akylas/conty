@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { openLink } from '~/utils/ui/index.common';
-    import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     // technique for only specific properties to get updated on store change
 
     const licences = require('~/licenses.json');

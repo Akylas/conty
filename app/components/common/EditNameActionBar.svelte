@@ -1,6 +1,6 @@
 <script lang="ts">
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from './CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { TextField } from '@nativescript-community/ui-material-textfield';
     import { showError } from '@shared/utils/showError';
     import { colors } from '~/variables';

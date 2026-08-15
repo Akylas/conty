@@ -5,7 +5,7 @@
     import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
     import { Color, Screen } from '@nativescript/core';
     import { Template } from '@nativescript-community/svelte-native/components';
-    import ListItemAutoSize from '~/components/common/ListItemAutoSize.svelte';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { PlaylistItem } from '~/handlers/StoryHandler';
     import { formatDuration } from '~/helpers/formatter';
     import { onDestroy, onMount } from 'svelte';

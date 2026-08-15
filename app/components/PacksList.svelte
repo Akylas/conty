@@ -15,7 +15,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
     import { colorTheme, isEInk, onThemeChanged } from '~/helpers/theme';
@@ -34,7 +34,6 @@
         promptForFolderName,
         showAllPlayablePackStories,
         showBarPlayer,
-        showBottomsheetOptionSelect,
         showLoading,
         showParentalGate,
         showPopoverMenu,
@@ -43,10 +42,9 @@
     import { colors, folderBackgroundColor, fontScale, fonts, onFolderBackgroundColorChanged, onPodcastModeChanged, podcastMode, screenWidthDips, windowInset } from '~/variables';
 
     import { request } from '@nativescript-community/perms';
-    import ActionBarSearch from '~/components/common/ActionBarSearch.svelte';
-    import IconButton from '~/components/common/IconButton.svelte';
-    import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
-    import { OptionType } from '~/components/common/OptionSelect.svelte';
+    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
+    import IconButton from '@shared/components/IconButton.svelte';
+    import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { getBGServiceInstance } from '~/services/BgService';
     import { importService } from '~/services/importservice';
     import { getRealPath, requestManagePermission } from '~/utils';

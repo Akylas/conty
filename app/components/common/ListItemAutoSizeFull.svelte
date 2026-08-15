@@ -2,7 +2,7 @@
     import { Canvas, CanvasView, Paint } from '@nativescript-community/ui-canvas';
     import { conditionalEvent, createEventDispatcher } from '@shared/utils/svelte/ui';
     import { colors, fontScale } from '~/variables';
-    import { ListItem } from './ListItem';
+    import type { IListItem as ListItem } from '@shared/components/OptionSelect.svelte';
     const linePaint = new Paint();
     linePaint.strokeWidth = 1;
 </script>
@@ -39,6 +39,7 @@
     }
 
     $: addedPadding = (item.subtitle?.length > 0 ? 6 : 10) + (__ANDROID__ ? 8 : 12);
+    $: color = typeof item.color === 'function' ? item['color'](item) : item.color;
 </script>
 
 <!-- <gridlayout>
@@ -65,7 +66,7 @@
 <canvasview
     {columns}
     padding="0 16 0 16"
-    rippleColor={item.rippleColor || item.color || colorOnSurface}
+    rippleColor={item.rippleColor || color || colorOnSurface}
     on:tap={(event) => dispatch('tap', event)}
     on:longPress={(event) => dispatch('longPress', event)}
     on:draw={draw}
@@ -80,7 +81,7 @@
         width={iconFontSize * 2} /> -->
     <stacklayout col={mainCol} paddingBottom={addedPadding} paddingTop={addedPadding} verticalAlignment="center" {...$$restProps?.titleHolderProps}>
         <label
-            color={item.titleColor || item.color || titleColor || colorOnSurface}
+            color={item.titleColor || color || titleColor || colorOnSurface}
             disableCss={true}
             fontSize={(item.fontSize || fontSize) * $fontScale}
             {fontWeight}

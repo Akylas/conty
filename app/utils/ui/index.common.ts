@@ -25,9 +25,9 @@ import { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
 import type BarAudioPlayer__SvelteComponent_ from '~/components/BarAudioPlayerWidget.svelte';
 import BarAudioPlayer from '~/components/BarAudioPlayerWidget.svelte';
-import type BottomSnack__SvelteComponent_ from '~/components/common/BottomSnack.svelte';
-import BottomSnack from '~/components/common/BottomSnack.svelte';
-import type OptionSelect__SvelteComponent_ from '~/components/common/OptionSelect.svelte';
+import type BottomSnack__SvelteComponent_ from '@shared/components/BottomSnack.svelte';
+import BottomSnack from '@shared/components/BottomSnack.svelte';
+import type OptionSelect__SvelteComponent_ from '@shared/components/OptionSelect.svelte';
 import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
@@ -42,7 +42,7 @@ import { imagesMatrix, onlyInverseLuniiTypeImages } from '~/handlers/StoryHandle
 export * from '@shared/utils/ui';
 
 export async function showAlertOptionSelect<T>(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<AlertOptions & MDCAlertControlerOptions>) {
-    const component = (await import('~/components/common/OptionSelect.svelte')).default;
+    const component = (await import('@shared/components/OptionSelect.svelte')).default;
     let componentInstanceInfo: ComponentInstanceInfo<GridLayout, OptionSelect__SvelteComponent_>;
     try {
         componentInstanceInfo = resolveComponentElement(component, {
@@ -72,7 +72,7 @@ export async function showAlertOptionSelect<T>(props?: ComponentProps<OptionSele
 }
 
 export async function showBottomsheetOptionSelect(props?: ComponentProps<OptionSelect__SvelteComponent_>, options?: Partial<BottomSheetOptions>) {
-    const component = (await import('~/components/common/OptionSelect.svelte')).default;
+    const component = (await import('@shared/components/OptionSelect.svelte')).default;
     try {
         const result = await showBottomSheet({
             view: component as any,
@@ -103,7 +103,7 @@ export async function showPopoverMenu<T = any>({
     vertPos
 }: { options: any[] | ObservableArray<any>; anchor; onClose?; onLongPress?; props?; closeOnClose?; onCheckBox?: (item, value, e) => void } & Partial<PopoverOptions>) {
     const { colorSurfaceContainer } = get(colors);
-    const OptionSelect = (await import('~/components/common/OptionSelect.svelte')).default;
+    const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
     const rowHeight = (props?.rowHeight || 60) * get(fontScale);
     const result: T = await showPopover({
         backgroundColor: colorSurfaceContainer,
@@ -186,7 +186,7 @@ export async function showSliderPopover({
     value?;
     onChange?;
 }) {
-    const component = (await import('~/components/common/SliderPopover.svelte')).default;
+    const component = (await import('@shared/components/SliderPopover.svelte')).default;
     const { colorSurfaceContainer } = get(colors);
 
     return showPopover({

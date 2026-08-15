@@ -7,7 +7,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import {
         PackStartEvent,
         PackStopEvent,
@@ -31,7 +31,7 @@
     import { onSetup, onUnsetup } from '~/services/BgService.common';
     import { showError } from '@shared/utils/showError';
     import { closeModal } from '@shared/utils/svelte/ui';
-    import { openLink, playStory, showAllPlayablePackStories, showBottomsheetOptionSelect } from '~/utils/ui';
+    import { openLink, playStory, showAllPlayablePackStories } from '~/utils/ui';
     import { colors, coverSharedTransitionTag, fontScale, isLandscape, screenWidthDips, windowInset } from '~/variables';
     import { CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CARD_RATIO } from '~/utils/constants';

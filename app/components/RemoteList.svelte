@@ -10,7 +10,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc } from '~/helpers/locale';
     import { colorTheme, isEInk, onThemeChanged } from '~/helpers/theme';
@@ -20,7 +20,7 @@
     import { RMUH_URL, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
     import { showPopoverMenu, showSettings } from '~/utils/ui';
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
-    import ActionBarSearch from './common/ActionBarSearch.svelte';
+    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import { openUrl } from '@akylas/nativescript/utils';
     import { confirm } from '@nativescript-community/ui-material-dialogs';
     import { AWebView } from '@nativescript-community/ui-webview';
