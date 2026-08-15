@@ -18,16 +18,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@akylas/nativescript-android-runtime@npm:9.0.5":
-  version: 9.0.5
-  resolution: "@akylas/nativescript-android-runtime@npm:9.0.5"
-  checksum: 10/46233a96a633deb3d1b7b7240a7d312e62fe625155a35b7ad26f706863cc9f399204b69784bc795248b733b9922ce572ebe4a361ab9cdfd1a85d611a250798ed
+"@akylas/nativescript-android-runtime@npm:8.9.2":
+  version: 8.9.2
+  resolution: "@akylas/nativescript-android-runtime@npm:8.9.2"
+  checksum: 10/3d1cd13b1a3e2256d139c97699097a8fe37e1a05771d17849b6b0a3b07c4784f1160c791e09aed023b14178cff70b6f305562e9e46a8e8594eda218a97dfc3af
   languageName: node
   linkType: hard
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=0c8c80&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=88d2fc&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -81,7 +81,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/018814bea48d867e37c79d936fc51dd40204a597626772b16e50038e025d0ed0f04bfe198c2345eb92f6fdb693b08713ce7c680882fccfc9574e38e680b423fa
+  checksum: 10/0b69ae08bd0293ebf7049df8bc4b890fedf94c6ce9015dc17e895024220beab86b4038907e398bb2c7d2888ea85f06628fee7e77933abd41977e7d168333d6f5
   languageName: node
   linkType: hard
 
@@ -8798,7 +8798,7 @@ __metadata:
   dependencies:
     "@akylas/kiss-orm": "npm:2.1.14"
     "@akylas/nativescript": "npm:9.0.23"
-    "@akylas/nativescript-android-runtime": "npm:9.0.5"
+    "@akylas/nativescript-android-runtime": "npm:8.9.2"
     "@akylas/nativescript-app-tools": "file:tools"
     "@akylas/nativescript-app-utils": "npm:2.2.14"
     "@akylas/nativescript-inapp-purchase": "npm:0.0.5"
