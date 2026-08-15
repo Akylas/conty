@@ -505,13 +505,14 @@ export async function showAllPlayablePackStories(pack: Pack, podcastMode = false
                 rowHeight,
                 fontSize: 18,
                 showFilter,
+                autoSizeListItem: true,
                 title: pack.title,
                 component: ListItemAutoSizeFull,
                 titleProps: {
                     maxLines: 2,
-                    lineBreak: 'end'
-                    // maxFontSize: 18,
-                    // autoFontSize: true
+                    lineBreak: 'end',
+                    maxFontSize: 18,
+                    autoFontSize: true
                 },
                 titleHolderProps: {
                     paddingTop: 0,
