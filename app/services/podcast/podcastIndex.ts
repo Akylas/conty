@@ -1,5 +1,5 @@
 import { request } from '~/services/api';
-import { sha1 } from '~/utils/sha1';
+import { sha1 } from '~/utils';
 
 export interface PodcastSearchResult {
     id: number;
