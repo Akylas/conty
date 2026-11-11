@@ -8,6 +8,12 @@
         
         "android.media:MediaMetadataRetriever",
 
+        "android.speech.tts:TextToSpeech*",
+        "android.speech.tts.TextToSpeech:OnInitListener*",
+        "android.speech.tts:UtteranceProgressListener*",
+        "android.media:AudioAttributes*",
+        "android.media.AudioAttributes:Builder*",
+
         "android.view:View.OnApplyWindowInsetsListener",
         "android.graphics:Insets",
         "android.app:Notification",

@@ -16,7 +16,7 @@ const context: Worker = self as any;
 export interface ImportStateEventData extends Optional<EventData<Observable>, 'object'> {
     state: 'finished' | 'running';
     showSnack?: boolean;
-    type: 'import_from_files' | 'import_data' | 'delete_packs';
+    type: 'import_from_files' | 'import_from_folder' | 'import_data' | 'delete_packs';
 }
 
 let documentsService: DocumentsService;
@@ -76,13 +76,17 @@ export default class ImportWorker extends BaseWorker {
                 await worker.handleStart(event);
                 await this.importFromFilesQueue(event.data.messageData);
                 break;
+            case 'import_from_folder':
+                await worker.handleStart(event);
+                await this.importFromFolderQueue(event.data.messageData, data);
+                break;
             // case 'import_from_file':
             //     await worker.handleStart(event);
             //     this.importFromFileQueue(event.data.messageData);
             //     break;
             case 'delete_packs':
                 await worker.handleStart(event);
-                await this.deletePacksQueue(event.data.messageData);
+                await this.deletePacksQueue(event.data.messageData, data);
                 DEV_LOG && console.log('deletePacksQueue done');
 
                 break;
@@ -99,8 +103,19 @@ export default class ImportWorker extends BaseWorker {
     async importFromFilesQueue({ files, folderId, showSnack }: { files: { filePath: string; id?: string; extraData?: Partial<Pack> }[]; folderId?: number; showSnack?: boolean }) {
         return this.queue.add(() => this.importFromFilesInternal({ files, folderId, showSnack }));
     }
-    async deletePacksQueue(data: { id: string; folders: number[] }[]) {
-        return this.queue.add(() => this.deletePacks(data));
+    async importFromFolderQueue(data: { id: string; folderId?: number }, message: { id?: number }) {
+        return this.queue.add(async () => {
+            await this.importFromFolderInternal(data);
+            // answer from inside the job: once the queue is done the worker stops itself
+            this.replyToPromise(message);
+        });
+    }
+    async deletePacksQueue(data: { id: string; folders: number[] }[], message: { id?: number }) {
+        return this.queue.add(async () => {
+            await this.deletePacks(data);
+            // answer from inside the job: once the queue is done the worker stops itself
+            this.replyToPromise(message);
+        });
     }
     async deletePacks(ids: { id: string; folders: number[] }[]) {
         try {
@@ -442,6 +457,18 @@ export default class ImportWorker extends BaseWorker {
     //         this.sendError(error);
     //     }
     // }
+    /** imports a pack folder already written in the data folder (used for podcasts) */
+    async importFromFolderInternal({ folderId, id }: { id: string; folderId?: number }) {
+        try {
+            if (!documentsService.db.isOpen()) {
+                return;
+            }
+            this.notify({ eventName: EVENT_IMPORT_STATE, state: 'running', type: 'import_from_folder', showSnack: false } as ImportStateEventData);
+            await this.prepareAndImportUncompressedPack({ destinationFolderPath: path.join(this.dataFolder.path, id), id, supportsCompressedData: false, folderId });
+        } catch (error) {
+            this.sendError(error);
+        }
+    }
     async importFromFilesInternal({ files, folderId, showSnack }: { files: { filePath: string; id?: string; extraData?: Partial<Pack> }[]; folderId?: number; showSnack?: boolean }) {
         try {
             const database = documentsService.db;

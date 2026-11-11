@@ -5,6 +5,7 @@ import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, IPackFolder, LuniiPack, Pack, PackFolder, Tag, TelmiPack } from '~/models/Pack';
 import { getRealPath } from '~/utils';
+import { PodcastRepository } from '~/services/podcast/podcastRepository';
 import { EVENT_PACK_ADDED } from '~/utils/constants';
 
 export const sql = SqlQuery.createFromTemplateString;
@@ -411,6 +412,7 @@ export class DocumentsService extends Observable {
     packRepository: PackRepository;
     tagRepository: TagRepository;
     folderRepository: FolderRepository;
+    podcastRepository: PodcastRepository;
 
     constructor(withCache = true) {
         super();
@@ -463,10 +465,12 @@ export class DocumentsService extends Observable {
         this.tagRepository = new TagRepository(this.db);
         this.folderRepository = new FolderRepository(this.db);
         this.packRepository = new PackRepository(this, this.db, this.tagRepository, this.folderRepository);
+        this.podcastRepository = new PodcastRepository(this.db);
         if (!db) {
             await this.packRepository.createTables();
             await this.tagRepository.createTables();
             await this.folderRepository.createTables();
+            await this.podcastRepository.createTables();
             try {
                 await this.db.migrate(Object.assign({}, this.packRepository.migrations, this.tagRepository.migrations, this.folderRepository.migrations));
                 // appliedMigrations.push(...Object.keys(migrations));

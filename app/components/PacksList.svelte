@@ -415,6 +415,18 @@
         }
     }
 
+    async function openPodcasts() {
+        try {
+            if (!(await showParentalGate())) {
+                return;
+            }
+            const component = (await import('~/components/podcast/PodcastsList.svelte')).default;
+            await showModal({ page: component, fullscreen: true });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
     async function onNavigatedTo(e: NavigatedData) {
         try {
             if (!e.isBackNavigation) {
@@ -1082,6 +1094,7 @@
             row={2}
             translateY={-bottomOffset}
             verticalAlignment="bottom">
+            <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-podcast" verticalAlignment="center" on:tap={throttle(() => openPodcasts(), 500)} />
             <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => importPack(), 500)} />
             <mdbutton class="fab" horizontalAlignment="center" text="mdi-cloud-download-outline" verticalAlignment="center" on:tap={throttle(() => downloadPack(), 500)} />
         </stacklayout>

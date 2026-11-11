@@ -1265,6 +1265,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nativescript-community/texttospeech@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "@nativescript-community/texttospeech@npm:3.1.2"
+  checksum: 10/6d8b8d76acb9ea677c86a39565eb4535aa32d6117349b5d2e78b8da0aa11abb8bd7b38003808ecccbb714b42d1c12570e3a7f1228358ba0a3c71e27936793829
+  languageName: node
+  linkType: hard
+
 "@nativescript-community/ui-canvas@npm:4.6.52, @nativescript-community/ui-canvas@npm:^4.6.52":
   version: 4.6.52
   resolution: "@nativescript-community/ui-canvas@npm:4.6.52"
@@ -8824,6 +8831,7 @@ __metadata:
     "@nativescript-community/svelte-native": "npm:1.0.32"
     "@nativescript-community/systemui": "npm:1.1.24"
     "@nativescript-community/text": "npm:1.6.25"
+    "@nativescript-community/texttospeech": "npm:^3.1.2"
     "@nativescript-community/ui-canvas": "npm:4.6.52"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.55"
     "@nativescript-community/ui-checkbox": "npm:2.0.18"

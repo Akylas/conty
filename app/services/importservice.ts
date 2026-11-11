@@ -86,6 +86,9 @@ export class ImportService extends BaseWorkerHandler<ImportWorker> {
         DEV_LOG && console.log('importContentFromFiles', files, folderId);
         await this.sendMessageToWorker('import_from_files', { files, folderId }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
     }
+    async importFolder(id: string, folderId?: number, shouldWait = true) {
+        await this.sendMessageToWorker('import_from_folder', { id, folderId }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
+    }
     // async importContentFromFile(data: { filePath: string; id?: string; extraData?; folderId?: number }) {
     //     DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
     //     this.ensureWorker();
