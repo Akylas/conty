@@ -1,4 +1,4 @@
-import { themer } from '@nativescript-community/ui-material-core';
+import { themer } from '@nativescript-community/ui-core';
 import { Application, ApplicationSettings, Color, Frame, OrientationChangedEventData, Page, Screen, Utils } from '@nativescript/core';
 import { getCurrentFontScale } from '@nativescript/core/accessibility/font-scale';
 import { get, writable } from 'svelte/store';

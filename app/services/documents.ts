@@ -1,6 +1,6 @@
 import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
 import { isObject, isString } from '@nativescript/core/utils';
-import NSQLDatabase from '@shared/db/NSQLDatabase';
+import NSQLDatabase from '~/db/NSQLDatabase';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, IPackFolder, LuniiPack, Pack, PackFolder, Tag, TelmiPack } from '~/models/Pack';

@@ -11,5 +11,6 @@
             "@nativescript/core/*": ["node_modules/@akylas/nativescript/*"]
         }
     },
-    "include": ["app/**/*", "tools/app/**/*", "typings/*.d.ts"]
+    "include": ["app/**/*", "tools/app/**/*", "typings/*.d.ts"],
+    "exclude": ["tools/app/db/**/*", "tools/app/**/*.test.ts"]
 }

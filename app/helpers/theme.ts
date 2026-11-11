@@ -11,7 +11,7 @@ import { SDK_VERSION } from '@nativescript/core/utils';
 import { showAlertOptionSelect } from '~/utils/ui';
 import { closePopover } from '@nativescript-community/ui-popover/svelte';
 import { ALERT_OPTION_MAX_HEIGHT, DEFAULT_COLOR_THEME, SETTINGS_COLOR_THEME } from '~/utils/constants';
-import { confirm } from '@nativescript-community/ui-material-dialogs';
+import { confirm } from '@nativescript-community/ui-dialogs';
 import { restartApp, setCustomCssRootClass } from '~/utils';
 import { AppUtilsAndroid } from '@akylas/nativescript-app-utils';
 

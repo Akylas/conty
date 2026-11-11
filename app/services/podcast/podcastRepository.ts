@@ -1,4 +1,4 @@
-import NSQLDatabase from '@shared/db/NSQLDatabase';
+import NSQLDatabase from '~/db/NSQLDatabase';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import { Feed, FeedEpisode } from './rssParser';
 

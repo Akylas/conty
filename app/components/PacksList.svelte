@@ -3,7 +3,7 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker } from '@nativescript-community/ui-document-picker';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
     import { AnimationDefinition, Application, ApplicationSettings, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout, Utils, View } from '@nativescript/core';

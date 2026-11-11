@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { confirm, prompt } from '@nativescript-community/ui-material-dialogs';
+    import { confirm, prompt } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ObservableArray, Utils } from '@nativescript/core';
     import { Template } from '@nativescript-community/svelte-native/components';

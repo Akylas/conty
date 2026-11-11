@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
-    import { alert } from '@nativescript-community/ui-material-dialogs';
-    import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { alert } from '@nativescript-community/ui-dialogs';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { closeModal } from '@nativescript-community/svelte-native';
     import { colors } from '~/variables';
     import IconButton from '@shared/components/IconButton.svelte';
