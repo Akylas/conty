@@ -661,7 +661,7 @@ export class StoryHandler extends Handler {
                     return;
                 }
             } else if (pack.extra?.podcast && pack.isMenuStage(stage)) {
-                // podcast episodes have no title audio, we speak it
+                // no audio attributed to the episode title (the generated story only has the text), we speak it
                 const name = pack.cleanupStageName(stage);
                 if (name) {
                     this.clearPlayer();
