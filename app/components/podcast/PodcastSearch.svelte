@@ -84,7 +84,7 @@
             <label color={colorOnSurfaceVariant} fontSize={19} horizontalAlignment="center" row={1} text={lc('no_results')} verticalAlignment="center" />
         {/if}
         <CActionBar onGoBack={() => goBack()} title={l('search_podcast')}>
-            <ActionBarSearch bind:this={searchField} slot="center" delay={400} hideOnClear={false} refresh={search} visible={true} />
+            <ActionBarSearch bind:this={searchField} slot="center" delay={800} hideOnClear={false} refresh={search} visible={true} />
         </CActionBar>
     </gridlayout>
 </page>
