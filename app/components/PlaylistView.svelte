@@ -2,7 +2,7 @@
 
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
-    import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { Color, Screen } from '@nativescript/core';
     import { Template } from '@nativescript-community/svelte-native/components';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';

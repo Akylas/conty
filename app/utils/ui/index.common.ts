@@ -1,6 +1,6 @@
 import { lc } from '@nativescript-community/l';
-import { SvelteShowBottomSheetOptions, closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-import { MDCAlertControlerOptions, alert, confirm } from '@nativescript-community/ui-material-dialogs';
+import { SvelteShowBottomSheetOptions, closeBottomSheet, showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+import { MDCAlertControlerOptions, alert, confirm } from '@nativescript-community/ui-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
 import {
@@ -32,7 +32,7 @@ import { Pack, PackFolder, Story } from '~/models/Pack';
 import { getBGServiceInstance } from '~/services/BgService';
 import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
 import { BAR_AUDIO_PLAYER_HEIGHT } from '../constants';
-import { BottomSheetOptions } from '@nativescript-community/ui-material-bottomsheet';
+import { BottomSheetOptions } from '@nativescript-community/ui-bottomsheet';
 import { formatDuration } from '~/helpers/formatter';
 import ListItemAutoSizeFull from '~/components/common/ListItemAutoSizeFull.svelte';
 import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';

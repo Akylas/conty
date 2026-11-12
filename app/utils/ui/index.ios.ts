@@ -1,4 +1,4 @@
-import { alert } from '@nativescript-community/ui-material-dialogs';
+import { alert } from '@nativescript-community/ui-dialogs';
 import { GridLayout, View } from '@nativescript/core';
 import { ComponentInstanceInfo, resolveComponentElement } from '@nativescript-community/svelte-native/dom';
 import type ParentalGate__SvelteComponent_ from '~/components/security/ParentalGate.svelte';

@@ -7,4 +7,6 @@
 /// <reference path="../node_modules/@nativescript/types-ios/lib/ios/objc-x86_64/objc!AVFAudio.d.ts" />
 
 declare const TEST_PARENTAL_GATE: boolean;
+declare const PODCAST_INDEX_KEY: string;
+declare const PODCAST_INDEX_SECRET: string;
 declare const START_ACCESSIBILITY: boolean;

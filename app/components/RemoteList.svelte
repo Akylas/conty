@@ -2,7 +2,7 @@
     import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ApplicationSettings, File, NavigatedData, ObservableArray, Page, Utils } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
@@ -22,7 +22,7 @@
     import { actionBarButtonHeight, colors, fontScale, windowInset } from '~/variables';
     import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import { openUrl } from '@akylas/nativescript/utils';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { AWebView } from '@nativescript-community/ui-webview';
 
     const textPaint = new Paint();

@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { Pager } from '@nativescript-community/ui-pager';
     import { Color, EventData, GridLayout, Image, Page, Screen, View } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
@@ -35,7 +35,7 @@
     import { colors, coverSharedTransitionTag, fontScale, isLandscape, screenWidthDips, windowInset } from '~/variables';
     import { CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CARD_RATIO } from '~/utils/constants';
-    import { alert } from '@nativescript-community/ui-material-dialogs';
+    import { alert } from '@nativescript-community/ui-dialogs';
     import { createView } from '@shared/utils/ui';
     import { Label } from '@nativescript-community/ui-label';
 

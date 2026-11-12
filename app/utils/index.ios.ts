@@ -113,3 +113,16 @@ export async function getAudioDuration(audioFile) {
 }
 
 export function closeApp() {}
+
+/** SHA-1 hex digest of a string, used to sign the Podcast Index requests. */
+export function sha1(text: string) {
+    const data = NSString.stringWithString(text).dataUsingEncoding(NSUTF8StringEncoding);
+    const digest = interop.alloc(20); // CC_SHA1_DIGEST_LENGTH
+    CC_SHA1(data.bytes, data.length, digest);
+    const bytes = new Uint8Array(interop.bufferFromData(NSData.dataWithBytesLength(digest, 20)));
+    let hex = '';
+    bytes.forEach((byte) => {
+        hex += (byte + 0x100).toString(16).slice(1);
+    });
+    return hex;
+}

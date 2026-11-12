@@ -136,3 +136,13 @@ export async function getAudioDuration(audioFile) {
 export function closeApp() {
     Application.android.startActivity?.finish();
 }
+
+/** SHA-1 hex digest of a string, used to sign the Podcast Index requests. */
+export function sha1(text: string) {
+    const digest = java.security.MessageDigest.getInstance('SHA-1').digest(new java.lang.String(text).getBytes('UTF-8'));
+    let hex = '';
+    for (let index = 0; index < digest.length; index++) {
+        hex += ((digest[index] & 0xff) + 0x100).toString(16).slice(1);
+    }
+    return hex;
+}

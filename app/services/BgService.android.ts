@@ -41,7 +41,7 @@ export class BgService extends BgServiceCommon {
     }
 
     async start() {
-        const intent = new Intent(this.context, java.lang.Class.forName(__APP_ID__ + '.BgService'));
+        const intent = new Intent(this.context, this.context.getClassLoader().loadClass(__APP_ID__ + '.BgService'));
         this.bindService(this.context, intent);
     }
 
@@ -55,7 +55,7 @@ export class BgService extends BgServiceCommon {
                 if (bgService) {
                     const context = this.context;
                     NotificationHelper.hideAllNotifications();
-                    const intent = new android.content.Intent(context, java.lang.Class.forName(__APP_ID__ + '.BgService'));
+                    const intent = new android.content.Intent(context, context.getClassLoader().loadClass(__APP_ID__ + '.BgService'));
                     DEV_LOG && console.log(TAG, 'stopService');
                     context.stopService(intent);
                     context.unbindService(this.serviceConnection);

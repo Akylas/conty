@@ -58,8 +58,8 @@
 }
 
 
-mdtextfield,
-mdtextview {
+textfield,
+textview {
     stroke-color: var(--colorOutline);
     placeholder-color: var(--colorOutline);
     color: var(--colorOnBackground);
@@ -166,7 +166,7 @@ frame {
 label,
 canvaslabel,
 htmllabel,
-mdtextfield,
+textfield,
 .actionBarTitle,
 .actionBarSubtitle {
 

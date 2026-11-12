@@ -7,3 +7,9 @@ declare class ContyImageUtils {
 declare interface NSFileManager {
     allocatedSizeOfDirectory(url: NSURL);
 }
+
+declare function CGSizeMake(width: number, height: number): CGSize;
+
+declare function CGRectMake(x: number, y: number, width: number, height: number): CGRect;
+
+declare function CC_SHA1(data: interop.Pointer | interop.Reference<any>, len: number, md: interop.Pointer | interop.Reference<any>): interop.Pointer;
