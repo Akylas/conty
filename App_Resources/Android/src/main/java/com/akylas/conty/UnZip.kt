@@ -3,7 +3,6 @@ package com.akylas.conty
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import com.anggrayudi.storage.file.findFolder
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -12,6 +11,8 @@ import java.io.InputStream
 import java.security.InvalidParameterException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+
+private fun DocumentFile.findFolder(name: String): DocumentFile? = findFile(name)?.takeIf { it.isDirectory }
 
 class UnZip {
     interface ZipCallback {

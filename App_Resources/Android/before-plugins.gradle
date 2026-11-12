@@ -2,7 +2,7 @@ ext {
     compileSdk = 36
     targetSdk = 36
     kotlinVersion = "2.2.0"
-    androidBuildToolsVersion = "8.13.2"
+    androidBuildToolsVersion = "9.4.1"
     buildToolsVersion = "36.1.0"
     androidxVersion = "1.17.0"
     androidXAppCompat = "1.7.0"
@@ -13,7 +13,7 @@ ext {
     androidXRecyclerViewVersion = "1.4.0"
     androidxViewPager2Version = "1.1.0"
     androidXSwipeRefreshLayoutViewVersion = "1.2.0-alpha01"
-    androidXMaterial = "1.12.0"
+    androidXMaterial = "1.14.0"
     androidXBrowser = "1.8.0"
     androidXPreferenceVersion = "1.2.1"
     androidXSplashscreenVersion = "1.2.0"
@@ -22,6 +22,6 @@ ext {
     lottieVersion = "6.2.0"
     ndkVersion = "27.3.13750724"
     licenseReporterVersion = "2.4"
-    sentryVersion = "7.22.6"
-    sentryGradleVersion = "4.14.1"
+    sentryVersion = "8.52.0"
+    sentryGradleVersion = "6.18.0"
 }

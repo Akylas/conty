@@ -2,11 +2,11 @@
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { alert, confirm, login, prompt } from '@nativescript-community/ui-material-dialogs';
-    import { showSnack } from '@nativescript-community/ui-material-snackbar';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
-    import { TextView } from '@nativescript-community/ui-material-textview';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { alert, confirm, login, prompt } from '@nativescript-community/ui-dialogs';
+    import { showSnack } from '@nativescript-community/ui-snackbar';
+    import { TextField } from '@nativescript-community/ui-textfield';
+    import { TextView } from '@nativescript-community/ui-textview';
     import { ApplicationSettings, File, ObservableArray, Page, Screen, ScrollView, StackLayout, Utils, View } from '@nativescript/core';
     import { SDK_VERSION, copyToClipboard, openUrl } from '@nativescript/core/utils';
     import dayjs from 'dayjs';

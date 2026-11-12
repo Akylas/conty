@@ -9,6 +9,7 @@ import { Pack, Stage, Story } from '~/models/Pack';
 import { documentsService } from '~/services/documents';
 import { prefs } from '~/services/preferences';
 import { closeApp } from '~/utils';
+import { speak, stopSpeaking } from '~/utils/tts';
 import {
     COLORMATRIX_INVERSED_BLACK_TRANSPARENT,
     DEFAULT_INVERSE_IMAGES,
@@ -297,6 +298,7 @@ export class StoryHandler extends Handler {
     }
 
     clearPlayer() {
+        stopSpeaking();
         // ensure current player is stopped
         // DEV_LOG && console.info('clearPlayer');
         const oldPlayer = this.mPlayer;
@@ -657,6 +659,13 @@ export class StoryHandler extends Handler {
                 if (pack.stageIsStory(stage) && this.appExited) {
                     this.stopPlaying();
                     return;
+                }
+            } else if (pack.extra?.podcast && pack.isMenuStage(stage)) {
+                // no audio attributed to the episode title (the generated story only has the text), we speak it
+                const name = pack.cleanupStageName(stage);
+                if (name) {
+                    this.clearPlayer();
+                    await speak(name, pack.extra.language);
                 }
             }
             // DEV_LOG && console.log('runStage playAudio done', stage === this.currentStageSelected(), this.currentStages.length, pack.isAutoPlay(stage));

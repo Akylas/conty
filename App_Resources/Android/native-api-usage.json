@@ -1,7 +1,7 @@
 {
     "whitelist-plugins-usages": true,
     "whitelist": [
-        "net.lingala.zip4j*:*", "java.io:IOException", "java.lang:Throwable", "java.util:UUID",
+        "net.lingala.zip4j*:*", "java.io:IOException", "java.lang:Throwable", "java.util:UUID", "java.security:MessageDigest",
         "com.akylas.conty*:*",
         "android.content:ServiceConnection", 
         "android.content.pm:ServiceInfo",

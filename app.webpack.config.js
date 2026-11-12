@@ -242,6 +242,8 @@ module.exports = (env, params = {}) => {
         START_ACCESSIBILITY: !!startAccessibility,
         NO_CONSOLE: noconsole,
         TEST_PARENTAL_GATE: testParentalGate,
+        PODCAST_INDEX_KEY: `"${process.env.PODCAST_INDEX_KEY || ''}"`,
+        PODCAST_INDEX_SECRET: `"${process.env.PODCAST_INDEX_SECRET || ''}"`,
         SENTRY_DSN: `"${process.env.SENTRY_DSN}"`,
         SENTRY_PREFIX: `"${!!sentry ? process.env.SENTRY_PREFIX : ''}"`,
         GIT_URL: `"${package.repository}"`,

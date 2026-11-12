@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.test'
-    id 'org.jetbrains.kotlin.android'
     id 'androidx.baselineprofile'
 }
 
@@ -11,10 +10,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 
     defaultConfig {
@@ -67,12 +62,18 @@ repositories {
     pluginDependencies.add(localAppResourcesLibraries)
 
     if (pluginDependencies.size() > 0) {
-
-        flatDir {
-            dirs pluginDependencies
+        // flatDir {
+            // dirs pluginDependencies
+        // }
+        // replace flatDir with file-based maven repos
+        pluginDependencies.each { dirPath ->
+            maven {
+                url uri(dirPath)
+            }
         }
     }
 
+    mavenLocal()
     mavenCentral()
 	maven { url 'https://jitpack.io' }
 }

@@ -20,12 +20,13 @@ module.exports = {
         defaultLanguage: 'en'
     },
     ios: {
-        runtimePackageName: '@akylas/nativescript-ios-runtime'
+        // runtimePackageName: '@akylas/nativescript-ios-runtime'
     },
     android: {
         ignoredNativeDependencies: ['@akylas/nativescript-inapp-purchase'],
-        runtimePackageName: '@akylas/nativescript-android-runtime',
-        gradleVersion: '8.14.3',
+        runtimePackageName: '@nativescript/android-quickjs-ng',
+        // runtimePackageName: '@akylas/nativescript-android-runtime',
+        gradleVersion: '9.7.1',
         markingMode: 'none',
         codeCache: true,
         enableMultithreadedJavascript: false,
@@ -40,7 +41,7 @@ module.exports = {
     cssParser: 'rework',
     hooks: [
         {
-            type: 'after-prepareNativeApp',
+            type: 'before-prepareNativeApp',
             script: 'tools/scripts/after-prepareNativeApp.js'
         }
     ]
