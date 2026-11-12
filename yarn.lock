@@ -20,7 +20,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=a034e6&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=b6114f&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,7 +74,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/149d283f87e74e456b15161e7c080e0d9e89451b831724f1917373c783f3c1f5e94f8adffa1198a810190cf82a2e429f79b1ccfa43700a6f608b1615b7f4c094
+  checksum: 10/92ee5e4a1833091840e51189fa4d9a47571867d93664d1c8507f0c377df77c367522e42de0bcd1159292cd0b95dbe368523384714a46026072d6410a1e5b959a
   languageName: node
   linkType: hard
 
