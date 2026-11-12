@@ -50,9 +50,9 @@ export default class ImportWorker extends BaseWorker {
                 this.notify({ ...other, target: 'documentsService', object: object === this ? undefined : object });
             };
             setDocumentsService(documentsService);
-            await documentsService.start(event.data.nativeData.db);
+            await documentsService.start(true);
             this.dataFolder = Folder.fromPath(ApplicationSettings.getString('data_folder', path.join(documentsService.rootDataFolder, 'data')));
-            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, event.data.nativeData.db, this.dataFolder.path);
+            DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, this.dataFolder.path);
         }
     }
     replyToPromise(data) {

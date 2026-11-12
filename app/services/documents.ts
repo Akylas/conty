@@ -1,6 +1,9 @@
+// the SQLite engine (libsqlite.so with WAL on Android, the process SQLite on iOS) for @nativescript-community/sqlite-core.
+// Configured per JS context: this module is loaded by the main thread and by the workers that open the db.
+import '@nativescript-community/sqlite-shared-engine';
 import { ApplicationSettings, EventData, File, Folder, ImageCache, Observable, Utils, knownFolders, path } from '@nativescript/core';
 import { isObject, isString } from '@nativescript/core/utils';
-import NSQLDatabase from '~/db/NSQLDatabase';
+import NSQLDatabase from '@shared/db/NSQLDatabase';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { IPack, IPackFolder, LuniiPack, Pack, PackFolder, Tag, TelmiPack } from '~/models/Pack';
@@ -421,7 +424,8 @@ export class DocumentsService extends Observable {
         }
         this.id = ID++;
     }
-    async start(db?) {
+    // inWorker: the main thread already created the tables and ran the migrations
+    async start(inWorker = false) {
         if (this.started) {
             return;
         }
@@ -443,30 +447,18 @@ export class DocumentsService extends Observable {
         this.rootDataFolder = rootDataFolder;
         this.realDataFolderPath = ApplicationSettings.getString('data_folder', path.join(rootDataFolder, 'data'));
         const nonContentPath = getRealPath(this.realDataFolderPath, false);
-        DEV_LOG && console.log('DocumentsService', 'start', this.id, !!db, this.realDataFolderPath, nonContentPath);
+        DEV_LOG && console.log('DocumentsService', 'start', this.id, inWorker, this.realDataFolderPath, nonContentPath);
         this.dataFolder = Folder.fromPath(nonContentPath, false);
-        if (db) {
-            this.db = new NSQLDatabase(db, {
-                // for now it breaks
-                // threading: true,
-                transformBlobs: false
-            } as any);
-        } else {
-            const filePath = path.join(rootDataFolder, DocumentsService.DB_NAME);
-            DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, File.exists(filePath));
+        const filePath = path.join(rootDataFolder, DocumentsService.DB_NAME);
+        DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, File.exists(filePath));
 
-            this.db = new NSQLDatabase(filePath, {
-                // for now it breaks
-                // threading: true,
-                transformBlobs: false
-            } as any);
-        }
+        this.db = new NSQLDatabase(filePath, { transformBlobs: false });
 
         this.tagRepository = new TagRepository(this.db);
         this.folderRepository = new FolderRepository(this.db);
         this.packRepository = new PackRepository(this, this.db, this.tagRepository, this.folderRepository);
         this.podcastRepository = new PodcastRepository(this.db);
-        if (!db) {
+        if (!inWorker) {
             await this.packRepository.createTables();
             await this.tagRepository.createTables();
             await this.folderRepository.createTables();
@@ -478,8 +470,9 @@ export class DocumentsService extends Observable {
                 console.error('error applying migrations', error.stack);
             }
         }
-        this.notify({ eventName: 'started' });
+        // db calls are async: set started first or the list refreshes too early and stays empty
         this.started = true;
+        this.notify({ eventName: 'started' });
     }
     stop() {
         DEV_LOG && console.log('DocumentsService stop');

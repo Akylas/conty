@@ -115,6 +115,8 @@ android {
     pickFirst 'lib/x86_64/libc++_shared.so'
     pickFirst 'lib/x86/libc++_shared.so'
     exclude "assets/app/**/*.js.map"
+    // sqlite-bridge is for iOS (its runtime has no Node-API yet): Android uses sqlite-napi, so the JNI bridge library is not packaged
+    exclude '**/libnssqlite_jni.so'
     exclude "org/bouncycastle/**"
     exclude "license/**"
     jniLibs {

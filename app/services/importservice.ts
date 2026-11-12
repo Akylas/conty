@@ -20,6 +20,10 @@ export class ImportService extends BaseWorkerHandler<ImportWorker> {
     constructor() {
         super(() => new Worker('~/workers/ImportWorker'));
     }
+    // BaseWorkerHandler does Object.keys(nativeData) without a guard when the caller does not wait for an answer
+    sendMessageToWorker(type, messageData, id?, error?, isResponse = false, timeout = 0, nativeData = {}) {
+        return super.sendMessageToWorker(type, messageData, id, error, isResponse, timeout, nativeData);
+    }
     async onWorkerEvent(eventData: any) {
         DEV_LOG && console.info('worker event', documentsService.id, eventData.eventName, eventData.target, !!eventData.object, Object.keys(eventData));
         if (eventData.target === 'documentsService') {
@@ -80,24 +84,24 @@ export class ImportService extends BaseWorkerHandler<ImportWorker> {
         // this.services.forEach((service) => service.stop());
     }
     async updateContentFromDataFolder({ showSnack = true }: { showSnack?: boolean } = {}, shouldWait = false) {
-        await this.sendMessageToWorker('import_data', { showSnack }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_data', { showSnack }, shouldWait ? time() : undefined);
     }
     async importContentFromFiles(files: { filePath: string; id?: string; extraData?: Partial<Pack> }[], folderId?: number, shouldWait = false) {
         DEV_LOG && console.log('importContentFromFiles', files, folderId);
-        await this.sendMessageToWorker('import_from_files', { files, folderId }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_from_files', { files, folderId }, shouldWait ? time() : undefined);
     }
     async importFolder(id: string, folderId?: number, shouldWait = true) {
-        await this.sendMessageToWorker('import_from_folder', { id, folderId }, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('import_from_folder', { id, folderId }, shouldWait ? time() : undefined);
     }
     // async importContentFromFile(data: { filePath: string; id?: string; extraData?; folderId?: number }) {
     //     DEV_LOG && console.log('importContentFromFile', JSON.stringify(data));
     //     this.ensureWorker();
-    //     await this.sendMessageToWorker('import_from_file', data, undefined, undefined, false, 0, { db: documentsService.db.db.db });
+    //     await this.sendMessageToWorker('import_from_file', data, undefined);
     // }
     async deletePacks(packs: Pack[], shouldWait = false) {
         const data = packs.map((s) => ({ id: s.id, folders: s.folders }));
         DEV_LOG && console.log('deleteDocuments', JSON.stringify(data));
-        await this.sendMessageToWorker('delete_packs', data, shouldWait ? time() : undefined, undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('delete_packs', data, shouldWait ? time() : undefined);
     }
 }
 export const importService = new ImportService();

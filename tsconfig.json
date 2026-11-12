@@ -12,5 +12,5 @@
         }
     },
     "include": ["app/**/*", "tools/app/**/*", "typings/*.d.ts"],
-    "exclude": ["tools/app/db/**/*", "tools/app/**/*.test.ts"]
+    "exclude": ["tools/app/**/*.test.ts"]
 }
