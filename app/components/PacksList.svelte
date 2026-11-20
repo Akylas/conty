@@ -401,6 +401,9 @@
     async function downloadPack() {
         DEV_LOG && console.log('downloadPack');
         try {
+            if (!(await showParentalGate())) {
+                return;
+            }
             const component = (await import('~/components/RemoteList.svelte')).default;
             const toDownload: RemoteContent = await showModal({
                 page: component,
