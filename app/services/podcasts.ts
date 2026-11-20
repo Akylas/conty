@@ -5,6 +5,7 @@ import { File, Folder, knownFolders, path } from '@nativescript/core';
 import { EventData, Observable } from '@nativescript/core/data/observable';
 import { throttle } from '@nativescript/core/utils';
 import { showError } from '@shared/utils/showError';
+import NotFoundError from 'kiss-orm/dist/Errors/NotFoundError';
 import { PackDeletedEventData, documentsService } from '~/services/documents';
 import { importService } from '~/services/importservice';
 import * as ProgressNotifications from '~/services/ProgressNotifications';
@@ -65,11 +66,23 @@ export class PodcastService extends Observable {
         await this.reconcilePacks();
     }
 
+    /** CrudRepository.get throws NotFoundError instead of returning nothing */
+    private async findPack(packId: string) {
+        try {
+            return await documentsService.packRepository.get(packId);
+        } catch (error) {
+            if (error instanceof NotFoundError) {
+                return undefined;
+            }
+            throw error;
+        }
+    }
+
     /** a pack could have been deleted while we were not listening */
     private async reconcilePacks() {
         const podcasts = await this.repository.listPodcasts();
         for (const podcast of podcasts) {
-            if (podcast.packId && !(await documentsService.packRepository.get(podcast.packId))) {
+            if (podcast.packId && !(await this.findPack(podcast.packId))) {
                 await this.forgetPack(podcast.id);
             }
         }
@@ -299,7 +312,12 @@ export class PodcastService extends Observable {
             progress: 0,
             actions: [{ id: 'cancel', text: 'mdi-close', notifText: lc('cancel'), callback: () => this.cancelDownloads() }]
         });
+        // the throttled callback can still fire after the download is done
+        let downloadDone = false;
         const onProgress = throttle((current: number, total: number) => {
+            if (downloadDone) {
+                return;
+            }
             const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
             showSnackMessage({ text: lc('downloading_episode_progress', episode.title, percentage), progress: percentage });
             ProgressNotifications.update(notification, { rightIcon: `${percentage}%`, progress: percentage });
@@ -337,6 +355,7 @@ export class PodcastService extends Observable {
                 throw error;
             }
         } finally {
+            downloadDone = true;
             ProgressNotifications.dismiss(notificationId);
             if (File.exists(temporaryAudio)) {
                 File.fromPath(temporaryAudio).removeSync();
@@ -460,7 +479,7 @@ export class PodcastService extends Observable {
             await this.repository.setPodcastPackId(podcastId, packId);
             try {
                 await importService.importFolder(packId);
-                if (!(await documentsService.packRepository.get(packId))) {
+                if (!(await this.findPack(packId))) {
                     throw new Error(lc('podcast_import_failed', podcast.title));
                 }
             } catch (error) {
@@ -469,7 +488,7 @@ export class PodcastService extends Observable {
             }
             this.reservedPackIds.delete(podcastId);
         } else {
-            const pack = await documentsService.packRepository.get(packId);
+            const pack = await this.findPack(packId);
             if (!pack) {
                 // deleted behind our back
                 await this.forgetPack(podcastId);
@@ -491,7 +510,7 @@ export class PodcastService extends Observable {
         if (!podcast.packId) {
             return;
         }
-        const pack = await documentsService.packRepository.get(podcast.packId);
+        const pack = await this.findPack(podcast.packId);
         // forget it first so that the delete event is a noop for us
         await this.repository.setPodcastPackId(podcast.id, null);
         if (pack) {

@@ -25,7 +25,7 @@ import { networkService } from './services/api';
 import { createSharedDocumentsService, documentsService } from './services/documents';
 import { importService } from './services/importservice';
 import { svelteNativeNoFrame } from '@nativescript-community/svelte-native';
-import { SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
+import { RMUH_URL, SETTINGS_REMOTE_SOURCES } from '~/utils/constants';
 // import './app.scss';
 declare module '@nativescript/core/application/application-common' {
     interface ApplicationCommon {
@@ -41,9 +41,10 @@ try {
             const source = sources[i];
             if (
                 source.url === 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json' ||
-                source.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json'
+                source.url === 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json' ||
+                source.url === 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R'
             ) {
-                source.url = 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R';
+                source.url = RMUH_URL;
                 needsUpdate = true;
                 break;
             }

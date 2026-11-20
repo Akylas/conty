@@ -51,6 +51,8 @@ export default class ImportWorker extends BaseWorker {
             };
             setDocumentsService(documentsService);
             await documentsService.start(true);
+            // the database opens in the background: without this the isOpen() checks below skip the work
+            await documentsService.db.db.ready;
             this.dataFolder = Folder.fromPath(ApplicationSettings.getString('data_folder', path.join(documentsService.rootDataFolder, 'data')));
             DEV_LOG && console.warn('ImportWorker', 'handleStart', documentsService.id, this.dataFolder.path);
         }

@@ -302,15 +302,22 @@ export async function showSnackMessage(props: ShowSnackMessageOptions) {
         await animateSnackMessage(barPlayerVisible ? -(BAR_AUDIO_PLAYER_HEIGHT + 10) : 0);
     }
 }
+let hidingSnackMessage = false;
 export async function hideSnackMessage() {
     // DEV_LOG && console.warn('hideSnackMessage');
-    if (snackMessage) {
-        snackMessageVisible = false;
-        await animateSnackMessage(100, false);
-        getSnackMessageParent().removeChild(snackMessage.element.nativeView);
-        snackMessage.element.nativeElement._tearDownUI();
-        snackMessage.viewInstance.$destroy();
-        snackMessage = null;
+    // hiding is async: a second call (several services hide it when they finish) must not run on the destroyed message
+    if (snackMessage && !hidingSnackMessage) {
+        hidingSnackMessage = true;
+        try {
+            snackMessageVisible = false;
+            await animateSnackMessage(100, false);
+            getSnackMessageParent().removeChild(snackMessage.element.nativeView);
+            snackMessage.element.nativeElement._tearDownUI();
+            snackMessage.viewInstance.$destroy();
+            snackMessage = null;
+        } finally {
+            hidingSnackMessage = false;
+        }
     }
 }
 
