@@ -3,7 +3,6 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import CActionBar from '@shared/components/CActionBar.svelte';
-    import { onMount } from 'svelte';
     import { showError } from '@shared/utils/showError';
     import { goBack } from '@shared/utils/svelte/ui';
     import { l, lc } from '~/helpers/locale';
@@ -50,22 +49,30 @@
         }
     }
 
-    onMount(() => searchField?.showSearch());
+    // the text field only takes the focus once the page is on screen
+    function onNavigatedTo() {
+        searchField?.showSearch();
+    }
 
     async function subscribe(result: PodcastSearchResult) {
         showLoading(lc('loading'));
+        let added = false;
         try {
             await podcastService.addByUrl(result.feedUrl);
-            goBack();
+            added = true;
         } catch (error) {
             showError(error);
         } finally {
-            hideLoading();
+            await hideLoading();
+        }
+        // on iOS the loading overlay is presented above the frame, which then ignores a back navigation
+        if (added) {
+            goBack();
         }
     }
 </script>
 
-<page actionBarHidden={true}>
+<page actionBarHidden={true} on:navigatedTo={onNavigatedTo}>
     <gridlayout paddingLeft={$windowInset.left} paddingRight={$windowInset.right} rows="auto,*">
         <collectionView items={results} row={1} rowHeight={96 * $fontScale} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
