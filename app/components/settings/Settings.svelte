@@ -28,6 +28,7 @@
         DEFAULT_ONLY_INVERSE_LUNII_TYPE_IMAGES,
         DEFAULT_PODCAST_MODE,
         DEFAULT_SHOW_SHUTDOWN_IN_NOTIF,
+        RMUH_URL,
         SETTINGS_DRAW_FOLDERS_BACKGROUND,
         SETTINGS_FORCE_LONG_PRESS_VOLUME_WHEN_NOT_PLAYING,
         SETTINGS_HANDLE_VOLUME_BUTTONS,
@@ -147,14 +148,12 @@
                 DEV_LOG && console.log('sources', sources);
                 const defaultSource = {
                     name: 'Raconte moi une histoire',
-                    url: 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R',
-                    // url: 'https://gist.githubusercontent.com/DantSu/3aea4c1fe15070bcf394a40b89aec33e/raw/stories.json',
-                    // url: 'https://gist.githubusercontent.com/UnofficialStories/32702fb104aebfe650d4ef8d440092c1/raw/luniicreations.json',
+                    url: RMUH_URL,
                     attribution:
                         'La communauté <a href="https://monurl.ca/lunii.creations">Raconte moi une histoire</a> crée et partage des histoires et des outils pour gérer ce contenu sur la Lunii, spécifiquement conçus pour cet appareil',
                     image: 'https://cdn.discordapp.com/icons/911349645752541244/2300753397affc590b981bcb582f2a65.png'
                 } as RemoteContentProvider;
-                const hasDefaultSource = sources.findIndex((s) => s.url === 'https://airtable.com/appPeKJE2w7yfGZyJ/shrQSwERXToKSQ18R') !== -1;
+                const hasDefaultSource = sources.findIndex((s) => s.url === RMUH_URL) !== -1;
                 return []
                     .concat(
                         hasDefaultSource
@@ -544,16 +543,17 @@
                             secure: false
                         }
                     });
-                    if (result?.password && result?.userName) {
-                        const data = await getJSON<any>(result.password);
+                    if (result?.result) {
+                        if (!result.password || !result.userName) {
+                            throw new SilentError(lc('missing_name_or_url'));
+                        }
+                        const data = result.password.endsWith('.json') ? await getJSON<any>(result.password) : undefined;
                         addRemoteSource({
                             name: result.userName,
-                            image: data.image || data.banner?.image,
-                            attribution: data.attribution || data.banner?.attribution,
+                            image: data?.image || data?.banner?.image,
+                            attribution: data?.attribution || data?.banner?.attribution,
                             url: result.password
                         });
-                    } else {
-                        throw new SilentError(lc('missing_name_or_url'));
                     }
                     break;
                 }
