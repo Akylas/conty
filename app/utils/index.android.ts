@@ -37,16 +37,6 @@ export async function askForManagePermission() {
         activity.startActivityForResult(intent, REQUEST_CODE);
     });
 }
-export async function requestManagePermission() {
-    DEV_LOG && console.log('requestManagePermission', PLAY_STORE_BUILD, SDK_VERSION);
-    if (!PLAY_STORE_BUILD && SDK_VERSION >= 30) {
-        if (checkManagePermission()) {
-            return true;
-        }
-        return askForManagePermission();
-    }
-    return true;
-}
 export function getRealPath(src: string, force = false) {
     DEV_LOG && console.log('getRealPath', src, _hasManagePermission, force);
     if (!force && !_hasManagePermission) {

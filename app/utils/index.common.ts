@@ -33,9 +33,6 @@ export function hashCode(s) {
         return a & a;
     }, 0);
 }
-export async function requestManagePermission() {
-    return true;
-}
 export function getRealPath(src: string) {
     return src;
 }

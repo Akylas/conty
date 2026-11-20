@@ -314,12 +314,7 @@ export abstract class Pack<S extends Stage = Stage, A extends Action = Action> e
     audioPath = 'assets';
 
     getFilePath(subfolder, file: string): string {
-        // DEV_LOG && console.log('getFilePath', hasManagePermission(), subfolder, file);
-        // if (__ANDROID__ && !hasManagePermission()) {
-        //     return this.folderPath.getFolder(subfolder, false).getFile(file, false).path;
-        // } else {
         return path.join(this.folderPath.path, subfolder, file);
-        // }
     }
 
     getAudio(audio: string): string {
