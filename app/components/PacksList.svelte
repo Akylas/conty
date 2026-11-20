@@ -47,7 +47,7 @@
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { getBGServiceInstance } from '~/services/BgService';
     import { importService } from '~/services/importservice';
-    import { getRealPath, requestManagePermission } from '~/utils';
+    import { getRealPath } from '~/utils';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import { formatDuration } from '~/helpers/formatter';
 
@@ -433,9 +433,6 @@
     async function onNavigatedTo(e: NavigatedData) {
         try {
             if (!e.isBackNavigation) {
-                if (!(await requestManagePermission())) {
-                    throw new Error(lc('missing_manage_permission'));
-                }
                 await request('storage');
                 await request('notification');
                 const showFirstPresentation = ApplicationSettings.getBoolean('showFirstPresentation', true);
