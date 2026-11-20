@@ -53,10 +53,18 @@
     let showFullDescription = false;
     let collectionView: NativeViewElementNode<CollectionView>;
 
+    // several loads can overlap (events come in bursts): only the latest one is applied
+    let loadId = 0;
     async function load() {
-        const selectedIds = new Set(getSelectedEpisodes().map((episode) => episode.id));
-        podcast = await podcastService.getPodcast(podcastId);
+        const currentLoadId = ++loadId;
+        const loadedPodcast = await podcastService.getPodcast(podcastId);
         const list = await podcastService.listEpisodes(podcastId, filter);
+        if (currentLoadId !== loadId) {
+            return;
+        }
+        // read the selection only now: it can change while the database is queried
+        const selectedIds = new Set(getSelectedEpisodes().map((episode) => episode.id));
+        podcast = loadedPodcast;
         episodes = new ObservableArray(
             list.map((episode) => ({
                 episode,
@@ -79,15 +87,19 @@
         safeLoad();
     }
 
-    let reloadTimer;
+    // the service only notifies once the database is up to date, so we can reload right away
     function onPodcastsChanged(event: PodcastsChangedEventData) {
         if (event.podcastId === podcastId) {
-            clearTimeout(reloadTimer);
-            reloadTimer = setTimeout(safeLoad, 300);
+            safeLoad();
         }
     }
     function onDownloadProgress(event: PodcastDownloadProgressEventData) {
         if (event.podcastId !== podcastId || !episodes) {
+            return;
+        }
+        if (event.progress < 0) {
+            // download finished or cancelled: the episode is already updated in the database
+            safeLoad();
             return;
         }
         const index = episodes.findIndex((item) => item.episode.id === event.episodeId);
@@ -103,7 +115,6 @@
         safeLoad();
     });
     onDestroy(() => {
-        clearTimeout(reloadTimer);
         podcastService.off(EVENT_PODCASTS_CHANGED, onPodcastsChanged);
         podcastService.off(EVENT_PODCAST_DOWNLOAD_PROGRESS, onDownloadProgress);
     });
@@ -175,8 +186,10 @@
                 downloaded.map((episode) => episode.id)
             );
         } finally {
-            hideLoading();
+            await hideLoading();
         }
+        // on iOS the loading overlay covers the list: refresh once it is gone
+        await safeLoad();
         return true;
     }
     async function removeSelected() {
@@ -253,8 +266,8 @@
                 options: [
                     { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
                     { id: 'download', name: lc('download_selected'), icon: 'mdi-download' },
-                    { id: 'remove', name: lc('delete_selected'), icon: 'mdi-delete', color: colorError }
-                ],
+                    { id: 'remove', name: lc('delete_selected'), icon: 'mdi-delete', color: colorError, visible: getSelectedEpisodes().some((episode) => !!episode.file) }
+                ].filter((option) => option.visible !== false),
                 anchor: event.object,
                 vertPos: VerticalPosition.BELOW,
                 props: { width: 240 * $fontScale },
@@ -329,11 +342,11 @@
                     padding="8 4 8 12"
                     on:tap={() => toggleSelect(item)}
                     on:longPress={() => toggleSelect(item)}>
-                    <stacklayout verticalAlignment="center">
+                    <stacklayout marginLeft={28} verticalAlignment="center">
                         <label fontSize={15 * $fontScale} fontWeight="bold" lineBreak="end" maxLines={2} text={item.episode.title} />
                         <label color={colorOnSurfaceVariant} fontSize={12 * $fontScale} lineBreak="end" maxLines={1} text={getSubtitle(item.episode)} />
                     </stacklayout>
-                    <SelectedIndicator horizontalAlignment="right" margin={0} selected={item.selected} verticalAlignment="top" />
+                    <SelectedIndicator horizontalAlignment="left" margin={0} selected={item.selected} verticalAlignment="top" />
                     {#if item.progress !== undefined}
                         <!-- circular determinate mode props are not in the svelte typings -->
                         <activityindicator busy={true} col={1} height={36} margin="0 10 0 10" width={36} {...{ indeterminate: item.progress === 0, maxValue: 100, value: item.progress }} />
